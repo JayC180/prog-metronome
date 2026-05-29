@@ -1,0 +1,4 @@
+package = audio_engine
+headers = audio_engine_c.h
+headerFilter = audio_engine_c.h
+linkerOpts = -framework AudioToolbox -framework AVFoundation -framework CoreAudio -framework CoreFoundation

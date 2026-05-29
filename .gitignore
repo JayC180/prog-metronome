@@ -1,0 +1,32 @@
+# gradle
+.gradle/
+**/build/
+build/
+
+# kmp
+.kotlin/
+.kotlin/metadata/
+.kotlin-native/
+.kotlin-js-store/
+
+# android
+local.properties
+.cxx/
+.externalNativeBuild/
+captures/
+
+# android studio
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# ios
+iosApp/build/
+iosApp/DerivedData/
+iosApp/*.xcworkspace/xcuserdata/
+iosApp/*.xcodeproj/xcuserdata/
+*.xcuserstate
+
+/.claude
