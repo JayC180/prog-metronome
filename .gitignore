@@ -30,3 +30,11 @@ iosApp/*.xcodeproj/xcuserdata/
 *.xcuserstate
 
 /.claude
+
+# JUCE / desktop build
+cmake-build-*/
+.cache/
+.vscode/
+.DS_Store
+*.user
+JuceLibraryCode/

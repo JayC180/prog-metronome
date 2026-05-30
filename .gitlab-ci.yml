@@ -1,0 +1,32 @@
+# Build Windows .exe via GitLab CI.
+#
+# Default runner: GitLab.com SaaS Windows runner (Windows Server 2022 with
+# Visual Studio 2022 + CMake preinstalled). Tag: saas-windows-medium-amd64.
+#
+# Self-hosted alternative: change `tags:` to whatever your shell runner uses,
+# ensure VS 2022 Build Tools + CMake >= 3.22 + git are on PATH.
+
+stages:
+  - build
+
+build:windows:
+  stage: build
+  tags:
+    - saas-windows-medium-amd64
+  timeout: 1h
+  variables:
+    GIT_SUBMODULE_STRATEGY: none
+  before_script:
+    - cmake --version
+    - git --version
+  script:
+    - cmake -B build -G "Visual Studio 17 2022" -A x64
+    - cmake --build build --config Release --target RhythmEngine_Standalone --parallel 4
+    - cmake --build build --config Release --target RhythmEngine_VST3       --parallel 4
+  artifacts:
+    name: "RhythmEngine-Windows-${CI_COMMIT_SHORT_SHA}"
+    paths:
+      - build/RhythmEngine_artefacts/Release/Standalone/RhythmEngine.exe
+      - build/RhythmEngine_artefacts/Release/VST3/RhythmEngine.vst3/
+    expire_in: 4 weeks
+    when: on_success
