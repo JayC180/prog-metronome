@@ -6,6 +6,13 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "")
 
+# Statically link the MSVC runtime so juceaide.exe (and our plugin) don't depend
+# on VCRUNTIME DLLs being on PATH — fixes "Testing juceaide failed" on CI runners
+# that have VS Build Tools installed but no Dev Cmd environment active.
+if(MSVC)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+
 # JUCE 8.0.13.
 # Prefer a local checkout (set JUCE_LOCAL_PATH or fall back to ~/JUCE_local
 # for local dev); otherwise FetchContent pulls JUCE from upstream — used by CI
