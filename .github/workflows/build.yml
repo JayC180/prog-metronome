@@ -1,0 +1,118 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  windows:
+    name: Windows (exe + VST3)
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B build -G "Visual Studio 17 2022" -A x64
+
+      - name: Build Standalone
+        run: cmake --build build --config Release --target RhythmEngine_Standalone --parallel 4
+
+      - name: Build VST3
+        run: cmake --build build --config Release --target RhythmEngine_VST3 --parallel 4
+
+      - name: Stage artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item build/RhythmEngine_artefacts/Release/Standalone/RhythmEngine.exe dist/
+          Copy-Item build/RhythmEngine_artefacts/Release/VST3/RhythmEngine.vst3 dist/ -Recurse
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RhythmEngine-windows-x64
+          path: dist/
+          if-no-files-found: error
+
+  macos:
+    name: macOS (app + VST3 + AU)
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build Standalone
+        run: cmake --build build --target RhythmEngine_Standalone --parallel 4
+
+      - name: Build VST3
+        run: cmake --build build --target RhythmEngine_VST3 --parallel 4
+
+      - name: Build AU
+        run: cmake --build build --target RhythmEngine_AU --parallel 4
+
+      - name: Stage artifacts
+        run: |
+          mkdir -p dist
+          cp -R build/RhythmEngine_artefacts/Release/Standalone/RhythmEngine.app dist/
+          cp -R build/RhythmEngine_artefacts/Release/VST3/RhythmEngine.vst3 dist/
+          cp -R build/RhythmEngine_artefacts/Release/AU/RhythmEngine.component dist/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RhythmEngine-macos-universal
+          path: dist/
+          if-no-files-found: error
+
+  linux:
+    name: Linux (Standalone + VST3)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        # JUCE Linux deps. WebKit/curl skipped — CMake sets JUCE_WEB_BROWSER=0 / JUCE_USE_CURL=0.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            ninja-build \
+            libasound2-dev \
+            libjack-jackd2-dev \
+            libfreetype-dev \
+            libfontconfig1-dev \
+            libx11-dev \
+            libxcomposite-dev \
+            libxcursor-dev \
+            libxext-dev \
+            libxinerama-dev \
+            libxrandr-dev \
+            libxrender-dev \
+            libglu1-mesa-dev \
+            mesa-common-dev
+
+      - name: Configure
+        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build Standalone
+        run: cmake --build build --target RhythmEngine_Standalone --parallel 4
+
+      - name: Build VST3
+        run: cmake --build build --target RhythmEngine_VST3 --parallel 4
+
+      - name: Stage artifacts
+        run: |
+          mkdir -p dist
+          cp build/RhythmEngine_artefacts/Release/Standalone/RhythmEngine dist/
+          cp -R build/RhythmEngine_artefacts/Release/VST3/RhythmEngine.vst3 dist/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RhythmEngine-linux-x64
+          path: dist/
+          if-no-files-found: error
