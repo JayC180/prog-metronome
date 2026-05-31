@@ -28,7 +28,6 @@ private:
     void rebuildFromState();
 
     void openBeatSoundPicker();
-    void openTrackDefaultSoundPicker (int trackIndex);
 
     TrackBuilder&            builder_;
     std::vector<SoundInfo>   availableSounds_;

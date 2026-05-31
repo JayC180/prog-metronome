@@ -56,11 +56,26 @@ void Transport::updateTracks (std::vector<InterpretResult> results)
     const bool wasPlaying = isPlaying_.load();
     if (wasPlaying) stop();
 
+    std::lock_guard<std::mutex> lock (resultsMutex_);
     results_ = std::move (results);
     clocks_.clear();
     clocks_.reserve (results_.size());
     for (auto& r : results_)
         clocks_.push_back (std::make_unique<StreamClock> (r));
+}
+
+void Transport::setTrackFlags (const std::string& trackId, bool muted, bool soloed)
+{
+    std::lock_guard<std::mutex> lock (resultsMutex_);
+    for (auto& r : results_)
+    {
+        if (r.trackId == trackId)
+        {
+            r.muted  = muted;
+            r.soloed = soloed;
+            return;
+        }
+    }
 }
 
 void Transport::fillQueueUntil (int64_t horizonNanos)
@@ -102,18 +117,29 @@ void Transport::runDispatcher()
             }
         }
 
+        // Snapshot per-track flags under the lock so live M/S toggles
+        // (Transport::setTrackFlags) take effect on the next dispatch pass.
+        struct Flags { bool muted; bool soloed; };
+        std::vector<std::pair<std::string, Flags>> flagSnapshot;
         bool anySoloed = false;
-        for (const auto& r : results_)
-            if (r.soloed) { anySoloed = true; break; }
+        {
+            std::lock_guard<std::mutex> lock (resultsMutex_);
+            flagSnapshot.reserve (results_.size());
+            for (const auto& r : results_)
+            {
+                flagSnapshot.push_back ({ r.trackId, { r.muted, r.soloed } });
+                if (r.soloed) anySoloed = true;
+            }
+        }
 
         for (const auto& ev : toFire)
         {
-            const InterpretResult* result = nullptr;
-            for (const auto& r : results_)
-                if (r.trackId == ev.trackId) { result = &r; break; }
+            const Flags* flags = nullptr;
+            for (const auto& [tid, f] : flagSnapshot)
+                if (tid == ev.trackId) { flags = &f; break; }
 
-            const bool audible = anySoloed ? (result != nullptr && result->soloed)
-                                           : (result != nullptr && ! result->muted);
+            const bool audible = anySoloed ? (flags != nullptr && flags->soloed)
+                                           : (flags != nullptr && ! flags->muted);
 
             AudioEngine* engine = audioEngine_.load();
             if (ev.soundId.has_value() && audible && engine != nullptr)

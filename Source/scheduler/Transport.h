@@ -35,6 +35,9 @@ public:
     // Swap in a new set of interpret results — automatically stops + reconfigures.
     void updateTracks (std::vector<InterpretResult> results);
 
+    // Live mute/solo update — safe to call while playing.
+    void setTrackFlags (const std::string& trackId, bool muted, bool soloed);
+
     void setSoundMap (std::shared_ptr<SoundMap> map) { soundMap_ = std::move (map); }
     std::shared_ptr<SoundMap> soundMap() const      { return soundMap_; }
 
@@ -57,6 +60,10 @@ private:
 
     std::vector<InterpretResult>                  results_;
     std::vector<std::unique_ptr<StreamClock>>     clocks_;
+    // Protects mutation of results_ and the muted/soloed fields read by the
+    // dispatcher. Layout (size, trackId, events) is only mutated via
+    // updateTracks while stopped; per-track flag updates use this mutex.
+    mutable std::mutex                            resultsMutex_;
 
     EventQueue                                    eventQueue_;
     std::mutex                                    queueMutex_;

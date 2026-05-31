@@ -242,7 +242,6 @@ TrackRowComponent::TrackRowComponent (TrackBuilder& builder, int trackIndex)
     addAndMakeVisible (nameLabel_);
     addAndMakeVisible (muteChip_);
     addAndMakeVisible (soloChip_);
-    addAndMakeVisible (soundChip_);
 
     deleteButton_.setStateColor (ChipButton::StateColor::Custom);
     deleteButton_.setColours (RhythmColors::bg1(), RhythmColors::border0(), RhythmColors::deleteText());
@@ -259,10 +258,6 @@ TrackRowComponent::TrackRowComponent (TrackBuilder& builder, int trackIndex)
     {
         if (auto* d = draft())
             builder_.setTrackSoloed (trackIndex_, ! d->soloed);
-    });
-    soundChip_.setOnClick ([this]
-    {
-        if (onChooseDefaultSound) onChooseDefaultSound (trackIndex_);
     });
 
     strip_ = std::make_unique<ItemStrip> (builder_, trackIndex_);
@@ -286,7 +281,6 @@ void TrackRowComponent::syncToState()
                               isActive ? RhythmColors::accent() : RhythmColors::textSecondary());
         muteChip_.setActive (d->muted);
         soloChip_.setActive (d->soloed);
-        soundChip_.setActive (d->defaultSoundId.has_value());
     }
     strip_->syncToState();
     repaint();
@@ -312,8 +306,6 @@ void TrackRowComponent::resized()
     muteChip_.setBounds  (chipRow.removeFromLeft (24));
     chipRow.removeFromLeft (3);
     soloChip_.setBounds  (chipRow.removeFromLeft (24));
-    chipRow.removeFromLeft (3);
-    soundChip_.setBounds (chipRow.removeFromLeft (24));
 
     deleteButton_.setBounds (bounds.removeFromRight (30).reduced (2, 8));
     strip_->setBounds (bounds);
@@ -370,10 +362,6 @@ void TrackListComponent::rebuildRows()
     {
         auto row = std::make_unique<TrackRowComponent> (builder_, i);
         row->onDeleteTrack = [this] (int idx) { builder_.deleteTrack (idx); syncToState(); };
-        row->onChooseDefaultSound = [this] (int idx)
-        {
-            if (onChooseTrackDefaultSound) onChooseTrackDefaultSound (idx);
-        };
         row->syncToState();
         content_.addAndMakeVisible (row.get());
         rows_.push_back (std::move (row));

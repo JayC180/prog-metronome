@@ -164,10 +164,22 @@ void TrackBuilder::setActiveTrack (int index)
 void TrackBuilder::setTrackMuted (int index, bool muted)
 {
     updateTrack (index, [muted] (const TrackDraft& d) { auto c = d; c.muted = muted; return c; });
+    if (transport_ != nullptr
+        && index >= 0 && index < (int) state_.tracks.size())
+    {
+        const auto& d = state_.tracks[(size_t) index];
+        transport_->setTrackFlags (d.id, d.muted, d.soloed);
+    }
 }
 void TrackBuilder::setTrackSoloed (int index, bool soloed)
 {
     updateTrack (index, [soloed] (const TrackDraft& d) { auto c = d; c.soloed = soloed; return c; });
+    if (transport_ != nullptr
+        && index >= 0 && index < (int) state_.tracks.size())
+    {
+        const auto& d = state_.tracks[(size_t) index];
+        transport_->setTrackFlags (d.id, d.muted, d.soloed);
+    }
 }
 void TrackBuilder::setTrackLabel (int index, const std::string& label)
 {

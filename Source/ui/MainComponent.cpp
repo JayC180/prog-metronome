@@ -120,7 +120,6 @@ MainComponent::MainComponent (TrackBuilder& builder)
     };
 
     bottomPanel_.onChangeBeatSound = [this] { openBeatSoundPicker(); };
-    trackList_.onChooseTrackDefaultSound = [this] (int idx) { openTrackDefaultSoundPicker (idx); };
 
     rebuildFromState();
 }
@@ -143,22 +142,6 @@ void MainComponent::openBeatSoundPicker()
             [this, idx] (const std::string& soundId)
             {
                 builder_.setBeatSound (idx, soundId);
-            }));
-}
-
-void MainComponent::openTrackDefaultSoundPicker (int trackIndex)
-{
-    const auto& s = builder_.state();
-    if (trackIndex < 0 || trackIndex >= (int) s.tracks.size()) return;
-    const auto& t = s.tracks[(size_t) trackIndex];
-
-    showRhythmDialog (this,
-        std::make_unique<SoundPickerDialog> (
-            availableSounds_,
-            t.defaultSoundId,
-            [this, trackIndex] (const std::string& soundId)
-            {
-                builder_.setTrackDefaultSound (trackIndex, soundId);
             }));
 }
 
