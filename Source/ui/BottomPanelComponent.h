@@ -34,6 +34,7 @@ private:
     void onCustom();
     void onEditToggle();
     void onBackspace();
+    void onToggleActive();
 
     TrackBuilder& builder_;
 
@@ -49,7 +50,7 @@ private:
 
     // edit panel
     juce::Label onOffLabel_;
-    juce::Label onOffStatus_;
+    ChipButton  onOffStatus_ { juce::String::fromUTF8 (u8"—") };
     juce::Label volumeLabel_;
     juce::Slider volumeSlider_;
     juce::Label volumePercentLabel_;

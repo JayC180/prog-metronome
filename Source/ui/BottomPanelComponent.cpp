@@ -41,7 +41,8 @@ BottomPanelComponent::BottomPanelComponent (TrackBuilder& builder)
     makeStaticLabel (onOffLabel_, "on/off");
     makeStaticLabel (volumeLabel_, "volume");
     makeStaticLabel (soundLabel_, "sound");
-    onOffStatus_.setFont (juce::Font (juce::FontOptions (12.0f)));
+    onOffStatus_.setFontSize (12.0f);
+    onOffStatus_.setOnClick ([this] { onToggleActive(); });
     addAndMakeVisible (onOffStatus_);
     volumePercentLabel_.setFont (juce::Font (juce::FontOptions (12.0f)));
     volumePercentLabel_.setJustificationType (juce::Justification::centredRight);
@@ -165,17 +166,21 @@ void BottomPanelComponent::rebuildNumpad()
                        enabled ? RhythmColors::thumbColor() : RhythmColors::textDim());
 
     // Edit panel (beat-only fields)
-    onOffStatus_.setText (! enabled
-                            ? juce::String ("select a beat")
-                            : (beatSelected ? (item->getIf<TrackItem::Beat>()->active
-                                                  ? juce::String ("active")
-                                                  : juce::String ("rest"))
-                                            : juce::String ("-")),
-                          juce::dontSendNotification);
-    onOffStatus_.setColour (juce::Label::textColourId,
-        ! enabled || ! beatSelected ? RhythmColors::textDim()
-            : (item->getIf<TrackItem::Beat>()->active ? RhythmColors::accent()
-                                                     : RhythmColors::textMuted()));
+    if (enabled && beatSelected)
+    {
+        const bool active = item->getIf<TrackItem::Beat>()->active;
+        onOffStatus_.setLabel (active ? "active" : "rest");
+        onOffStatus_.setColours (active ? RhythmColors::accentBg()  : RhythmColors::bg3(),
+                                 active ? RhythmColors::accentBorder() : RhythmColors::border1(),
+                                 active ? RhythmColors::accent()    : RhythmColors::textMuted());
+        onOffStatus_.setEnabledLook (true);
+    }
+    else
+    {
+        onOffStatus_.setLabel (! enabled ? "select a beat" : juce::String::fromUTF8 (u8"—"));
+        onOffStatus_.setColours (RhythmColors::bg3(), RhythmColors::border0(), RhythmColors::textDim());
+        onOffStatus_.setEnabledLook (false);
+    }
 
     if (beatSelected)
     {
@@ -329,6 +334,19 @@ void BottomPanelComponent::onBackspace()
     const auto& s = builder_.state();
     if (s.cursorIndex.has_value()) builder_.deleteSelected();
     else                           builder_.deleteLast();
+}
+
+void BottomPanelComponent::onToggleActive()
+{
+    const auto& s = builder_.state();
+    if (! s.cursorIndex.has_value()) return;
+    const auto* t = s.activeTrack();
+    if (t == nullptr) return;
+    const int idx = *s.cursorIndex;
+    if (idx < 0 || idx >= (int) t->items.size()) return;
+    if (! t->items[(size_t) idx].isBeat()) return;
+    builder_.updateBeatAt (idx, [] (const TrackItem::Beat& b)
+        { auto c = b; c.active = ! b.active; return c; });
 }
 
 } // namespace rhythm
