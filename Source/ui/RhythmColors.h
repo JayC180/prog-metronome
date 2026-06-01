@@ -6,7 +6,7 @@ namespace rhythm
 {
 
 // Active-theme singleton. Widgets read `RhythmColors::active()` to look up
-// the colour they need. Calling setActive() rebinds the theme — listeners
+// the colour they need. Calling setActive() rebinds the theme - listeners
 // repaint themselves on the next paint cycle.
 class RhythmColors
 {

@@ -80,7 +80,7 @@ std::optional<TrackItem> varToItem (const juce::var& v)
         if (! obj->hasProperty ("bpmVal")) return std::nullopt;
         return TrackItem (TrackItem::SetBpm { (double) obj->getProperty ("bpmVal") });
     }
-    return std::nullopt; // unknown type — skip gracefully (forward compatibility)
+    return std::nullopt; // unknown type - skip gracefully (forward compatibility)
 }
 
 juce::var trackToVar (const TrackDraft& d)
@@ -148,7 +148,7 @@ TrackBuilderState ProjectSerializer::deserialize (const std::string& jsonString)
     const int version = (int) obj->getProperty ("version");
     if (version != 1)
         throw DeserializationException ("Unsupported version " + std::to_string (version)
-                                        + " — update the app to open this file");
+                                        + " - update the app to open this file");
 
     TrackBuilderState st;
     st.bpm              = (double) obj->getProperty ("bpm");

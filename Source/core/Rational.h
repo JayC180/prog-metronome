@@ -12,7 +12,7 @@ namespace rhythm
 // Every subdivision used in the engine converts to ticks with zero rounding error.
 inline constexpr int64_t TICKS_PER_PULSE = 55440;
 
-// Immutable rational number — the only numeric type for durations inside the engine.
+// Immutable rational number - the only numeric type for durations inside the engine.
 // No floating point until the audio boundary (TempoContext::toNanos).
 // All arithmetic auto-reduces. Denominator is always positive after reduction.
 class Rational
@@ -45,7 +45,7 @@ public:
         return Rational (sign * num_ / g, sign * den_ / g);
     }
 
-    // arithmetic — always returns reduced form
+    // arithmetic - always returns reduced form
     Rational operator+ (const Rational& o) const { return Rational (num_ * o.den_ + o.num_ * den_, den_ * o.den_).reduced(); }
     Rational operator- (const Rational& o) const { return Rational (num_ * o.den_ - o.num_ * den_, den_ * o.den_).reduced(); }
     Rational operator* (const Rational& o) const { return Rational (num_ * o.num_, den_ * o.den_).reduced(); }
@@ -72,7 +72,7 @@ public:
     bool isPositive() const { return (num_ > 0) == (den_ > 0) && ! isZero(); }
     bool isNegative() const { return ! isZero() && ! isPositive(); }
 
-    // Integer division to ticks — zero rounding error for any subdivision in the supported set.
+    // Integer division to ticks - zero rounding error for any subdivision in the supported set.
     int64_t toTicks() const { return (num_ * TICKS_PER_PULSE) / den_; }
 
     double toDouble() const { return (double) num_ / (double) den_; }

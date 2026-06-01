@@ -7,7 +7,7 @@
 namespace rhythm
 {
 
-// One fire-able event — produced by StreamClock, consumed by AudioDispatcher and UI.
+// One fire-able event - produced by StreamClock, consumed by AudioDispatcher and UI.
 //
 // soundId is the opaque key into SoundMap. nullopt = rest slot (UI tracking only).
 // The audio dispatcher resolves soundId → SoundConfig → play. This type knows

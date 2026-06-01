@@ -7,15 +7,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "")
 
 # Statically link the MSVC runtime so juceaide.exe (and our plugin) don't depend
-# on VCRUNTIME DLLs being on PATH — fixes "Testing juceaide failed" on CI runners
+# on VCRUNTIME DLLs being on PATH - fixes "Testing juceaide failed" on CI runners
 # that have VS Build Tools installed but no Dev Cmd environment active.
 if(MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    add_compile_options(/utf-8)
 endif()
 
 # JUCE 8.0.13.
 # Prefer a local checkout (set JUCE_LOCAL_PATH or fall back to ~/JUCE_local
-# for local dev); otherwise FetchContent pulls JUCE from upstream — used by CI
+# for local dev); otherwise FetchContent pulls JUCE from upstream - used by CI
 # runners that don't have a local copy.
 if(DEFINED ENV{JUCE_LOCAL_PATH} AND EXISTS "$ENV{JUCE_LOCAL_PATH}/CMakeLists.txt")
     message(STATUS "JUCE: using local path $ENV{JUCE_LOCAL_PATH}")
@@ -83,6 +84,21 @@ target_compile_definitions(RhythmEngine PUBLIC
     JUCE_USE_CURL=0
     JUCE_VST3_CAN_REPLACE_VST2=0
     JUCE_DISPLAY_SPLASH_SCREEN=0)
+
+# Embed Inter if the font files are present in Resources/.
+# Download Inter from fonts.google.com/specimen/Inter and place InterRegular.ttf
+# and InterBold.ttf there. Build works without them (falls back to system font).
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Resources/InterRegular.ttf" AND
+   EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Resources/InterBold.ttf")
+    message(STATUS "Fonts: embedding Inter from Resources/")
+    juce_add_binary_data(AppFonts SOURCES
+        Resources/InterRegular.ttf
+        Resources/InterBold.ttf)
+    target_link_libraries(RhythmEngine PRIVATE AppFonts)
+    target_compile_definitions(RhythmEngine PRIVATE RHYTHM_HAS_EMBEDDED_FONT=1)
+else()
+    message(STATUS "Fonts: Inter not found in Resources/ - using system font")
+endif()
 
 target_link_libraries(RhythmEngine PRIVATE
     juce::juce_audio_utils

@@ -10,12 +10,12 @@ namespace rhythm
 {
 
 // Single schedulable event with fire time pre-computed in nanoseconds from
-// track start. No tempo context needed at runtime — everything is baked in.
+// track start. No tempo context needed at runtime - everything is baked in.
 //
 //   offsetNanos    : absolute offset from track origin
 //   soundId        : nullopt = rest (still tracked for playhead)
 //   trackItemIndex : which TrackItem in the flat list this event came from
-//                    (for UI highlight — maps directly, no conversion needed)
+//                    (for UI highlight - maps directly, no conversion needed)
 //   firedCount     : index within one loop pass (monotonic over a pass)
 struct PrecomputedEvent
 {
@@ -41,7 +41,7 @@ struct InterpretResult
     std::vector<PrecomputedEvent>          infinitePassEvents;
     int64_t                                infinitePassNanos { 0 };
 
-    // (offsetNanos, effectiveBpm) — for display during playback
+    // (offsetNanos, effectiveBpm) - for display during playback
     std::vector<std::pair<int64_t, double>> tempoMapNanos;
 
     bool muted  { false };

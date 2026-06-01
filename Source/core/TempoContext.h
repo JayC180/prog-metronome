@@ -15,7 +15,7 @@ namespace rhythm
 //   3. toNanos() is the ONLY place floats appear in the engine. All
 //      other arithmetic stays in Rational.
 //
-// Immutable — all mutations return a new TempoContext.
+// Immutable - all mutations return a new TempoContext.
 class TempoContext
 {
 public:
@@ -60,7 +60,7 @@ public:
         return TempoContext (bpm_, pulseUnit_, (modulation_ * ratio).reduced());
     }
 
-    // Hard BPM override — resets modulation accumulator.
+    // Hard BPM override - resets modulation accumulator.
     TempoContext withBpm (double newBpm) const
     {
         return TempoContext (newBpm, pulseUnit_, Rational::ONE);
@@ -77,7 +77,7 @@ private:
     Rational modulation_;
 };
 
-// Pulse-unit presets — referenced by upper layers but the engine doesn't enforce them.
+// Pulse-unit presets - referenced by upper layers but the engine doesn't enforce them.
 namespace PulseUnit
 {
     inline const Rational QUARTER         { 1, 1 };

@@ -6,7 +6,7 @@
 namespace rhythm
 {
 
-// Polymorphic audio engine — the dispatcher calls trigger() when an event
+// Polymorphic audio engine - the dispatcher calls trigger() when an event
 // is due. Implementations are responsible for resolving soundId to an audio
 // resource and rendering it. expectedFireNanos is the timestamp the
 // scheduler originally targeted (System nanoTime semantics).

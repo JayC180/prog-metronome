@@ -7,7 +7,7 @@
 namespace rhythm
 {
 
-// Interpreter — flat TrackItem list → pre-computed nanosecond events.
+// Interpreter - flat TrackItem list → pre-computed nanosecond events.
 //
 // Tempo semantics:
 //
@@ -19,7 +19,7 @@ namespace rhythm
 //     If an outer group repeats N times, the modifier compounds N times.
 //
 //   =bpm modifier sets absolute tempo, so each pass resets to the same value
-//   — no compounding. That is the distinction between mm and =bpm.
+//   - no compounding. That is the distinction between mm and =bpm.
 //
 //   Inline =bpm and inline mm inside [] thread forward through passes (no restore).
 //   Use modifier position on ] for compound modulation.

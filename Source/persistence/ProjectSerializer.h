@@ -11,9 +11,9 @@ namespace rhythm
 // Serializes and deserializes the full project state to/from JSON (.rhy files).
 //
 // Design principles:
-//   - version field is mandatory — always checked first
-//   - format is flat and human-readable — users can edit JSON directly
-//   - soundIds are stored as-is — missing sounds play as silence on load
+//   - version field is mandatory - always checked first
+//   - format is flat and human-readable - users can edit JSON directly
+//   - soundIds are stored as-is - missing sounds play as silence on load
 //   - runtime-internal fields (track IDs, cursor position) are NOT saved;
 //     they are regenerated fresh on load
 //   - migration handles older versions cleanly

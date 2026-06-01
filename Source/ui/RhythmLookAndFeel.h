@@ -25,8 +25,13 @@ public:
     void fillTextEditorBackground (juce::Graphics&, int, int, juce::TextEditor&) override;
     void drawTextEditorOutline    (juce::Graphics&, int, int, juce::TextEditor&) override;
 
+    juce::Typeface::Ptr getTypefaceForFont (const juce::Font&) override;
+
 private:
     void refreshDefaults();
+
+    juce::Typeface::Ptr regularTypeface_;
+    juce::Typeface::Ptr boldTypeface_;
 };
 
 } // namespace rhythm

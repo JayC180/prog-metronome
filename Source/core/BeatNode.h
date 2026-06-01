@@ -13,9 +13,9 @@ namespace rhythm
 // The rhythm tree. Every rhythmic structure in the engine is a BeatNode.
 //
 // Three node types:
-//   Leaf     — a single indivisible slot
-//   Group    — N slots inside the group's duration (tuplet, polyrhythm, etc.)
-//   Sequence — an ordered list of nodes played end-to-end
+//   Leaf     - a single indivisible slot
+//   Group    - N slots inside the group's duration (tuplet, polyrhythm, etc.)
+//   Sequence - an ordered list of nodes played end-to-end
 //
 // Invariants:
 //   1. Duration is always a Rational multiple of the pulse unit. No note names.
@@ -41,7 +41,7 @@ struct ValidationWarning
     Severity        severity { Severity::Warning };
 };
 
-// One schedulable slot — what the scheduler works with at runtime.
+// One schedulable slot - what the scheduler works with at runtime.
 // soundId nullopt = silent (still emitted for cursor tracking).
 struct FlatEvent
 {
@@ -86,7 +86,7 @@ public:
     virtual void validateInto (std::vector<ValidationWarning>& out) const = 0;
 };
 
-// Leaf — single indivisible slot. nullopt soundId = rest.
+// Leaf - single indivisible slot. nullopt soundId = rest.
 class LeafNode final : public BeatNode
 {
 public:
@@ -121,7 +121,7 @@ private:
     std::optional<std::string> soundId_;
 };
 
-// Group — tuplet/polyrhythm bracket with intended divisions.
+// Group - tuplet/polyrhythm bracket with intended divisions.
 class GroupNode final : public BeatNode
 {
 public:
@@ -180,7 +180,7 @@ private:
     std::optional<std::string> label_;
 };
 
-// Sequence — ordered list played end-to-end. Total = sum of children.
+// Sequence - ordered list played end-to-end. Total = sum of children.
 class SequenceNode final : public BeatNode
 {
 public:

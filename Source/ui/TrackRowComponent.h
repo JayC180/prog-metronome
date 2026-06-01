@@ -20,7 +20,7 @@ public:
     void setTrackIndex (int idx) { trackIndex_ = idx; syncToState(); }
     int  trackIndex() const      { return trackIndex_; }
 
-    // Update from current state. Cheap — repaints + lays out controls.
+    // Update from current state. Cheap - repaints + lays out controls.
     void syncToState();
 
     // For ensuring the cursor / playhead is visible. The active strip

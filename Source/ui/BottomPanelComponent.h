@@ -61,8 +61,13 @@ private:
     juce::Label                                  hintLabel_;
     std::array<std::unique_ptr<NumKeyButton>, 9> numKeys_ {};
     NumKeyButton                                 customKey_   { "custom" };
+  #if JUCE_WINDOWS
+    NumKeyButton                                 editKey_     { "E" };
+    NumKeyButton                                 backspaceKey_{ "Del" };
+  #else
     NumKeyButton                                 editKey_     { juce::String::fromUTF8 (u8"✎") };
     NumKeyButton                                 backspaceKey_{ juce::String::fromUTF8 (u8"⌫") };
+  #endif
 
     juce::Rectangle<int> toolbarArea_, editArea_, numpadArea_;
 

@@ -17,6 +17,12 @@ TopBarComponent::TopBarComponent (TrackBuilder& builder)
 
 void TopBarComponent::syncToState() { repaint(); }
 
+void TopBarComponent::setProjectName (const juce::String& name)
+{
+    projectName_ = name;
+    repaint();
+}
+
 void TopBarComponent::paint (juce::Graphics& g)
 {
     g.fillAll (RhythmColors::bg2());
@@ -24,12 +30,13 @@ void TopBarComponent::paint (juce::Graphics& g)
     g.drawLine (0.0f, (float) getHeight() - 0.5f, (float) getWidth(), (float) getHeight() - 0.5f, 0.5f);
 
     paintBpmCard       (g);
+    paintProjectName   (g);
     paintPlayStopButton(g);
 }
 
 void TopBarComponent::paintBpmCard (juce::Graphics& g)
 {
-    // Operate on a local copy — never mutate bpmCardArea_, since paint() is
+    // Operate on a local copy - never mutate bpmCardArea_, since paint() is
     // called repeatedly and `removeFromTop` is destructive.
     auto       cardArea = bpmCardArea_;
     const auto r        = cardArea.toFloat().reduced (0.5f);
@@ -53,6 +60,13 @@ void TopBarComponent::paintBpmCard (juce::Graphics& g)
     g.drawText (juce::String ((int) builder_.state().displayBpm()),
                 cardArea,
                 juce::Justification::centred, false);
+}
+
+void TopBarComponent::paintProjectName (juce::Graphics& g)
+{
+    g.setColour (RhythmColors::textMuted());
+    g.setFont (juce::Font (juce::FontOptions (13.0f)));
+    g.drawText (projectName_, projectNameArea_, juce::Justification::centredLeft, true);
 }
 
 void TopBarComponent::paintPlayStopButton (juce::Graphics& g)
@@ -96,6 +110,9 @@ void TopBarComponent::resized()
     bpmCardArea_ = bounds.removeFromLeft (90);
     bpmCardArea_.reduce (0, 2);
     playStopArea_ = bounds.removeFromRight (40);
+    bounds.removeFromLeft (8);
+    bounds.removeFromRight (8);
+    projectNameArea_ = bounds;
 }
 
 void TopBarComponent::mouseDown (const juce::MouseEvent& e)
@@ -103,6 +120,11 @@ void TopBarComponent::mouseDown (const juce::MouseEvent& e)
     if (bpmCardArea_.contains (e.getPosition()))
     {
         if (onBpmClicked) onBpmClicked();
+        return;
+    }
+    if (projectNameArea_.contains (e.getPosition()))
+    {
+        if (onProjectNameClicked) onProjectNameClicked();
         return;
     }
     if (playStopArea_.contains (e.getPosition()))

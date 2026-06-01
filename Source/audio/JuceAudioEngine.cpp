@@ -52,7 +52,7 @@ void JuceAudioEngine::trigger (const std::string& soundId, float volume, int64_t
 {
     int start1 = 0, size1 = 0, start2 = 0, size2 = 0;
     triggerFifo_.prepareToWrite (1, start1, size1, start2, size2);
-    if (size1 + size2 == 0) return; // queue full — drop trigger
+    if (size1 + size2 == 0) return; // queue full - drop trigger
 
     if (size1 > 0)
         triggerBuffer_[(size_t) start1] = { soundId, volume };

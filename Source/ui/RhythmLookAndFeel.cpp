@@ -1,11 +1,30 @@
 #include "RhythmLookAndFeel.h"
 
+#ifdef RHYTHM_HAS_EMBEDDED_FONT
+  #include <BinaryData.h>
+#endif
+
 namespace rhythm
 {
 
 RhythmLookAndFeel::RhythmLookAndFeel()
 {
+  #ifdef RHYTHM_HAS_EMBEDDED_FONT
+    regularTypeface_ = juce::Typeface::createSystemTypefaceFor (
+        BinaryData::InterRegular_ttf, BinaryData::InterRegular_ttfSize);
+    boldTypeface_ = juce::Typeface::createSystemTypefaceFor (
+        BinaryData::InterBold_ttf, BinaryData::InterBold_ttfSize);
+  #endif
     refreshDefaults();
+}
+
+juce::Typeface::Ptr RhythmLookAndFeel::getTypefaceForFont (const juce::Font& font)
+{
+  #ifdef RHYTHM_HAS_EMBEDDED_FONT
+    if (font.isBold() && boldTypeface_ != nullptr)   return boldTypeface_;
+    if (regularTypeface_ != nullptr)                 return regularTypeface_;
+  #endif
+    return LookAndFeel_V4::getTypefaceForFont (font);
 }
 
 void RhythmLookAndFeel::refreshDefaults()

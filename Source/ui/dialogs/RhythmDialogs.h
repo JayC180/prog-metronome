@@ -9,7 +9,7 @@
 namespace rhythm
 {
 
-// Shared dialog chrome — a rounded panel with a title, hint, content area,
+// Shared dialog chrome - a rounded panel with a title, hint, content area,
 // and a horizontal row of DialogButtons.
 class DialogPanel : public juce::Component
 {
@@ -41,7 +41,7 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DialogPanel)
 };
 
-// BPM input — used both for global tempo and for editing existing SetBpm items.
+// BPM input - used both for global tempo and for editing existing SetBpm items.
 class BpmInputDialog : public DialogPanel
 {
 public:
@@ -66,7 +66,7 @@ private:
     juce::Label      slash_;
 };
 
-// =bpm dialog — for inserting or editing a SetBpm marker inside a track.
+// =bpm dialog - for inserting or editing a SetBpm marker inside a track.
 class SetBpmDialog : public DialogPanel
 {
 public:
@@ -103,7 +103,7 @@ private:
     juce::TextEditor field_;
 };
 
-// Generic single-column list picker — used by SoundPicker and ThemePicker.
+// Generic single-column list picker - used by SoundPicker and ThemePicker.
 // Each entry has a label and an opaque payload identifier.
 class ListPickerDialog : public DialogPanel
 {
@@ -130,7 +130,7 @@ private:
     std::vector<std::unique_ptr<Row>>       rows_;
 };
 
-// Sound picker — a scrollable list of SoundInfo entries with the current
+// Sound picker - a scrollable list of SoundInfo entries with the current
 // selection highlighted. Clicking an entry fires onSelect with that sound's id.
 class SoundPickerDialog : public DialogPanel
 {
@@ -149,7 +149,7 @@ private:
 };
 
 // Helper: shows a DialogPanel inside a DialogWindow on top of `parent`.
-// Returns nothing — the panel owns its callback and self-destructs when closed.
+// Returns nothing - the panel owns its callback and self-destructs when closed.
 void showRhythmDialog (juce::Component* parent,
                        std::unique_ptr<DialogPanel> panel);
 

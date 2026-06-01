@@ -2,7 +2,7 @@
 
 RhythmEngineEditor::RhythmEngineEditor (RhythmEngineProcessor& p)
     : juce::AudioProcessorEditor (&p),
-      main_ (p.builder())
+      main_ (p)
 {
     setSize (900, 680);
     addAndMakeVisible (main_);

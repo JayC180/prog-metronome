@@ -92,7 +92,12 @@ BottomPanelComponent::BottomPanelComponent (TrackBuilder& builder)
     customKey_.setOnClick ([this] { onCustom(); });
     editKey_  .setOnClick ([this] { onEditToggle(); });
     backspaceKey_.setOnClick ([this] { onBackspace(); });
-    backspaceKey_.setFontSize (14.0f);
+  #if JUCE_WINDOWS
+    editKey_.setFontSize (13.0f);      // "E" - slightly smaller than numeric 18pt
+    backspaceKey_.setFontSize (12.0f); // "Del" - fits the button width
+  #else
+    backspaceKey_.setFontSize (14.0f); // ⌫ symbol
+  #endif
     addAndMakeVisible (customKey_);
     addAndMakeVisible (editKey_);
     addAndMakeVisible (backspaceKey_);
@@ -136,9 +141,9 @@ void BottomPanelComponent::rebuildNumpad()
     const bool beatSelected = item != nullptr && item->isBeat();
 
     juce::String hint;
-    if (s.isDenomMode())       hint = "set subdivision — tap or use custom";
+    if (s.isDenomMode())       hint = "set subdivision - tap or use custom";
     else if (s.isRepeatMode()) hint = juce::String::fromUTF8 (u8"set repeat (1-9) or custom / ∞");
-    else if (s.isEditMode())   hint = "edit value — tap a number or use custom";
+    else if (s.isEditMode())   hint = "edit value - tap a number or use custom";
     hintLabel_.setText (hint, juce::dontSendNotification);
 
     const bool customEnabled = s.isRepeatMode() || s.isEditMode() || s.isDenomMode()
@@ -165,7 +170,7 @@ void BottomPanelComponent::rebuildNumpad()
                             : (beatSelected ? (item->getIf<TrackItem::Beat>()->active
                                                   ? juce::String ("active")
                                                   : juce::String ("rest"))
-                                            : juce::String ("—")),
+                                            : juce::String ("-")),
                           juce::dontSendNotification);
     onOffStatus_.setColour (juce::Label::textColourId,
         ! enabled || ! beatSelected ? RhythmColors::textDim()
@@ -179,14 +184,14 @@ void BottomPanelComponent::rebuildNumpad()
         volumePercentLabel_.setText (juce::String ((int) (b.volume * 100.0f)) + "%",
                                      juce::dontSendNotification);
         soundValueLabel_.setText (b.soundId.has_value() ? juce::String (*b.soundId)
-                                                        : juce::String ("—"),
+                                                        : juce::String ("-"),
                                   juce::dontSendNotification);
     }
     else
     {
         volumeSlider_.setValue (0.0, juce::dontSendNotification);
-        volumePercentLabel_.setText ("—", juce::dontSendNotification);
-        soundValueLabel_.setText ("—", juce::dontSendNotification);
+        volumePercentLabel_.setText ("-", juce::dontSendNotification);
+        soundValueLabel_.setText ("-", juce::dontSendNotification);
     }
     volumeSlider_.setEnabled (enabled && beatSelected);
     changeSoundButton_.setEnabledLook (enabled && beatSelected);

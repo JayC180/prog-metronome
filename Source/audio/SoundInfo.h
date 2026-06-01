@@ -5,7 +5,7 @@
 namespace rhythm
 {
 
-// Platform-agnostic sound model — UI list rows. Implementations of a
+// Platform-agnostic sound model - UI list rows. Implementations of a
 // SoundRepository on a given platform translate their internal entries
 // into this type before handing them to the UI.
 struct SoundInfo

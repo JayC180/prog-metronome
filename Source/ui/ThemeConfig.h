@@ -7,7 +7,7 @@
 namespace rhythm
 {
 
-// Plain data — mirrors ui/theme/ThemeConfig.kt. One theme = one set of
+// Plain data - mirrors ui/theme/ThemeConfig.kt. One theme = one set of
 // concrete colors. Theming is "swap the active ThemeConfig"; widgets
 // read RhythmColors which is just a getter onto the active config.
 struct ThemeConfig

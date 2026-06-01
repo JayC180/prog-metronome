@@ -38,14 +38,34 @@ public:
 
     bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
 
-    rhythm::TrackBuilder&    builder()  { return *builder_; }
+    rhythm::TrackBuilder&    builder()   { return *builder_; }
     rhythm::Transport&       transport() { return *transport_; }
-    rhythm::JuceAudioEngine& audio()    { return *audio_; }
+    rhythm::JuceAudioEngine& audio()     { return *audio_; }
+
+    // Project file state
+    const std::string& projectName() const  { return projectName_; }
+    void setProjectName (std::string n)     { projectName_ = std::move (n); }
+    juce::File projectFile() const          { return projectFile_; }
+    void setProjectFile (juce::File f)      { projectFile_ = std::move (f); }
+
+    bool isDirty()  const { return isDirty_; }
+    void markDirty()      { isDirty_ = true; }
+    void clearDirty()     { isDirty_ = false; }
+
+    bool wasRestoredByHost() const { return wasRestoredByHost_; }
+
+    bool saveToFile   (const juce::File& f);
+    bool loadFromFile (const juce::File& f);
 
 private:
     std::unique_ptr<rhythm::JuceAudioEngine> audio_;
     std::unique_ptr<rhythm::Transport>       transport_;
     std::unique_ptr<rhythm::TrackBuilder>    builder_;
+
+    std::string projectName_       { "Untitled" };
+    juce::File  projectFile_;
+    bool        isDirty_           { false };
+    bool        wasRestoredByHost_ { false };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RhythmEngineProcessor)
 };

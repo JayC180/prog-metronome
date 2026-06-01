@@ -32,10 +32,10 @@ public:
     void start();
     void stop();
 
-    // Swap in a new set of interpret results — automatically stops + reconfigures.
+    // Swap in a new set of interpret results - automatically stops + reconfigures.
     void updateTracks (std::vector<InterpretResult> results);
 
-    // Live mute/solo update — safe to call while playing.
+    // Live mute/solo update - safe to call while playing.
     void setTrackFlags (const std::string& trackId, bool muted, bool soloed);
 
     void setSoundMap (std::shared_ptr<SoundMap> map) { soundMap_ = std::move (map); }
@@ -43,7 +43,7 @@ public:
 
     void setAudioEngine (AudioEngine* engine) { audioEngine_.store (engine); }
 
-    // Optional UI hook — invoked for every fired event on the dispatcher thread.
+    // Optional UI hook - invoked for every fired event on the dispatcher thread.
     void setOnFired (std::function<void (const ScheduledEvent&)> cb) { onFired_ = std::move (cb); }
 
     std::string debugState() const;

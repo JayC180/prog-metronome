@@ -11,7 +11,7 @@ namespace rhythm
 // hold a soundId (string key). At audio dispatch time, the engine looks up
 // that key in the active SoundMap to find this config and know how to play it.
 //
-// resourceUri is intentionally flexible — typically a file path, but may be
+// resourceUri is intentionally flexible - typically a file path, but may be
 // a URL or a bundled-asset reference depending on the host platform.
 struct SoundConfig
 {

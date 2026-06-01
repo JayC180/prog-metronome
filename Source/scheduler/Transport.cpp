@@ -102,7 +102,7 @@ void Transport::runScheduler()
 
 void Transport::runDispatcher()
 {
-    // any-soloed check — recompute each pass
+    // any-soloed check - recompute each pass
     while (isPlaying_.load())
     {
         const int64_t now = nowNanos();
