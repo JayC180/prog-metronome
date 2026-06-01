@@ -2,7 +2,7 @@ name: build
 
 on:
   push:
-    branches: [main]
+    branches: [desktop-juce]
     tags: ['v*']
   pull_request:
   workflow_dispatch:
