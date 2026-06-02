@@ -6,6 +6,7 @@
 #include "RhythmLookAndFeel.h"
 #include "../audio/SoundInfo.h"
 #include "../builder/TrackBuilder.h"
+#include "../builder/TapTempoCalculator.h"
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <memory>
@@ -39,13 +40,18 @@ private:
     void saveProject();
     void saveProjectAs();
     void renameProject();
+    void importSound();
     void confirmIfDirty (std::function<void()> onProceed);
     void updateProjectNameDisplay();
+    void rebuildAvailableSounds();
+    void loadUserSoundsFromDisk();
 
     static juce::File autosavePath();
+    static juce::File userSoundsDir();
 
     RhythmEngineProcessor&   processor_;
     TrackBuilder&            builder_;
+    TapTempoCalculator       tapTempo_;
     std::vector<SoundInfo>   availableSounds_;
 
     RhythmLookAndFeel     lookAndFeel_;

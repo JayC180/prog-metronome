@@ -13,6 +13,12 @@ TopBarComponent::TopBarComponent (TrackBuilder& builder)
     settingsButton_.setFontSize (18.0f);
     settingsButton_.setOnClick ([this]{ if (onSettingsClicked) onSettingsClicked(); });
     addAndMakeVisible (settingsButton_);
+
+    tapButton_.setStateColor (ChipButton::StateColor::Custom);
+    tapButton_.setColours (RhythmColors::bg3(), RhythmColors::border1(), RhythmColors::textSecondary());
+    tapButton_.setFontSize (12.0f);
+    tapButton_.setOnClick ([this] { if (onTapClicked) onTapClicked(); });
+    addAndMakeVisible (tapButton_);
 }
 
 void TopBarComponent::syncToState() { repaint(); }
@@ -109,6 +115,8 @@ void TopBarComponent::resized()
     bounds.removeFromLeft (8);
     bpmCardArea_ = bounds.removeFromLeft (90);
     bpmCardArea_.reduce (0, 2);
+    bounds.removeFromLeft (4);
+    tapButton_.setBounds (bounds.removeFromLeft (44));
     playStopArea_ = bounds.removeFromRight (40);
     bounds.removeFromLeft (8);
     bounds.removeFromRight (8);

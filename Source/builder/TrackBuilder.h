@@ -45,6 +45,7 @@ public:
 
     // cursor
     void setCursor (std::optional<int> index);
+    void setActiveTrackAndCursor (int trackIdx, int itemIdx);
     void moveCursorPrev();
     void moveCursorNext();
 

@@ -16,6 +16,7 @@ public:
     std::function<void()> onBpmClicked;
     std::function<void()> onSettingsClicked;
     std::function<void()> onProjectNameClicked;
+    std::function<void()> onTapClicked;
 
     void syncToState();
     void setProjectName (const juce::String& name);
@@ -30,6 +31,7 @@ private:
 
     TrackBuilder& builder_;
     ChipButton    settingsButton_  { juce::String::fromUTF8 (u8"⚙") };
+    ChipButton    tapButton_       { "tap" };
 
     void paintProjectName (juce::Graphics&);
 

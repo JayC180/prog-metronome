@@ -161,6 +161,20 @@ void TrackBuilder::setActiveTrack (int index)
     emit (std::move (next));
 }
 
+void TrackBuilder::setActiveTrackAndCursor (int trackIdx, int itemIdx)
+{
+    if (trackIdx < 0 || trackIdx >= (int) state_.tracks.size()) return;
+    auto next = state_;
+    next.activeTrackIndex = trackIdx;
+    next.inputMode = InputMode::normal();
+    const auto& t = next.tracks[(size_t) trackIdx];
+    if (! t.items.empty())
+        next.cursorIndex = std::clamp (itemIdx, 0, (int) t.items.size() - 1);
+    else
+        next.cursorIndex.reset();
+    emit (std::move (next));
+}
+
 void TrackBuilder::setTrackMuted (int index, bool muted)
 {
     updateTrack (index, [muted] (const TrackDraft& d) { auto c = d; c.muted = muted; return c; });

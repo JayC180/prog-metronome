@@ -9,13 +9,6 @@ namespace rhythm
 MainComponent::MainComponent (RhythmEngineProcessor& processor)
     : processor_ (processor),
       builder_   (processor.builder()),
-      availableSounds_ {
-          { "default", "default", false },
-          { "hi",      "hi click", false },
-          { "lo",      "lo click", false },
-          { "accent",  "accent",   false },
-          { "hat",     "hat",      false },
-      },
       topBar_      (builder_),
       trackList_   (builder_),
       bottomPanel_ (builder_)
@@ -50,6 +43,8 @@ MainComponent::MainComponent (RhythmEngineProcessor& processor)
         menu.addItem (3, "Save",      true);
         menu.addItem (4, "Save As...", true);
         menu.addSeparator();
+        menu.addItem (5, "Import Sound...");
+        menu.addSeparator();
         menu.addSubMenu ("Theme", themeMenu);
 
         menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (&topBar_),
@@ -59,6 +54,7 @@ MainComponent::MainComponent (RhythmEngineProcessor& processor)
                 else if (result == 2) openProject();
                 else if (result == 3) saveProject();
                 else if (result == 4) saveProjectAs();
+                else if (result == 5) importSound();
                 else if (result >= 200)
                 {
                     const int idx = result - 200;
@@ -80,6 +76,12 @@ MainComponent::MainComponent (RhythmEngineProcessor& processor)
     };
 
     topBar_.onProjectNameClicked = [this] { renameProject(); };
+
+    topBar_.onTapClicked = [this]
+    {
+        if (auto bpm = tapTempo_.tap())
+            builder_.setBpm (*bpm);
+    };
 
     bottomPanel_.onMmRequested = [this]
     {
@@ -152,6 +154,7 @@ MainComponent::MainComponent (RhythmEngineProcessor& processor)
 
     bottomPanel_.onChangeBeatSound = [this] { openBeatSoundPicker(); };
 
+    loadUserSoundsFromDisk(); // populates availableSounds_ + loads WAVs into engine
     updateProjectNameDisplay();
     rebuildFromState();
 
@@ -331,6 +334,89 @@ void MainComponent::updateProjectNameDisplay()
     auto name = juce::String (processor_.projectName());
     if (processor_.isDirty()) name += " *";
     topBar_.setProjectName (name);
+}
+
+juce::File MainComponent::userSoundsDir()
+{
+    return juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory)
+               .getChildFile ("RhythmEngine")
+               .getChildFile ("sounds");
+}
+
+void MainComponent::rebuildAvailableSounds()
+{
+    availableSounds_ = {
+        { "default", "default",  false },
+        { "hi",      "hi click", false },
+        { "lo",      "lo click", false },
+        { "accent",  "accent",   false },
+        { "hat",     "hat",      false },
+    };
+    const auto dir = userSoundsDir();
+    if (! dir.isDirectory()) return;
+    for (const auto& f : dir.findChildFiles (juce::File::findFiles, false,
+                                             "*.wav;*.aif;*.aiff;*.flac"))
+    {
+        const auto id = f.getFileNameWithoutExtension().toLowerCase().toStdString();
+        availableSounds_.push_back ({ id, f.getFileNameWithoutExtension().toStdString(), true });
+    }
+}
+
+void MainComponent::loadUserSoundsFromDisk()
+{
+    const auto dir = userSoundsDir();
+    if (dir.isDirectory())
+    {
+        for (const auto& f : dir.findChildFiles (juce::File::findFiles, false,
+                                                 "*.wav;*.aif;*.aiff;*.flac"))
+        {
+            const auto id = f.getFileNameWithoutExtension().toLowerCase().toStdString();
+            processor_.audio().loadSample (id, f);
+        }
+    }
+    rebuildAvailableSounds();
+}
+
+void MainComponent::importSound()
+{
+    fileChooser_ = std::make_unique<juce::FileChooser> (
+        "Import Sound",
+        juce::File::getSpecialLocation (juce::File::userDocumentsDirectory),
+        "*.wav;*.aif;*.aiff;*.flac");
+
+    fileChooser_->launchAsync (
+        juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
+        [this] (const juce::FileChooser& fc)
+        {
+            const auto src = fc.getResult();
+            if (src == juce::File{}) return;
+
+            const auto dir = userSoundsDir();
+            dir.createDirectory();
+
+            // Copy file to user sounds dir (skip if already there)
+            const auto dest = dir.getChildFile (src.getFileName());
+            if (! dest.existsAsFile())
+                src.copyFileTo (dest);
+
+            // soundId = lowercase stem; avoid shadowing built-ins
+            auto id = dest.getFileNameWithoutExtension().toLowerCase().toStdString();
+            const std::array<std::string, 5> builtIns { "default", "hi", "lo", "accent", "hat" };
+            if (std::find (builtIns.begin(), builtIns.end(), id) != builtIns.end())
+                id += "_user";
+
+            if (! processor_.audio().loadSample (id, dest))
+            {
+                juce::NativeMessageBox::showAsync (
+                    juce::MessageBoxOptions()
+                        .withTitle ("Import failed")
+                        .withMessage ("Could not decode the audio file.")
+                        .withButton ("OK"),
+                    nullptr);
+                return;
+            }
+            rebuildAvailableSounds();
+        });
 }
 
 juce::File MainComponent::autosavePath()

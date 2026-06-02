@@ -58,7 +58,9 @@ public:
 private:
     struct ItemHit : public juce::Component
     {
-        int index { 0 };
+        int              index    { 0 };
+        TrackItem::Kind  kind     { TrackItem::Kind::Beat };
+
         void mouseDown (const juce::MouseEvent&) override
         {
             if (onClick) onClick();
@@ -86,51 +88,63 @@ private:
 
     void layoutItems()
     {
-        items_.clear();
         const auto& st = builder_.state();
-        if (trackIndex_ < 0 || trackIndex_ >= (int) st.tracks.size()) return;
+        if (trackIndex_ < 0 || trackIndex_ >= (int) st.tracks.size())
+        {
+            content_.removeAllChildren();
+            items_.clear();
+            return;
+        }
         const auto& draft = st.tracks[(size_t) trackIndex_];
 
-        const int  beatWidth  = 52;
-        const int  bracketW   = 24;
-        const int  glyphW     = 56;   // repeat / mod / setbpm
-        const int  height     = 42;
-        const int  pad        = 6;
-        const int  gap        = 4;
-        const bool isActive   = st.activeTrackIndex == trackIndex_;
-        const auto cursorIdx  = isActive ? st.cursorIndex : std::nullopt;
-        const int  playingIdx = lastPlayingIndex_;
-
-        int x = pad;
+        const int beatWidth = 52, bracketW = 24, glyphW = 56;
+        const int height = 42, pad = 6, gap = 4;
         const int contentH = height + pad * 2;
 
-        for (int i = 0; i < (int) draft.items.size(); ++i)
+        // Rebuild child list only when structure changes (count or item kinds differ).
+        bool needsRebuild = items_.size() != draft.items.size();
+        if (! needsRebuild)
         {
-            const auto& item = draft.items[(size_t) i];
-            const bool selected = cursorIdx.has_value() && *cursorIdx == i;
-            const bool playing  = st.isPlaying() && playingIdx == i;
-
-            auto hit = std::make_unique<ItemHit>();
-            hit->index    = i;
-            hit->onClick  = [this, i] {
-                builder_.setActiveTrack (trackIndex_);
-                builder_.setCursor (i);
-            };
-
-            int width = beatWidth;
-            if      (item.isBeat())        { width = beatWidth; }
-            else if (item.isBracketOpen()
-                  || item.isBracketClose()){ width = bracketW; }
-            else                           { width = glyphW; }
-
-            colourise (item, selected, playing, *hit);
-            hit->setBounds (x, pad, width, height);
-            content_.addAndMakeVisible (hit.get());
-            items_.push_back (std::move (hit));
-            x += width + gap;
+            for (int i = 0; i < (int) draft.items.size(); ++i)
+                if (draft.items[(size_t) i].kind() != items_[(size_t) i]->kind)
+                    { needsRebuild = true; break; }
         }
 
-        content_.setSize (juce::jmax (x + pad, viewport_.getWidth()), contentH);
+        if (needsRebuild)
+        {
+            const int savedX = viewport_.getViewPositionX();
+            content_.removeAllChildren();
+            items_.clear();
+            int x = pad;
+            for (int i = 0; i < (int) draft.items.size(); ++i)
+            {
+                const auto& item = draft.items[(size_t) i];
+                int width = item.isBeat() ? beatWidth
+                          : (item.isBracketOpen() || item.isBracketClose()) ? bracketW
+                          : glyphW;
+                auto hit = std::make_unique<ItemHit>();
+                hit->index = i;
+                hit->kind  = item.kind();
+                hit->onClick = [this, i] { builder_.setActiveTrackAndCursor (trackIndex_, i); };
+                hit->setBounds (x, pad, width, height);
+                content_.addAndMakeVisible (hit.get());
+                items_.push_back (std::move (hit));
+                x += width + gap;
+            }
+            content_.setSize (juce::jmax (x + pad, viewport_.getWidth()), contentH);
+            viewport_.setViewPosition (savedX, 0);
+        }
+
+        // Always update colours/labels (cheap).
+        const bool isActive  = st.activeTrackIndex == trackIndex_;
+        const auto cursorIdx = isActive ? st.cursorIndex : std::nullopt;
+        for (int i = 0; i < (int) draft.items.size(); ++i)
+        {
+            const bool selected = cursorIdx.has_value() && *cursorIdx == i;
+            const bool playing  = st.isPlaying() && lastPlayingIndex_ == i;
+            colourise (draft.items[(size_t) i], selected, playing, *items_[(size_t) i]);
+            items_[(size_t) i]->repaint();
+        }
     }
 
     static void colourise (const TrackItem& item, bool selected, bool playing, ItemHit& hit)
