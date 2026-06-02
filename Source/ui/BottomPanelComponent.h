@@ -15,6 +15,10 @@ public:
 
     void syncToState();
 
+    // keyboard inputs
+    void handleNumKey  (int n) { onNumKey (n); }
+    void handleBackspace()     { onBackspace(); }
+
     // External hooks so MainComponent can pop dialogs.
     std::function<void()> onMmRequested;
     std::function<void()> onSetBpmRequested;

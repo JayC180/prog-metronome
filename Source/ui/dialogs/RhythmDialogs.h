@@ -30,7 +30,8 @@ public:
     // layout is: title (auto) + hint (auto) + content (flex) + buttons (auto)
     virtual void layoutContent (juce::Rectangle<int> /*contentBounds*/) {}
 
-    int preferredWidth { 360 };
+    int preferredWidth  { 360 };
+    int preferredHeight { 200 };
 
 private:
     juce::String                                  title_;

@@ -306,7 +306,8 @@ ListPickerDialog::ListPickerDialog (juce::String title,
                                     std::function<void (const juce::String&)> onSelect)
     : DialogPanel (std::move (title), {})
 {
-    preferredWidth = 400;
+    preferredWidth  = 400;
+    preferredHeight = juce::jmin (116 + (int) entries.size() * 40, 520);
     addAndMakeVisible (viewport_);
     viewport_.setViewedComponent (&listContent_, false);
     viewport_.setScrollBarsShown (true, false);
@@ -405,7 +406,8 @@ SoundPickerDialog::SoundPickerDialog (std::vector<SoundInfo> sounds,
                                       std::function<void (const std::string&)> onSelect)
     : DialogPanel ("Choose sound", {})
 {
-    preferredWidth = 400;
+    preferredWidth  = 400;
+    preferredHeight = juce::jmin (116 + (int) sounds.size() * 40, 520);
     addAndMakeVisible (viewport_);
     viewport_.setViewedComponent (&listContent_, false);
     viewport_.setScrollBarsShown (true, false);
@@ -452,7 +454,7 @@ void SoundPickerDialog::layoutContent (juce::Rectangle<int> b)
 void showRhythmDialog (juce::Component* parent, std::unique_ptr<DialogPanel> panel)
 {
     auto* raw = panel.release();
-    raw->setSize (raw->preferredWidth, 200);
+    raw->setSize (raw->preferredWidth, raw->preferredHeight);
 
     juce::DialogWindow::LaunchOptions opts;
     opts.dialogTitle                   = {};

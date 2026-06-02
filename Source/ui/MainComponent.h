@@ -25,8 +25,9 @@ public:
     explicit MainComponent (RhythmEngineProcessor& processor);
     ~MainComponent() override;
 
-    void paint (juce::Graphics&) override;
-    void resized() override;
+    void paint    (juce::Graphics&) override;
+    void resized  () override;
+    bool keyPressed (const juce::KeyPress&) override;
 
 private:
     void handleAsyncUpdate() override;

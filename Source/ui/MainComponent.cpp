@@ -154,10 +154,11 @@ MainComponent::MainComponent (RhythmEngineProcessor& processor)
 
     bottomPanel_.onChangeBeatSound = [this] { openBeatSoundPicker(); };
 
-    loadUserSoundsFromDisk(); // populates availableSounds_ + loads WAVs into engine
+    loadUserSoundsFromDisk(); // populates availableSounds_ and load wavs
     updateProjectNameDisplay();
     rebuildFromState();
 
+    setWantsKeyboardFocus (true);
     startTimer (30000); // autosave every 30s
 }
 
@@ -441,6 +442,77 @@ void MainComponent::timerCallback()
     const std::string json = ProjectSerializer::serialize (
         builder_.state(), processor_.projectName());
     path.replaceWithText (juce::String (json));
+}
+
+bool MainComponent::keyPressed (const juce::KeyPress& key)
+{
+    // no key input to numpad when model opens
+    if (juce::Component::getCurrentlyModalComponent() != nullptr)
+        return false;
+
+    const int code = key.getKeyCode();
+
+    // space: play/stop
+    if (code == juce::KeyPress::spaceKey)
+    {
+        builder_.togglePlayStop();
+        return true;
+    }
+
+    // numpad input
+    int digit = -1;
+    if (code >= '1' && code <= '9')
+        digit = code - '0';
+    else if (code >= juce::KeyPress::numberPad1 && code <= juce::KeyPress::numberPad9)
+        digit = code - juce::KeyPress::numberPad0;
+
+    if (digit >= 1 && digit <= 9)
+    {
+        bottomPanel_.handleNumKey (digit);
+        return true;
+    }
+
+    // navigation: left/right between elements in same track, up/down between tracks
+    if (code == juce::KeyPress::leftKey)  { builder_.moveCursorPrev(); return true; }
+    if (code == juce::KeyPress::rightKey) { builder_.moveCursorNext(); return true; }
+    if (code == juce::KeyPress::upKey)
+    {
+        const auto& st = builder_.state();
+        if (st.activeTrackIndex > 0)
+            builder_.setActiveTrack (st.activeTrackIndex - 1);
+        return true;
+    }
+    if (code == juce::KeyPress::downKey)
+    {
+        const auto& st = builder_.state();
+        if (st.activeTrackIndex < (int) st.tracks.size() - 1)
+            builder_.setActiveTrack (st.activeTrackIndex + 1);
+        return true;
+    }
+
+    // backspace/delete delets
+    if (code == juce::KeyPress::backspaceKey || code == juce::KeyPress::deleteKey)
+    {
+        bottomPanel_.handleBackspace();
+        return true;
+    }
+
+    // m/s: mute/solo
+    const auto& s = builder_.state();
+    if (code == 'm' || code == 'M')
+    {
+        const auto* t = s.activeTrack();
+        if (t != nullptr) builder_.setTrackMuted (s.activeTrackIndex, ! t->muted);
+        return true;
+    }
+    if (code == 's' || code == 'S')
+    {
+        const auto* t = s.activeTrack();
+        if (t != nullptr) builder_.setTrackSoloed (s.activeTrackIndex, ! t->soloed);
+        return true;
+    }
+
+    return false;
 }
 
 void MainComponent::handleAsyncUpdate()
