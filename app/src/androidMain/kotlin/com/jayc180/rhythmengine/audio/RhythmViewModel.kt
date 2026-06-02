@@ -44,8 +44,11 @@ class RhythmViewModel(application: Application) : AndroidViewModel(application) 
     private val _playheads = MutableStateFlow<Map<String, Int>>(emptyMap())
     val playheads: StateFlow<Map<String, Int>> = _playheads.asStateFlow()
 
-    private val _globalDefaultSoundId = MutableStateFlow("default")
+    private val _globalDefaultSoundId   = MutableStateFlow("default")
     val globalDefaultSoundId: String get() = _globalDefaultSoundId.value
+
+    private val _globalDefaultVolume = MutableStateFlow(1.0f)
+    val globalDefaultVolume: Float get() = _globalDefaultVolume.value
 
     val themeManager = ThemeManager(application)
 
@@ -69,6 +72,9 @@ class RhythmViewModel(application: Application) : AndroidViewModel(application) 
         loadSoundsAsync()
         builder.pairedBracketDelete =
             prefs.getBoolean("paired_bracket_delete", true)
+        val savedVol = prefs.getFloat("global_default_volume", 1.0f)
+        _globalDefaultVolume.value = savedVol
+        builder.setDefaultVolume(savedVol)
     }
 
     private fun wireAudio() {
@@ -117,6 +123,12 @@ class RhythmViewModel(application: Application) : AndroidViewModel(application) 
     fun setGlobalDefaultSound(soundId: String) {
         _globalDefaultSoundId.value = soundId
         builder.setDefaultSoundId(soundId)
+    }
+
+    fun setGlobalDefaultVolume(volume: Float) {
+        _globalDefaultVolume.value = volume
+        builder.setDefaultVolume(volume)
+        prefs.edit().putFloat("global_default_volume", volume).apply()
     }
 
     fun importSoundFromUri(uri: Uri) {

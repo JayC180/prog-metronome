@@ -204,9 +204,25 @@ fun App(vm: AppViewModel) {
                 vm.globalDefaultSoundId
         }
 
+        val currentVolume: Float? = when (target) {
+            is SoundPickerTarget.Beat         -> null
+            is SoundPickerTarget.TrackDefault ->
+                state.tracks.getOrNull(target.trackIndex)?.defaultVolume
+                    ?: vm.globalDefaultVolume
+            is SoundPickerTarget.GlobalDefault -> vm.globalDefaultVolume
+        }
+
         SoundPickerDialog(
-            sounds = sounds,
+            sounds         = sounds,
             currentSoundId = currentSoundId,
+            currentVolume  = currentVolume,
+            onVolumeChange = when (target) {
+                is SoundPickerTarget.Beat         -> null
+                is SoundPickerTarget.TrackDefault ->
+                    { v -> vm.builder.setTrackDefaultVolume(target.trackIndex, v) }
+                is SoundPickerTarget.GlobalDefault ->
+                    { v -> vm.setGlobalDefaultVolume(v) }
+            },
             onSelect = { entry ->
                 when (target) {
                     is SoundPickerTarget.Beat ->
@@ -246,7 +262,7 @@ private fun PortraitLayout(
 
     Column(modifier = Modifier
         .fillMaxSize()
-        .windowInsetsPadding(WindowInsets.statusBars)
+        .windowInsetsPadding(WindowInsets.systemBars)
     ) {
         TopBar(
             bpm             = state.displayBpm,
@@ -317,7 +333,7 @@ private fun LandscapeLayout(
 
     Column(modifier = Modifier
         .fillMaxSize()
-        .windowInsetsPadding(WindowInsets.statusBars)
+        .windowInsetsPadding(WindowInsets.systemBars)
     ) {
         TopBar(
             bpm             = state.displayBpm,

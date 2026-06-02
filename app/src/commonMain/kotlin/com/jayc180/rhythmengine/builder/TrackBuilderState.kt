@@ -43,6 +43,7 @@ data class TrackDraft(
     val muted:  Boolean         = false,
     val soloed: Boolean         = false,
     val defaultSoundId: String?        = null,   // null = use global default
+    val defaultVolume:  Float?         = null,   // null = use global default (1.0)
 ) {
     val bracketDepth: Int get() {
         var d = 0

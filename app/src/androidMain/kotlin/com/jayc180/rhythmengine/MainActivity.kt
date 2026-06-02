@@ -166,8 +166,9 @@ class MainActivity : ComponentActivity() {
                 playheads             = vm.playheads,
                 sounds                = vm.sounds,
                 onSettingsClick       = { showSettings = true },
-                _globalDefaultSoundId = vm.globalDefaultSoundId,
-                onSetGlobalDefault    = { id -> vm.setGlobalDefaultSound(id) },
+                _globalDefaultSoundId        = vm.globalDefaultSoundId,
+                onSetGlobalDefault           = { id -> vm.setGlobalDefaultSound(id) },
+                onSetGlobalDefaultVolume     = { v  -> vm.setGlobalDefaultVolume(v) },
             )
         }
 

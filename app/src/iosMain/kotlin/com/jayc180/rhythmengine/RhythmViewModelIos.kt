@@ -31,6 +31,9 @@ class RhythmViewModelIos {
     private val _globalDefaultSoundId = MutableStateFlow("default")
     val globalDefaultSoundId: String get() = _globalDefaultSoundId.value
 
+    private val _globalDefaultVolume = MutableStateFlow(1.0f)
+    val globalDefaultVolume: Float get() = _globalDefaultVolume.value
+
     // ── Project state ──────────────────────────────────────────────────────────
 
     private val _projectName   = MutableStateFlow("Untitled")
@@ -75,6 +78,11 @@ class RhythmViewModelIos {
         val prefs = platform.Foundation.NSUserDefaults.standardUserDefaults
         if (prefs.objectForKey("paired_bracket_delete") != null)
             builder.pairedBracketDelete = prefs.boolForKey("paired_bracket_delete")
+        if (prefs.objectForKey("global_default_volume") != null) {
+            val v = prefs.floatForKey("global_default_volume")
+            _globalDefaultVolume.value = v
+            builder.setDefaultVolume(v)
+        }
     }
 
     private fun wireAudio() {
@@ -113,6 +121,13 @@ class RhythmViewModelIos {
     fun setGlobalDefaultSound(soundId: String) {
         _globalDefaultSoundId.value = soundId
         builder.setDefaultSoundId(soundId)
+    }
+
+    fun setGlobalDefaultVolume(volume: Float) {
+        _globalDefaultVolume.value = volume
+        builder.setDefaultVolume(volume)
+        platform.Foundation.NSUserDefaults.standardUserDefaults
+            .setFloat(volume, "global_default_volume")
     }
 
     fun deleteUserSound(soundId: String) {
@@ -243,7 +258,8 @@ class RhythmViewModelIos {
         sounds                = sounds,
         onSettingsClick       = onSettingsClick,
         _globalDefaultSoundId = globalDefaultSoundId,
-        onSetGlobalDefault    = { id -> setGlobalDefaultSound(id) },
+        onSetGlobalDefault           = { id -> setGlobalDefaultSound(id) },
+        onSetGlobalDefaultVolume     = { v  -> setGlobalDefaultVolume(v) },
     )
 
     fun dispose() {

@@ -86,6 +86,7 @@ object ProjectSerializer {
         soloed = if (draft.soloed) true else null,
         items  = draft.items.map { serializeItem(it) },
         defaultSoundId = draft.defaultSoundId,
+        defaultVolume  = draft.defaultVolume,
     )
 
     private fun serializeItem(item: TrackItem): RhyItem = when (item) {
@@ -117,7 +118,8 @@ object ProjectSerializer {
                 muted  = rhyTrack.muted  ?: false,
                 soloed = rhyTrack.soloed ?: false,
                 items  = rhyTrack.items.mapNotNull { deserializeItem(it) },
-                defaultSoundId = rhyTrack.defaultSoundId
+                defaultSoundId = rhyTrack.defaultSoundId,
+                defaultVolume  = rhyTrack.defaultVolume,
             )
         }
 
@@ -188,6 +190,7 @@ private data class RhyTrack(
     val soloed: Boolean?         = null,
     val items:  List<RhyItem>,
     val defaultSoundId: String? = null,
+    val defaultVolume:  Float?  = null,
 )
 
 @Serializable

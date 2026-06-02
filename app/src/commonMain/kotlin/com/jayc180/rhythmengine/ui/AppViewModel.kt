@@ -12,15 +12,22 @@ class AppViewModel(
     val builder:           TrackBuilder,
     val audio:             AudioEngine,
     val playheads:         StateFlow<Map<String, Int>>,
-    val sounds:            StateFlow<List<SoundInfo>>, // not SoundEntry
+    val sounds:            StateFlow<List<SoundInfo>>,
     val onSettingsClick:   () -> Unit = {},
-    private val _globalDefaultSoundId: String,
-    private val onSetGlobalDefault:    (String) -> Unit,
+    private val _globalDefaultSoundId:    String,
+    private val onSetGlobalDefault:       (String) -> Unit,
+    private val onSetGlobalDefaultVolume: (Float)  -> Unit = {},
 ) {
     val globalDefaultSoundId: String get() = _globalDefaultSoundId
+    val globalDefaultVolume:  Float  get() = builder.defaultVolume
 
     fun setGlobalDefault(soundId: String) {
         onSetGlobalDefault(soundId)
         builder.setDefaultSoundId(soundId)
+    }
+
+    fun setGlobalDefaultVolume(volume: Float) {
+        onSetGlobalDefaultVolume(volume)
+        builder.setDefaultVolume(volume)
     }
 }

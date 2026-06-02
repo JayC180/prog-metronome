@@ -33,6 +33,10 @@ class TrackBuilder(
     val defaultSoundId: String get() = _defaultSoundId
     fun setDefaultSoundId(id: String) { _defaultSoundId = id }
 
+    private var _defaultVolume: Float = 1.0f
+    val defaultVolume: Float get() = _defaultVolume
+    fun setDefaultVolume(v: Float) { _defaultVolume = v.coerceIn(0f, 1f) }
+
     private val current get() = _state.value
     private fun emit(s: TrackBuilderState) { _state.value = s }
 
@@ -97,7 +101,7 @@ class TrackBuilder(
         val source = current.activeTrack ?: return
         val idx  = current.tracks.size
         val base = newTrackDraft(idx)   // new id + label "Track N"
-        val copy = base.copy(items = source.items, denom = source.denom, defaultSoundId = source.defaultSoundId)
+        val copy = base.copy(items = source.items, denom = source.denom, defaultSoundId = source.defaultSoundId, defaultVolume = source.defaultVolume)
         emit(current.copy(tracks = current.tracks + copy,
             activeTrackIndex = idx, cursorIndex = null, inputMode = InputMode.Normal))
     }
@@ -148,20 +152,25 @@ class TrackBuilder(
         updateTrack(trackIndex) { it.copy(defaultSoundId = soundId) }
     }
 
-    // maybe put in use?
     fun clearTrackDefaultSound(trackIndex: Int) {
         updateTrack(trackIndex) { it.copy(defaultSoundId = null) }
+    }
+
+    fun setTrackDefaultVolume(trackIndex: Int, volume: Float) {
+        updateTrack(trackIndex) { it.copy(defaultVolume = volume.coerceIn(0f, 1f)) }
     }
 
     // use track default if set
     fun enterBeat(numerator: Int) {
         if (!current.canEnterBeats || numerator <= 0) return
-        val track = current.activeTrack ?: return
-        val soundId = track.defaultSoundId ?: _defaultSoundId // global fallback
+        val track  = current.activeTrack ?: return
+        val soundId = track.defaultSoundId ?: _defaultSoundId
+        val volume  = track.defaultVolume  ?: _defaultVolume
         insertItem(TrackItem.Beat(
             displayNum   = numerator,
             displayDenom = track.denom,
             soundId      = soundId,
+            volume       = volume,
         ))
     }
 

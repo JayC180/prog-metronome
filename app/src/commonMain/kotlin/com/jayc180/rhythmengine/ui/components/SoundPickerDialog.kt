@@ -22,14 +22,17 @@ import androidx.compose.ui.window.DialogProperties
 import com.jayc180.rhythmengine.audio.SoundInfo
 import com.jayc180.rhythmengine.ui.theme.RhythmColors
 import com.jayc180.rhythmengine.ui.theme.RhythmType
+import kotlin.math.roundToInt
 
 @Composable
 fun SoundPickerDialog(
-    sounds:         List<SoundInfo>,
-    currentSoundId: String?,
-    onSelect:       (SoundInfo) -> Unit,
-    onDismiss:      () -> Unit,
-    onDeleteUser:   ((String) -> Unit)? = null,   // null = delete not available
+    sounds:          List<SoundInfo>,
+    currentSoundId:  String?,
+    onSelect:        (SoundInfo) -> Unit,
+    onDismiss:       () -> Unit,
+    onDeleteUser:    ((String) -> Unit)? = null,   // null = delete not available
+    currentVolume:   Float?              = null,   // null = no volume section
+    onVolumeChange:  ((Float) -> Unit)?  = null,
     bg:        Color = Color.Unspecified,
     textColor: Color = Color.Unspecified,
     border:    Color = Color.Unspecified,
@@ -39,6 +42,7 @@ fun SoundPickerDialog(
 
     var searchText    by remember { mutableStateOf("") }
     var confirmDelete by remember { mutableStateOf<SoundInfo?>(null) }
+    var localVolume   by remember(currentVolume) { mutableStateOf(currentVolume ?: 1.0f) }
 
     val filteredUser    = if (searchText.isEmpty()) userSounds
     else userSounds.filter { it.label.contains(searchText, ignoreCase = true) }
@@ -101,6 +105,30 @@ fun SoundPickerDialog(
             }
 
             HorizontalDivider()
+
+            // default volume
+            if (onVolumeChange != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Text("Default Volume",
+                        style = RhythmType.label.copy(fontSize = 11.sp, color = RhythmColors.textSecondary))
+                    VolumeSlider(
+                        value         = localVolume,
+                        onValueChange = { v ->
+                            localVolume = v
+                            onVolumeChange(v)
+                        },
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text("${(localVolume * 100).roundToInt()}%",
+                        style = RhythmType.label.copy(fontSize = 11.sp, color = RhythmColors.textSecondary))
+                }
+                HorizontalDivider()
+            }
 
             // search
             OutlinedTextField(
