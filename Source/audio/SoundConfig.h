@@ -2,8 +2,7 @@
 
 #include <string>
 
-namespace rhythm
-{
+namespace rhythm {
 
 // Complete audio configuration for one sound.
 //
@@ -13,13 +12,12 @@ namespace rhythm
 //
 // resourceUri is intentionally flexible - typically a file path, but may be
 // a URL or a bundled-asset reference depending on the host platform.
-struct SoundConfig
-{
+struct SoundConfig {
     std::string soundId;
     std::string resourceUri;
-    float       volume { 1.0f };   // 0.0 – 1.0
-    float       pitch  { 1.0f };   // playback speed multiplier (1.0 = original)
-    std::string label  {};         // display name in UI; defaults to soundId
+    float volume{1.0f};  // 0.0 – 1.0
+    float pitch{1.0f};   // playback speed multiplier (1.0 = original)
+    std::string label{}; // display name in UI; defaults to soundId
 };
 
 } // namespace rhythm

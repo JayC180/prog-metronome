@@ -5,8 +5,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace rhythm
-{
+namespace rhythm {
 
 // Serializes and deserializes the full project state to/from JSON (.rhy files).
 //
@@ -17,25 +16,23 @@ namespace rhythm
 //   - runtime-internal fields (track IDs, cursor position) are NOT saved;
 //     they are regenerated fresh on load
 //   - migration handles older versions cleanly
-class ProjectSerializer
-{
-public:
-    static constexpr int         CURRENT_VERSION  = 1;
-    static constexpr const char* FILE_EXTENSION   = "rhy";
+class ProjectSerializer {
+  public:
+    static constexpr int CURRENT_VERSION = 1;
+    static constexpr const char *FILE_EXTENSION = "rhy";
 
-    static std::string                serialize   (const TrackBuilderState& state,
-                                                   const std::string& name);
-    static TrackBuilderState          deserialize (const std::string& jsonString);
+    static std::string serialize(const TrackBuilderState &state,
+                                 const std::string &name);
+    static TrackBuilderState deserialize(const std::string &jsonString);
     static std::optional<TrackBuilderState>
-                                       deserializeOrNull (const std::string& jsonString);
+    deserializeOrNull(const std::string &jsonString);
 
-    static std::optional<std::string> peekName (const std::string& jsonString);
-    static std::optional<double>      peekBpm  (const std::string& jsonString);
+    static std::optional<std::string> peekName(const std::string &jsonString);
+    static std::optional<double> peekBpm(const std::string &jsonString);
 };
 
-class DeserializationException : public std::runtime_error
-{
-public:
+class DeserializationException : public std::runtime_error {
+  public:
     using std::runtime_error::runtime_error;
 };
 

@@ -1,23 +1,21 @@
 #pragma once
 
-#include "UiHelpers.h"
 #include "../builder/TrackBuilder.h"
+#include "UiHelpers.h"
 #include <juce_gui_basics/juce_gui_basics.h>
 
-namespace rhythm
-{
+namespace rhythm {
 
-class BottomPanelComponent : public juce::Component
-{
-public:
-    explicit BottomPanelComponent (TrackBuilder& builder);
+class BottomPanelComponent : public juce::Component {
+  public:
+    explicit BottomPanelComponent(TrackBuilder &builder);
     ~BottomPanelComponent() override = default;
 
     void syncToState();
 
     // keyboard inputs
-    void handleNumKey  (int n) { onNumKey (n); }
-    void handleBackspace()     { onBackspace(); }
+    void handleNumKey(int n) { onNumKey(n); }
+    void handleBackspace() { onBackspace(); }
 
     // External hooks so MainComponent can pop dialogs.
     std::function<void()> onMmRequested;
@@ -27,20 +25,20 @@ public:
     std::function<void()> onRepeatCustomRequested;
     std::function<void()> onChangeBeatSound;
 
-    void paint (juce::Graphics&) override;
+    void paint(juce::Graphics &) override;
     void resized() override;
 
-private:
+  private:
     void rebuildToolbar();
     void rebuildNumpad();
 
-    void onNumKey  (int n);
+    void onNumKey(int n);
     void onCustom();
     void onEditToggle();
     void onBackspace();
     void onToggleActive();
 
-    TrackBuilder& builder_;
+    TrackBuilder &builder_;
 
     // toolbar row
     ChipButton navPrevButton_;
@@ -54,29 +52,29 @@ private:
 
     // edit panel
     juce::Label onOffLabel_;
-    ChipButton  onOffStatus_ { juce::String::fromUTF8 (u8"—") };
+    ChipButton onOffStatus_{juce::String::fromUTF8(u8"—")};
     juce::Label volumeLabel_;
     juce::Slider volumeSlider_;
     juce::Label volumePercentLabel_;
     juce::Label soundLabel_;
     juce::Label soundValueLabel_;
-    ChipButton  changeSoundButton_  { juce::String::fromUTF8 (u8"change ›") };
+    ChipButton changeSoundButton_{juce::String::fromUTF8(u8"change ›")};
 
     // numpad
-    juce::Label                                  hintLabel_;
-    std::array<std::unique_ptr<NumKeyButton>, 9> numKeys_ {};
-    NumKeyButton                                 customKey_   { "custom" };
-  #if JUCE_WINDOWS
-    NumKeyButton                                 editKey_     { "E" };
-    NumKeyButton                                 backspaceKey_{ "Del" };
-  #else
-    NumKeyButton                                 editKey_     { juce::String::fromUTF8 (u8"✎") };
-    NumKeyButton                                 backspaceKey_{ juce::String::fromUTF8 (u8"⌫") };
-  #endif
+    juce::Label hintLabel_;
+    std::array<std::unique_ptr<NumKeyButton>, 9> numKeys_{};
+    NumKeyButton customKey_{"custom"};
+#if JUCE_WINDOWS
+    NumKeyButton editKey_{"E"};
+    NumKeyButton backspaceKey_{"Del"};
+#else
+    NumKeyButton editKey_{juce::String::fromUTF8(u8"✎")};
+    NumKeyButton backspaceKey_{juce::String::fromUTF8(u8"⌫")};
+#endif
 
     juce::Rectangle<int> toolbarArea_, editArea_, numpadArea_;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BottomPanelComponent)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(BottomPanelComponent)
 };
 
 } // namespace rhythm

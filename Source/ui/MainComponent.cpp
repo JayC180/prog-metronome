@@ -1,67 +1,64 @@
 #include "MainComponent.h"
-#include "dialogs/RhythmDialogs.h"
-#include "../persistence/ProjectSerializer.h"
 #include "../PluginProcessor.h"
+#include "../persistence/ProjectSerializer.h"
+#include "dialogs/RhythmDialogs.h"
 
-namespace rhythm
-{
+namespace rhythm {
 
-MainComponent::MainComponent (RhythmEngineProcessor& processor)
-    : processor_ (processor),
-      builder_   (processor.builder()),
-      topBar_      (builder_),
-      trackList_   (builder_),
-      bottomPanel_ (builder_)
-{
-    setLookAndFeel (&lookAndFeel_);
+MainComponent::MainComponent(RhythmEngineProcessor &processor)
+    : processor_(processor), builder_(processor.builder()), topBar_(builder_),
+      trackList_(builder_), bottomPanel_(builder_) {
+    setLookAndFeel(&lookAndFeel_);
 
-    addAndMakeVisible (topBar_);
-    addAndMakeVisible (trackList_);
-    addAndMakeVisible (bottomPanel_);
+    addAndMakeVisible(topBar_);
+    addAndMakeVisible(trackList_);
+    addAndMakeVisible(bottomPanel_);
 
-    builder_.setOnStateChanged ([this] (const TrackBuilderState&)
-    {
+    builder_.setOnStateChanged([this](const TrackBuilderState &) {
         processor_.markDirty();
         triggerAsyncUpdate();
     });
 
     // Settings button → popup menu: file ops + theme
-    topBar_.onSettingsClicked = [this]
-    {
+    topBar_.onSettingsClicked = [this] {
         juce::PopupMenu themeMenu;
-        const auto& themes = BuiltInThemes::all();
-        for (int i = 0; i < (int) themes.size(); ++i)
-        {
-            themeMenu.addItem (200 + i, juce::String (themes[(size_t) i].name), true,
-                               juce::String (themes[(size_t) i].name) == juce::String (RhythmColors::active().name));
+        const auto &themes = BuiltInThemes::all();
+        for (int i = 0; i < (int)themes.size(); ++i) {
+            themeMenu.addItem(200 + i, juce::String(themes[(size_t)i].name),
+                              true,
+                              juce::String(themes[(size_t)i].name) ==
+                                  juce::String(RhythmColors::active().name));
         }
 
         juce::PopupMenu menu;
-        menu.addItem (1, "New Project");
-        menu.addItem (2, "Open Project...");
+        menu.addItem(1, "New Project");
+        menu.addItem(2, "Open Project...");
         menu.addSeparator();
-        menu.addItem (3, "Save",      true);
-        menu.addItem (4, "Save As...", true);
+        menu.addItem(3, "Save", true);
+        menu.addItem(4, "Save As...", true);
         menu.addSeparator();
-        menu.addItem (5, "Import Sound...");
+        menu.addItem(5, "Import Sound...");
         menu.addSeparator();
-        menu.addSubMenu ("Theme", themeMenu);
+        menu.addSubMenu("Theme", themeMenu);
 
-        menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (&topBar_),
-            [this] (int result)
-            {
-                if      (result == 1) newProject();
-                else if (result == 2) openProject();
-                else if (result == 3) saveProject();
-                else if (result == 4) saveProjectAs();
-                else if (result == 5) importSound();
-                else if (result >= 200)
-                {
+        menu.showMenuAsync(
+            juce::PopupMenu::Options().withTargetComponent(&topBar_),
+            [this](int result) {
+                if (result == 1)
+                    newProject();
+                else if (result == 2)
+                    openProject();
+                else if (result == 3)
+                    saveProject();
+                else if (result == 4)
+                    saveProjectAs();
+                else if (result == 5)
+                    importSound();
+                else if (result >= 200) {
                     const int idx = result - 200;
-                    const auto& themes = BuiltInThemes::all();
-                    if (idx >= 0 && idx < (int) themes.size())
-                    {
-                        RhythmColors::setActive (themes[(size_t) idx]);
+                    const auto &themes = BuiltInThemes::all();
+                    if (idx >= 0 && idx < (int)themes.size()) {
+                        RhythmColors::setActive(themes[(size_t)idx]);
                         rebuildFromState();
                         repaint();
                     }
@@ -69,86 +66,95 @@ MainComponent::MainComponent (RhythmEngineProcessor& processor)
             });
     };
 
-    topBar_.onBpmClicked = [this]
-    {
-        auto cb = [this] (double v) { builder_.setBpm (v); };
-        showRhythmDialog (this, std::make_unique<BpmInputDialog> (builder_.state().bpm, cb));
+    topBar_.onBpmClicked = [this] {
+        auto cb = [this](double v) { builder_.setBpm(v); };
+        showRhythmDialog(
+            this, std::make_unique<BpmInputDialog>(builder_.state().bpm, cb));
     };
 
     topBar_.onProjectNameClicked = [this] { renameProject(); };
 
-    topBar_.onTapClicked = [this]
-    {
+    topBar_.onTapClicked = [this] {
         if (auto bpm = tapTempo_.tap())
-            builder_.setBpm (*bpm);
+            builder_.setBpm(*bpm);
     };
 
-    bottomPanel_.onMmRequested = [this]
-    {
-        const auto* item = builder_.state().cursorItem();
+    bottomPanel_.onMmRequested = [this] {
+        const auto *item = builder_.state().cursorItem();
         std::optional<int> p, q;
         if (item != nullptr)
-            if (const auto* m = item->getIf<TrackItem::Modulation>()) { p = m->p; q = m->q; }
-        showRhythmDialog (this,
-            std::make_unique<MmDialog> (p, q, [this, idx = builder_.state().cursorIndex,
-                                                editing = item != nullptr && item->isModulation()]
-                                              (int pp, int qq)
-            {
-                if (editing && idx.has_value()) builder_.replaceModulation (*idx, pp, qq);
-                else                            builder_.commitModulation (pp, qq);
-            }));
+            if (const auto *m = item->getIf<TrackItem::Modulation>()) {
+                p = m->p;
+                q = m->q;
+            }
+        showRhythmDialog(this,
+                         std::make_unique<MmDialog>(
+                             p, q,
+                             [this, idx = builder_.state().cursorIndex,
+                              editing = item != nullptr &&
+                                        item->isModulation()](int pp, int qq) {
+                                 if (editing && idx.has_value())
+                                     builder_.replaceModulation(*idx, pp, qq);
+                                 else
+                                     builder_.commitModulation(pp, qq);
+                             }));
     };
 
-    bottomPanel_.onSetBpmRequested = [this]
-    {
-        const auto* item = builder_.state().cursorItem();
+    bottomPanel_.onSetBpmRequested = [this] {
+        const auto *item = builder_.state().cursorItem();
         std::optional<double> initial;
         bool editing = false;
         if (item != nullptr)
-            if (const auto* sb = item->getIf<TrackItem::SetBpm>()) { initial = sb->bpm; editing = true; }
-        showRhythmDialog (this,
-            std::make_unique<SetBpmDialog> (builder_.state().bpm, initial,
-                [this, idx = builder_.state().cursorIndex, editing] (double v)
-                {
-                    if (editing && idx.has_value()) builder_.replaceSetBpm (*idx, v);
-                    else                            builder_.commitSetBpm (v);
-                }));
+            if (const auto *sb = item->getIf<TrackItem::SetBpm>()) {
+                initial = sb->bpm;
+                editing = true;
+            }
+        showRhythmDialog(this, std::make_unique<SetBpmDialog>(
+                                   builder_.state().bpm, initial,
+                                   [this, idx = builder_.state().cursorIndex,
+                                    editing](double v) {
+                                       if (editing && idx.has_value())
+                                           builder_.replaceSetBpm(*idx, v);
+                                       else
+                                           builder_.commitSetBpm(v);
+                                   }));
     };
 
-    bottomPanel_.onCustomBeatRequested = [this]
-    {
-        const bool editingBeat = builder_.state().isEditMode()
-                              && builder_.state().cursorItem() != nullptr
-                              && builder_.state().cursorItem()->isBeat();
-        showRhythmDialog (this,
-            std::make_unique<CustomNumberDialog> ("Beat value",
-                                                  "numerator - must be greater than 0",
-                [this, editingBeat] (int n)
-                {
-                    if (editingBeat) builder_.replaceBeat (n);
-                    else             builder_.enterBeat (n);
-                }));
+    bottomPanel_.onCustomBeatRequested = [this] {
+        const bool editingBeat = builder_.state().isEditMode() &&
+                                 builder_.state().cursorItem() != nullptr &&
+                                 builder_.state().cursorItem()->isBeat();
+        showRhythmDialog(this,
+                         std::make_unique<CustomNumberDialog>(
+                             "Beat value", "numerator - must be greater than 0",
+                             [this, editingBeat](int n) {
+                                 if (editingBeat)
+                                     builder_.replaceBeat(n);
+                                 else
+                                     builder_.enterBeat(n);
+                             }));
     };
 
-    bottomPanel_.onCustomDenomRequested = [this]
-    {
-        showRhythmDialog (this,
-            std::make_unique<CustomNumberDialog> ("Subdivision",
-                                                  "denominator",
-                [this] (int n) { builder_.setDenom (n); }));
+    bottomPanel_.onCustomDenomRequested = [this] {
+        showRhythmDialog(this, std::make_unique<CustomNumberDialog>(
+                                   "Subdivision", "denominator",
+                                   [this](int n) { builder_.setDenom(n); }));
     };
 
-    bottomPanel_.onRepeatCustomRequested = [this]
-    {
-        showRhythmDialog (this,
-            std::make_unique<RepeatDialog> (
-                [this, editing = builder_.state().isEditMode()
-                                && builder_.state().cursorItem() != nullptr
-                                && builder_.state().cursorItem()->isRepeat()] (int count)
-                {
-                    if (count == TrackItem::Repeat::INFINITE_COUNT) builder_.setRepeatInfinite();
-                    else if (editing)                              builder_.replaceRepeat (count);
-                    else                                           builder_.setRepeatCustom (count);
+    bottomPanel_.onRepeatCustomRequested = [this] {
+        showRhythmDialog(
+            this,
+            std::make_unique<RepeatDialog>(
+                [this, editing = builder_.state().isEditMode() &&
+                                 builder_.state().cursorItem() != nullptr &&
+                                 builder_.state().cursorItem()->isRepeat()](
+                    int count) {
+                    if (count == TrackItem::Repeat::INFINITE_COUNT)
+                        builder_.setRepeatInfinite();
+                    else if (editing)
+                        builder_.replaceRepeat(count);
+                    else
+                        builder_.setRepeatCustom(count);
                 }));
     };
 
@@ -158,69 +164,66 @@ MainComponent::MainComponent (RhythmEngineProcessor& processor)
     updateProjectNameDisplay();
     rebuildFromState();
 
-    setWantsKeyboardFocus (true);
-    startTimer (30000); // autosave every 30s
+    setWantsKeyboardFocus(true);
+    startTimer(30000); // autosave every 30s
 }
 
-void MainComponent::openBeatSoundPicker()
-{
-    const auto& s = builder_.state();
-    if (! s.cursorIndex.has_value()) return;
-    const auto* t = s.activeTrack();
-    if (t == nullptr) return;
+void MainComponent::openBeatSoundPicker() {
+    const auto &s = builder_.state();
+    if (!s.cursorIndex.has_value())
+        return;
+    const auto *t = s.activeTrack();
+    if (t == nullptr)
+        return;
     const int idx = *s.cursorIndex;
-    if (idx < 0 || idx >= (int) t->items.size()) return;
-    const auto* beat = t->items[(size_t) idx].getIf<TrackItem::Beat>();
-    if (beat == nullptr) return;
+    if (idx < 0 || idx >= (int)t->items.size())
+        return;
+    const auto *beat = t->items[(size_t)idx].getIf<TrackItem::Beat>();
+    if (beat == nullptr)
+        return;
 
-    showRhythmDialog (this,
-        std::make_unique<SoundPickerDialog> (
-            availableSounds_,
-            beat->soundId,
-            [this, idx] (const std::string& soundId)
-            {
-                builder_.setBeatSound (idx, soundId);
-            }));
+    showRhythmDialog(this, std::make_unique<SoundPickerDialog>(
+                               availableSounds_, beat->soundId,
+                               [this, idx](const std::string &soundId) {
+                                   builder_.setBeatSound(idx, soundId);
+                               }));
 }
 
-void MainComponent::newProject()
-{
-    confirmIfDirty ([this]
-    {
+void MainComponent::newProject() {
+    confirmIfDirty([this] {
         TrackBuilderState fresh;
-        fresh.tracks.push_back (TrackBuilder::newTrackDraft (0));
+        fresh.tracks.push_back(TrackBuilder::newTrackDraft(0));
         fresh.bpm = 120.0;
-        builder_.restoreState (fresh);
-        processor_.setProjectName ("Untitled");
-        processor_.setProjectFile ({});
+        builder_.restoreState(fresh);
+        processor_.setProjectName("Untitled");
+        processor_.setProjectFile({});
         processor_.clearDirty();
         updateProjectNameDisplay();
     });
 }
 
-void MainComponent::openProject()
-{
-    confirmIfDirty ([this]
-    {
-        fileChooser_ = std::make_unique<juce::FileChooser> (
+void MainComponent::openProject() {
+    confirmIfDirty([this] {
+        fileChooser_ = std::make_unique<juce::FileChooser>(
             "Open Project",
-            juce::File::getSpecialLocation (juce::File::userDocumentsDirectory),
+            juce::File::getSpecialLocation(juce::File::userDocumentsDirectory),
             "*.rhy");
 
-        fileChooser_->launchAsync (
-            juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
-            [this] (const juce::FileChooser& fc)
-            {
+        fileChooser_->launchAsync(
+            juce::FileBrowserComponent::openMode |
+                juce::FileBrowserComponent::canSelectFiles,
+            [this](const juce::FileChooser &fc) {
                 const auto f = fc.getResult();
-                if (f == juce::File{}) return;
+                if (f == juce::File{})
+                    return;
 
-                if (! processor_.loadFromFile (f))
-                {
-                    juce::NativeMessageBox::showAsync (
+                if (!processor_.loadFromFile(f)) {
+                    juce::NativeMessageBox::showAsync(
                         juce::MessageBoxOptions()
-                            .withTitle ("Could not open file")
-                            .withMessage ("The file could not be read or is invalid.")
-                            .withButton ("OK"),
+                            .withTitle("Could not open file")
+                            .withMessage(
+                                "The file could not be read or is invalid.")
+                            .withButton("OK"),
                         nullptr);
                     return;
                 }
@@ -230,57 +233,51 @@ void MainComponent::openProject()
     });
 }
 
-void MainComponent::saveProject()
-{
-    if (processor_.projectFile().existsAsFile())
-    {
-        if (! processor_.saveToFile (processor_.projectFile()))
-        {
-            juce::NativeMessageBox::showAsync (
+void MainComponent::saveProject() {
+    if (processor_.projectFile().existsAsFile()) {
+        if (!processor_.saveToFile(processor_.projectFile())) {
+            juce::NativeMessageBox::showAsync(
                 juce::MessageBoxOptions()
-                    .withTitle ("Save failed")
-                    .withMessage ("Could not write to file.")
-                    .withButton ("OK"),
+                    .withTitle("Save failed")
+                    .withMessage("Could not write to file.")
+                    .withButton("OK"),
                 nullptr);
             return;
         }
         updateProjectNameDisplay();
-    }
-    else
-    {
+    } else {
         saveProjectAs();
     }
 }
 
-void MainComponent::saveProjectAs()
-{
-    fileChooser_ = std::make_unique<juce::FileChooser> (
+void MainComponent::saveProjectAs() {
+    fileChooser_ = std::make_unique<juce::FileChooser>(
         "Save Project As",
-        juce::File::getSpecialLocation (juce::File::userDocumentsDirectory)
-            .getChildFile (juce::String (processor_.projectName()) + ".rhy"),
+        juce::File::getSpecialLocation(juce::File::userDocumentsDirectory)
+            .getChildFile(juce::String(processor_.projectName()) + ".rhy"),
         "*.rhy");
 
-    fileChooser_->launchAsync (
-        juce::FileBrowserComponent::saveMode
-            | juce::FileBrowserComponent::canSelectFiles
-            | juce::FileBrowserComponent::warnAboutOverwriting,
-        [this] (const juce::FileChooser& fc)
-        {
+    fileChooser_->launchAsync(
+        juce::FileBrowserComponent::saveMode |
+            juce::FileBrowserComponent::canSelectFiles |
+            juce::FileBrowserComponent::warnAboutOverwriting,
+        [this](const juce::FileChooser &fc) {
             auto f = fc.getResult();
-            if (f == juce::File{}) return;
-            if (! f.hasFileExtension ("rhy"))
-                f = f.withFileExtension ("rhy");
+            if (f == juce::File{})
+                return;
+            if (!f.hasFileExtension("rhy"))
+                f = f.withFileExtension("rhy");
 
             // Use the filename (without extension) as the project name
-            processor_.setProjectName (f.getFileNameWithoutExtension().toStdString());
+            processor_.setProjectName(
+                f.getFileNameWithoutExtension().toStdString());
 
-            if (! processor_.saveToFile (f))
-            {
-                juce::NativeMessageBox::showAsync (
+            if (!processor_.saveToFile(f)) {
+                juce::NativeMessageBox::showAsync(
                     juce::MessageBoxOptions()
-                        .withTitle ("Save failed")
-                        .withMessage ("Could not write to file.")
-                        .withButton ("OK"),
+                        .withTitle("Save failed")
+                        .withMessage("Could not write to file.")
+                        .withButton("OK"),
                     nullptr);
                 return;
             }
@@ -288,21 +285,19 @@ void MainComponent::saveProjectAs()
         });
 }
 
-void MainComponent::renameProject()
-{
-    auto* alert = new juce::AlertWindow ("Rename Project", "", juce::MessageBoxIconType::NoIcon);
-    alert->addTextEditor ("name", juce::String (processor_.projectName()), "Project name:");
-    alert->addButton ("OK",     1, juce::KeyPress (juce::KeyPress::returnKey));
-    alert->addButton ("Cancel", 0, juce::KeyPress (juce::KeyPress::escapeKey));
-    alert->enterModalState (true,
-        juce::ModalCallbackFunction::create ([this, alert] (int result)
-        {
-            if (result == 1)
-            {
-                auto name = alert->getTextEditorContents ("name").trim();
-                if (name.isNotEmpty())
-                {
-                    processor_.setProjectName (name.toStdString());
+void MainComponent::renameProject() {
+    auto *alert = new juce::AlertWindow("Rename Project", "",
+                                        juce::MessageBoxIconType::NoIcon);
+    alert->addTextEditor("name", juce::String(processor_.projectName()),
+                         "Project name:");
+    alert->addButton("OK", 1, juce::KeyPress(juce::KeyPress::returnKey));
+    alert->addButton("Cancel", 0, juce::KeyPress(juce::KeyPress::escapeKey));
+    alert->enterModalState(
+        true, juce::ModalCallbackFunction::create([this, alert](int result) {
+            if (result == 1) {
+                auto name = alert->getTextEditorContents("name").trim();
+                if (name.isNotEmpty()) {
+                    processor_.setProjectName(name.toStdString());
                     processor_.markDirty();
                     updateProjectNameDisplay();
                 }
@@ -311,108 +306,105 @@ void MainComponent::renameProject()
         true);
 }
 
-void MainComponent::confirmIfDirty (std::function<void()> onProceed)
-{
-    if (! processor_.isDirty())
-    {
+void MainComponent::confirmIfDirty(std::function<void()> onProceed) {
+    if (!processor_.isDirty()) {
         onProceed();
         return;
     }
-    juce::NativeMessageBox::showAsync (
+    juce::NativeMessageBox::showAsync(
         juce::MessageBoxOptions()
-            .withTitle ("Unsaved Changes")
-            .withMessage ("You have unsaved changes. Discard?")
-            .withButton ("Discard")
-            .withButton ("Cancel"),
-        [proceed = std::move (onProceed)] (int result)
-        {
-            if (result == 0) proceed(); // first button is Discard
+            .withTitle("Unsaved Changes")
+            .withMessage("You have unsaved changes. Discard?")
+            .withButton("Discard")
+            .withButton("Cancel"),
+        [proceed = std::move(onProceed)](int result) {
+            if (result == 0)
+                proceed(); // first button is Discard
         });
 }
 
-void MainComponent::updateProjectNameDisplay()
-{
-    auto name = juce::String (processor_.projectName());
-    if (processor_.isDirty()) name += " *";
-    topBar_.setProjectName (name);
+void MainComponent::updateProjectNameDisplay() {
+    auto name = juce::String(processor_.projectName());
+    if (processor_.isDirty())
+        name += " *";
+    topBar_.setProjectName(name);
 }
 
-juce::File MainComponent::userSoundsDir()
-{
-    return juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory)
-               .getChildFile ("RhythmEngine")
-               .getChildFile ("sounds");
+juce::File MainComponent::userSoundsDir() {
+    return juce::File::getSpecialLocation(
+               juce::File::userApplicationDataDirectory)
+        .getChildFile("RhythmEngine")
+        .getChildFile("sounds");
 }
 
-void MainComponent::rebuildAvailableSounds()
-{
+void MainComponent::rebuildAvailableSounds() {
     availableSounds_ = {
-        { "default", "default",  false },
-        { "hi",      "hi click", false },
-        { "lo",      "lo click", false },
-        { "accent",  "accent",   false },
-        { "hat",     "hat",      false },
+        {"default", "default", false}, {"hi", "hi click", false},
+        {"lo", "lo click", false},     {"accent", "accent", false},
+        {"hat", "hat", false},
     };
     const auto dir = userSoundsDir();
-    if (! dir.isDirectory()) return;
-    for (const auto& f : dir.findChildFiles (juce::File::findFiles, false,
-                                             "*.wav;*.aif;*.aiff;*.flac"))
-    {
-        const auto id = f.getFileNameWithoutExtension().toLowerCase().toStdString();
-        availableSounds_.push_back ({ id, f.getFileNameWithoutExtension().toStdString(), true });
+    if (!dir.isDirectory())
+        return;
+    for (const auto &f : dir.findChildFiles(juce::File::findFiles, false,
+                                            "*.wav;*.aif;*.aiff;*.flac")) {
+        const auto id =
+            f.getFileNameWithoutExtension().toLowerCase().toStdString();
+        availableSounds_.push_back(
+            {id, f.getFileNameWithoutExtension().toStdString(), true});
     }
 }
 
-void MainComponent::loadUserSoundsFromDisk()
-{
+void MainComponent::loadUserSoundsFromDisk() {
     const auto dir = userSoundsDir();
-    if (dir.isDirectory())
-    {
-        for (const auto& f : dir.findChildFiles (juce::File::findFiles, false,
-                                                 "*.wav;*.aif;*.aiff;*.flac"))
-        {
-            const auto id = f.getFileNameWithoutExtension().toLowerCase().toStdString();
-            processor_.audio().loadSample (id, f);
+    if (dir.isDirectory()) {
+        for (const auto &f : dir.findChildFiles(juce::File::findFiles, false,
+                                                "*.wav;*.aif;*.aiff;*.flac")) {
+            const auto id =
+                f.getFileNameWithoutExtension().toLowerCase().toStdString();
+            processor_.audio().loadSample(id, f);
         }
     }
     rebuildAvailableSounds();
 }
 
-void MainComponent::importSound()
-{
-    fileChooser_ = std::make_unique<juce::FileChooser> (
+void MainComponent::importSound() {
+    fileChooser_ = std::make_unique<juce::FileChooser>(
         "Import Sound",
-        juce::File::getSpecialLocation (juce::File::userDocumentsDirectory),
+        juce::File::getSpecialLocation(juce::File::userDocumentsDirectory),
         "*.wav;*.aif;*.aiff;*.flac");
 
-    fileChooser_->launchAsync (
-        juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
-        [this] (const juce::FileChooser& fc)
-        {
+    fileChooser_->launchAsync(
+        juce::FileBrowserComponent::openMode |
+            juce::FileBrowserComponent::canSelectFiles,
+        [this](const juce::FileChooser &fc) {
             const auto src = fc.getResult();
-            if (src == juce::File{}) return;
+            if (src == juce::File{})
+                return;
 
             const auto dir = userSoundsDir();
             dir.createDirectory();
 
             // Copy file to user sounds dir (skip if already there)
-            const auto dest = dir.getChildFile (src.getFileName());
-            if (! dest.existsAsFile())
-                src.copyFileTo (dest);
+            const auto dest = dir.getChildFile(src.getFileName());
+            if (!dest.existsAsFile())
+                src.copyFileTo(dest);
 
             // soundId = lowercase stem; avoid shadowing built-ins
-            auto id = dest.getFileNameWithoutExtension().toLowerCase().toStdString();
-            const std::array<std::string, 5> builtIns { "default", "hi", "lo", "accent", "hat" };
-            if (std::find (builtIns.begin(), builtIns.end(), id) != builtIns.end())
+            auto id =
+                dest.getFileNameWithoutExtension().toLowerCase().toStdString();
+            const std::array<std::string, 5> builtIns{"default", "hi", "lo",
+                                                      "accent", "hat"};
+            if (std::find(builtIns.begin(), builtIns.end(), id) !=
+                builtIns.end())
                 id += "_user";
 
-            if (! processor_.audio().loadSample (id, dest))
-            {
-                juce::NativeMessageBox::showAsync (
+            if (!processor_.audio().loadSample(id, dest)) {
+                juce::NativeMessageBox::showAsync(
                     juce::MessageBoxOptions()
-                        .withTitle ("Import failed")
-                        .withMessage ("Could not decode the audio file.")
-                        .withButton ("OK"),
+                        .withTitle("Import failed")
+                        .withMessage("Could not decode the audio file.")
+                        .withButton("OK"),
                     nullptr);
                 return;
             }
@@ -420,32 +412,30 @@ void MainComponent::importSound()
         });
 }
 
-juce::File MainComponent::autosavePath()
-{
-    return juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory)
-               .getChildFile ("RhythmEngine")
-               .getChildFile ("autosave.rhy");
+juce::File MainComponent::autosavePath() {
+    return juce::File::getSpecialLocation(
+               juce::File::userApplicationDataDirectory)
+        .getChildFile("RhythmEngine")
+        .getChildFile("autosave.rhy");
 }
 
-MainComponent::~MainComponent()
-{
+MainComponent::~MainComponent() {
     stopTimer();
-    builder_.setOnStateChanged (nullptr);
-    setLookAndFeel (nullptr);
+    builder_.setOnStateChanged(nullptr);
+    setLookAndFeel(nullptr);
 }
 
-void MainComponent::timerCallback()
-{
-    if (! processor_.isDirty()) return;
+void MainComponent::timerCallback() {
+    if (!processor_.isDirty())
+        return;
     const auto path = autosavePath();
     path.getParentDirectory().createDirectory();
-    const std::string json = ProjectSerializer::serialize (
+    const std::string json = ProjectSerializer::serialize(
         builder_.state(), processor_.projectName());
-    path.replaceWithText (juce::String (json));
+    path.replaceWithText(juce::String(json));
 }
 
-bool MainComponent::keyPressed (const juce::KeyPress& key)
-{
+bool MainComponent::keyPressed(const juce::KeyPress &key) {
     // no key input to numpad when model opens
     if (juce::Component::getCurrentlyModalComponent() != nullptr)
         return false;
@@ -453,8 +443,7 @@ bool MainComponent::keyPressed (const juce::KeyPress& key)
     const int code = key.getKeyCode();
 
     // space: play/stop
-    if (code == juce::KeyPress::spaceKey)
-    {
+    if (code == juce::KeyPress::spaceKey) {
         builder_.togglePlayStop();
         return true;
     }
@@ -463,92 +452,88 @@ bool MainComponent::keyPressed (const juce::KeyPress& key)
     int digit = -1;
     if (code >= '1' && code <= '9')
         digit = code - '0';
-    else if (code >= juce::KeyPress::numberPad1 && code <= juce::KeyPress::numberPad9)
+    else if (code >= juce::KeyPress::numberPad1 &&
+             code <= juce::KeyPress::numberPad9)
         digit = code - juce::KeyPress::numberPad0;
 
-    if (digit >= 1 && digit <= 9)
-    {
-        bottomPanel_.handleNumKey (digit);
+    if (digit >= 1 && digit <= 9) {
+        bottomPanel_.handleNumKey(digit);
         return true;
     }
 
-    // navigation: left/right between elements in same track, up/down between tracks
-    if (code == juce::KeyPress::leftKey)  { builder_.moveCursorPrev(); return true; }
-    if (code == juce::KeyPress::rightKey) { builder_.moveCursorNext(); return true; }
-    if (code == juce::KeyPress::upKey)
-    {
-        const auto& st = builder_.state();
-        if (st.activeTrackIndex > 0)
-            builder_.setActiveTrack (st.activeTrackIndex - 1);
+    // navigation: left/right between elements in same track, up/down between
+    // tracks
+    if (code == juce::KeyPress::leftKey) {
+        builder_.moveCursorPrev();
         return true;
     }
-    if (code == juce::KeyPress::downKey)
-    {
-        const auto& st = builder_.state();
-        if (st.activeTrackIndex < (int) st.tracks.size() - 1)
-            builder_.setActiveTrack (st.activeTrackIndex + 1);
+    if (code == juce::KeyPress::rightKey) {
+        builder_.moveCursorNext();
+        return true;
+    }
+    if (code == juce::KeyPress::upKey) {
+        const auto &st = builder_.state();
+        if (st.activeTrackIndex > 0)
+            builder_.setActiveTrack(st.activeTrackIndex - 1);
+        return true;
+    }
+    if (code == juce::KeyPress::downKey) {
+        const auto &st = builder_.state();
+        if (st.activeTrackIndex < (int)st.tracks.size() - 1)
+            builder_.setActiveTrack(st.activeTrackIndex + 1);
         return true;
     }
 
     // backspace/delete delets
-    if (code == juce::KeyPress::backspaceKey || code == juce::KeyPress::deleteKey)
-    {
+    if (code == juce::KeyPress::backspaceKey ||
+        code == juce::KeyPress::deleteKey) {
         bottomPanel_.handleBackspace();
         return true;
     }
 
     // m/s: mute/solo
-    const auto& s = builder_.state();
-    if (code == 'm' || code == 'M')
-    {
-        const auto* t = s.activeTrack();
-        if (t != nullptr) builder_.setTrackMuted (s.activeTrackIndex, ! t->muted);
+    const auto &s = builder_.state();
+    if (code == 'm' || code == 'M') {
+        const auto *t = s.activeTrack();
+        if (t != nullptr)
+            builder_.setTrackMuted(s.activeTrackIndex, !t->muted);
         return true;
     }
-    if (code == 's' || code == 'S')
-    {
-        const auto* t = s.activeTrack();
-        if (t != nullptr) builder_.setTrackSoloed (s.activeTrackIndex, ! t->soloed);
+    if (code == 's' || code == 'S') {
+        const auto *t = s.activeTrack();
+        if (t != nullptr)
+            builder_.setTrackSoloed(s.activeTrackIndex, !t->soloed);
         return true;
     }
 
     return false;
 }
 
-void MainComponent::handleAsyncUpdate()
-{
+void MainComponent::handleAsyncUpdate() {
     rebuildFromState();
     updateProjectNameDisplay(); // keep dirty indicator in sync
 }
 
-void MainComponent::rebuildFromState()
-{
+void MainComponent::rebuildFromState() {
     topBar_.syncToState();
     trackList_.syncToState();
     bottomPanel_.syncToState();
 }
 
-void MainComponent::paint (juce::Graphics& g)
-{
-    g.fillAll (RhythmColors::bg0());
-}
+void MainComponent::paint(juce::Graphics &g) { g.fillAll(RhythmColors::bg0()); }
 
-void MainComponent::resized()
-{
+void MainComponent::resized() {
     auto bounds = getLocalBounds();
-    topBar_.setBounds (bounds.removeFromTop (52));
+    topBar_.setBounds(bounds.removeFromTop(52));
 
-    if (bounds.getWidth() >= 600)
-    {
+    if (bounds.getWidth() >= 600) {
         // Landscape: tracks left, bottom panel right.
-        const int rightW = juce::jmin (bounds.getWidth() * 5 / 12, 420);
-        bottomPanel_.setBounds (bounds.removeFromRight (rightW));
-        trackList_.setBounds (bounds);
-    }
-    else
-    {
-        bottomPanel_.setBounds (bounds.removeFromBottom (340));
-        trackList_.setBounds (bounds);
+        const int rightW = juce::jmin(bounds.getWidth() * 5 / 12, 420);
+        bottomPanel_.setBounds(bounds.removeFromRight(rightW));
+        trackList_.setBounds(bounds);
+    } else {
+        bottomPanel_.setBounds(bounds.removeFromBottom(340));
+        trackList_.setBounds(bounds);
     }
 }
 

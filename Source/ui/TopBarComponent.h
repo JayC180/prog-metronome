@@ -1,16 +1,14 @@
 #pragma once
 
-#include "UiHelpers.h"
 #include "../builder/TrackBuilder.h"
+#include "UiHelpers.h"
 #include <juce_gui_basics/juce_gui_basics.h>
 
-namespace rhythm
-{
+namespace rhythm {
 
-class TopBarComponent : public juce::Component
-{
-public:
-    explicit TopBarComponent (TrackBuilder& builder);
+class TopBarComponent : public juce::Component {
+  public:
+    explicit TopBarComponent(TrackBuilder &builder);
     ~TopBarComponent() override = default;
 
     std::function<void()> onBpmClicked;
@@ -19,30 +17,30 @@ public:
     std::function<void()> onTapClicked;
 
     void syncToState();
-    void setProjectName (const juce::String& name);
+    void setProjectName(const juce::String &name);
 
-    void paint (juce::Graphics&) override;
+    void paint(juce::Graphics &) override;
     void resized() override;
-    void mouseDown (const juce::MouseEvent&) override;
+    void mouseDown(const juce::MouseEvent &) override;
 
-private:
-    void paintBpmCard       (juce::Graphics&);
-    void paintPlayStopButton(juce::Graphics&);
+  private:
+    void paintBpmCard(juce::Graphics &);
+    void paintPlayStopButton(juce::Graphics &);
 
-    TrackBuilder& builder_;
-    ChipButton    settingsButton_  { juce::String::fromUTF8 (u8"⚙") };
-    ChipButton    tapButton_       { "tap" };
+    TrackBuilder &builder_;
+    ChipButton settingsButton_{juce::String::fromUTF8(u8"⚙")};
+    ChipButton tapButton_{"tap"};
 
-    void paintProjectName (juce::Graphics&);
+    void paintProjectName(juce::Graphics &);
 
     // BPM card and play button are drawn directly inside paint() because their
     // visuals are highly bespoke (live-coloured BPM, triangle / square icons).
-    juce::String         projectName_ { "Untitled" };
+    juce::String projectName_{"Untitled"};
     juce::Rectangle<int> bpmCardArea_;
     juce::Rectangle<int> projectNameArea_;
     juce::Rectangle<int> playStopArea_;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TopBarComponent)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TopBarComponent)
 };
 
 } // namespace rhythm
