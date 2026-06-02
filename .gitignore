@@ -14,6 +14,7 @@ local.properties
 .cxx/
 .externalNativeBuild/
 captures/
+app/release/
 
 # android studio
 .idea/
