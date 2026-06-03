@@ -16,6 +16,7 @@ class TrackDraft {
     bool muted{false};
     bool soloed{false};
     std::optional<std::string> defaultSoundId{}; // nullopt = use global default
+    std::optional<float> defaultVolume{};
 
     int bracketDepth() const;
     int bracketDepthAt(int index) const;

@@ -448,10 +448,46 @@ class SoundPickerDialog::Row : public juce::Component {
 
 SoundPickerDialog::SoundPickerDialog(
     std::vector<SoundInfo> sounds, std::optional<std::string> currentSoundId,
-    std::function<void(const std::string &)> onSelect)
+    std::function<void(const std::string &)> onSelect,
+    std::optional<float> currentVolume,
+    std::function<void(float)> onVolumeChange)
     : DialogPanel("Choose sound", {}) {
     preferredWidth = 400;
     preferredHeight = juce::jmin(116 + (int)sounds.size() * 40, 520);
+
+    if (currentVolume.has_value()) {
+        hasVolume_ = true;
+        onVolumeChange_ = std::move(onVolumeChange);
+        preferredHeight = juce::jmin(preferredHeight + 44, 564);
+
+        volumeLabel_.setText("Default volume", juce::dontSendNotification);
+        volumeLabel_.setFont(juce::Font(juce::FontOptions(11.0f)));
+        volumeLabel_.setColour(juce::Label::textColourId, RhythmColors::textSecondary());
+
+        volumeSlider_.setRange(0.0, 1.0);
+        volumeSlider_.setSliderStyle(juce::Slider::LinearHorizontal);
+        volumeSlider_.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+        volumeSlider_.setValue((double)*currentVolume, juce::dontSendNotification);
+        volumeSlider_.onValueChange = [this] {
+            const auto v = (float)volumeSlider_.getValue();
+            volumePercent_.setText(juce::String((int)(v * 100.0f)) + "%",
+                                   juce::dontSendNotification);
+            if (onVolumeChange_)
+                onVolumeChange_(v);
+        };
+
+        volumePercent_.setText(
+            juce::String((int)(*currentVolume * 100.0f)) + "%",
+            juce::dontSendNotification);
+        volumePercent_.setFont(juce::Font(juce::FontOptions(11.0f)));
+        volumePercent_.setColour(juce::Label::textColourId, RhythmColors::textSecondary());
+        volumePercent_.setJustificationType(juce::Justification::centredRight);
+
+        content().addAndMakeVisible(volumeLabel_);
+        content().addAndMakeVisible(volumeSlider_);
+        content().addAndMakeVisible(volumePercent_);
+    }
+
     addAndMakeVisible(viewport_);
     viewport_.setViewedComponent(&listContent_, false);
     viewport_.setScrollBarsShown(true, false);
@@ -482,6 +518,14 @@ SoundPickerDialog::SoundPickerDialog(
 SoundPickerDialog::~SoundPickerDialog() = default;
 
 void SoundPickerDialog::layoutContent(juce::Rectangle<int> b) {
+    if (hasVolume_) {
+        auto volRow = b.removeFromTop(36);
+        b.removeFromTop(4);
+        volumeLabel_.setBounds(volRow.removeFromLeft(96));
+        volRow.removeFromLeft(4);
+        volumePercent_.setBounds(volRow.removeFromRight(44));
+        volumeSlider_.setBounds(volRow.reduced(0, 4));
+    }
     viewport_.setBounds(b.reduced(0, 4));
     const int rowH = 36;
     const int gap = 4;

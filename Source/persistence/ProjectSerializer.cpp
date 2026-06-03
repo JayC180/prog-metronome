@@ -95,6 +95,8 @@ juce::var trackToVar(const TrackDraft &d) {
         obj->setProperty("soloed", true);
     if (d.defaultSoundId.has_value())
         obj->setProperty("defaultSoundId", juce::String(*d.defaultSoundId));
+    if (d.defaultVolume.has_value())
+        obj->setProperty("defaultVolume", (double)*d.defaultVolume);
 
     juce::Array<juce::var> items;
     items.ensureStorageAllocated((int)d.items.size());
@@ -187,6 +189,8 @@ ProjectSerializer::deserialize(const std::string &jsonString) {
                 d.defaultSoundId = tobj->getProperty("defaultSoundId")
                                        .toString()
                                        .toStdString();
+            if (tobj->hasProperty("defaultVolume"))
+                d.defaultVolume = (float)(double)tobj->getProperty("defaultVolume");
 
             if (auto *itemsArr = tobj->getProperty("items").getArray()) {
                 d.items.reserve((size_t)itemsArr->size());

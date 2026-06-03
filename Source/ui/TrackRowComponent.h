@@ -29,6 +29,7 @@ class TrackRowComponent : public juce::Component {
     void scrollIntoView(int itemIndex);
 
     std::function<void(int /*trackIdx*/)> onDeleteTrack;
+    std::function<void(int /*trackIdx*/)> onTrackSound;
 
     void paint(juce::Graphics &) override;
     void resized() override;
@@ -43,6 +44,7 @@ class TrackRowComponent : public juce::Component {
     juce::Label nameLabel_;
     TrackChip muteChip_{"M", RhythmColors::muteColor()};
     TrackChip soloChip_{"S", RhythmColors::soloColor()};
+    TrackChip soundChip_{"snd", RhythmColors::accent()};
     ChipButton deleteButton_;
     std::unique_ptr<ItemStrip> strip_;
 
@@ -58,6 +60,8 @@ class TrackListComponent : public juce::Component {
     ~TrackListComponent() override;
 
     void syncToState();
+
+    std::function<void(int)> onTrackSound;
 
     void paint(juce::Graphics &) override;
     void resized() override;

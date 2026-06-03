@@ -128,6 +128,7 @@ void TrackBuilder::copyTrack() {
     copy.items = src->items;
     copy.denom = src->denom;
     copy.defaultSoundId = src->defaultSoundId;
+    copy.defaultVolume = src->defaultVolume;
     auto next = state_;
     next.tracks.push_back(std::move(copy));
     next.activeTrackIndex = idx;
@@ -223,6 +224,13 @@ void TrackBuilder::clearTrackDefaultSound(int index) {
         return c;
     });
 }
+void TrackBuilder::setTrackDefaultVolume(int index, float volume) {
+    updateTrack(index, [volume](const TrackDraft &d) {
+        auto c = d;
+        c.defaultVolume = std::clamp(volume, 0.0f, 1.0f);
+        return c;
+    });
+}
 
 void TrackBuilder::setBpm(double bpm) {
     if (bpm <= 0)
@@ -266,10 +274,13 @@ void TrackBuilder::enterBeat(int numerator) {
         return;
     const std::string soundId =
         t->defaultSoundId.has_value() ? *t->defaultSoundId : defaultSoundId_;
+    const float volume =
+        t->defaultVolume.has_value() ? *t->defaultVolume : defaultVolume_;
     TrackItem::Beat b;
     b.displayNum = numerator;
     b.displayDenom = t->denom;
     b.soundId = soundId;
+    b.volume = volume;
     insertItem(TrackItem(std::move(b)));
 }
 

@@ -50,6 +50,9 @@ class TrackBuilder {
     void setDefaultSoundId(std::string id) { defaultSoundId_ = std::move(id); }
     const std::string &defaultSoundId() const { return defaultSoundId_; }
 
+    void setDefaultVolume(float v) { defaultVolume_ = v < 0.0f ? 0.0f : (v > 1.0f ? 1.0f : v); }
+    float defaultVolume() const { return defaultVolume_; }
+
     bool pairedBracketDelete() const { return pairedBracketDelete_; }
     void setPairedBracketDelete(bool v) { pairedBracketDelete_ = v; }
 
@@ -69,6 +72,7 @@ class TrackBuilder {
     void setTrackLabel(int index, const std::string &label);
     void setTrackDefaultSound(int index, const std::string &soundId);
     void clearTrackDefaultSound(int index);
+    void setTrackDefaultVolume(int index, float volume);
 
     // bpm
     void setBpm(double bpm);
@@ -141,6 +145,7 @@ class TrackBuilder {
     TrackBuilderState state_;
     Transport *transport_{nullptr};
     std::string defaultSoundId_{"default"};
+    float defaultVolume_{1.0f};
     bool pairedBracketDelete_{true};
 
     std::vector<InterpretResult> lastBuildResults_;

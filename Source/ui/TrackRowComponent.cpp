@@ -274,6 +274,11 @@ TrackRowComponent::TrackRowComponent(TrackBuilder &builder, int trackIndex)
         if (auto *d = draft())
             builder_.setTrackSoloed(trackIndex_, !d->soloed);
     });
+    soundChip_.setOnClick([this] {
+        if (onTrackSound)
+            onTrackSound(trackIndex_);
+    });
+    addAndMakeVisible(soundChip_);
 
     strip_ = std::make_unique<ItemStrip>(builder_, trackIndex_);
     addAndMakeVisible(strip_.get());
@@ -295,6 +300,7 @@ void TrackRowComponent::syncToState() {
                                       : RhythmColors::textSecondary());
         muteChip_.setActive(d->muted);
         soloChip_.setActive(d->soloed);
+        soundChip_.setActive(d->defaultSoundId.has_value());
     }
     strip_->syncToState();
     repaint();
@@ -318,9 +324,11 @@ void TrackRowComponent::resized() {
     nameLabel_.setBounds(left.removeFromTop(18));
     left.removeFromTop(4);
     auto chipRow = left.removeFromTop(22);
-    muteChip_.setBounds(chipRow.removeFromLeft(24));
+    muteChip_.setBounds(chipRow.removeFromLeft(22));
     chipRow.removeFromLeft(3);
-    soloChip_.setBounds(chipRow.removeFromLeft(24));
+    soloChip_.setBounds(chipRow.removeFromLeft(22));
+    chipRow.removeFromLeft(3);
+    soundChip_.setBounds(chipRow.removeFromLeft(22));
 
     deleteButton_.setBounds(bounds.removeFromRight(30).reduced(2, 8));
     strip_->setBounds(bounds);
@@ -367,6 +375,7 @@ void TrackListComponent::syncToState() {
         rebuildRows();
     for (int i = 0; i < (int)rows_.size(); ++i) {
         rows_[(size_t)i]->setTrackIndex(i);
+        rows_[(size_t)i]->onTrackSound = onTrackSound;
         rows_[(size_t)i]->syncToState();
     }
     resized();
@@ -384,6 +393,7 @@ void TrackListComponent::rebuildRows() {
             builder_.deleteTrack(idx);
             syncToState();
         };
+        row->onTrackSound = onTrackSound;
         row->syncToState();
         content_.addAndMakeVisible(row.get());
         rows_.push_back(std::move(row));

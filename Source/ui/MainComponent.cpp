@@ -38,6 +38,7 @@ MainComponent::MainComponent(RhythmEngineProcessor &processor)
         menu.addItem(4, "Save As...", true);
         menu.addSeparator();
         menu.addItem(5, "Import Sound...");
+        menu.addItem(6, "Default sound...");
         menu.addSeparator();
         menu.addSubMenu("Theme", themeMenu);
 
@@ -54,6 +55,8 @@ MainComponent::MainComponent(RhythmEngineProcessor &processor)
                     saveProjectAs();
                 else if (result == 5)
                     importSound();
+                else if (result == 6)
+                    openGlobalSoundPicker();
                 else if (result >= 200) {
                     const int idx = result - 200;
                     const auto &themes = BuiltInThemes::all();
@@ -160,6 +163,8 @@ MainComponent::MainComponent(RhythmEngineProcessor &processor)
 
     bottomPanel_.onChangeBeatSound = [this] { openBeatSoundPicker(); };
 
+    trackList_.onTrackSound = [this](int idx) { openTrackSoundPicker(idx); };
+
     loadUserSoundsFromDisk(); // populates availableSounds_ and load wavs
     updateProjectNameDisplay();
     rebuildFromState();
@@ -187,6 +192,44 @@ void MainComponent::openBeatSoundPicker() {
                                [this, idx](const std::string &soundId) {
                                    builder_.setBeatSound(idx, soundId);
                                }));
+}
+
+void MainComponent::openGlobalSoundPicker() {
+    showRhythmDialog(
+        this,
+        std::make_unique<SoundPickerDialog>(
+            availableSounds_,
+            std::optional<std::string>{builder_.defaultSoundId()},
+            [this](const std::string &soundId) {
+                builder_.setDefaultSoundId(soundId);
+            },
+            builder_.defaultVolume(),
+            [this](float v) {
+                builder_.setDefaultVolume(v);
+            }));
+}
+
+void MainComponent::openTrackSoundPicker(int trackIdx) {
+    const auto &s = builder_.state();
+    if (trackIdx < 0 || trackIdx >= (int)s.tracks.size())
+        return;
+    const auto &track = s.tracks[(size_t)trackIdx];
+
+    const float currentVol = track.defaultVolume.has_value()
+                                 ? *track.defaultVolume
+                                 : builder_.defaultVolume();
+
+    showRhythmDialog(
+        this,
+        std::make_unique<SoundPickerDialog>(
+            availableSounds_, track.defaultSoundId,
+            [this, trackIdx](const std::string &soundId) {
+                builder_.setTrackDefaultSound(trackIdx, soundId);
+            },
+            currentVol,
+            [this, trackIdx](float v) {
+                builder_.setTrackDefaultVolume(trackIdx, v);
+            }));
 }
 
 void MainComponent::newProject() {
