@@ -32,17 +32,18 @@ The logo stands for a 5:4 polyrhythm/polymeter because I really like 5:4. I also
 - MacOS (Standalone and VST3)
 
 ## Download
+Coming soon...
 
 ## <a name="usage"></a> Usage
 <div align="center">
   <img src="./assets/demo.gif" width="220" />
 </div>
 
-Full demo video: 
+Demo video: coming soon...
 
 See [help](./assets/help.md) for manual explanations. This can also be found in settings in the software.
 
-Explanation for a list of examples can be found [here]. Download and load these .rhy files into the app to see them in action.
+Explanation for a list of examples can be found [here](./assets/examples/examples.md). Download and load these .rhy files into the app to see them in action.
 
 ## Issues
 For any issues or feedback, please submit a GitHub Issue or email prog.metronome@gmail.com
@@ -53,3 +54,9 @@ Also I'm a CS student open to full time roles starting summer 2027 I can do soft
 Prog Metronome is [Free Software](https://en.wikipedia.org/wiki/Free_software): You can use, study, share and modify it at your will. The app can be redistributed and/or modified under the terms of the
 [GNU General Public License version 3 or later](https://www.gnu.org/licenses/gpl.html) published by the 
 [Free Software Foundation](https://www.fsf.org/).
+
+## Credits
+All the metronome sounds for the mobile version comes from Ludwig Peter Müller.
+
+## Donation
+If you have the ability, consider to support me at [https://ko-fi.com/prog_metronome](https://ko-fi.com/prog_metronome). All the donations will *only* go towards the annual Apple developer fees of $99 so I can keep publishing this app for IOS and MacOS.

@@ -23,5 +23,5 @@ Each track row has M (mute), S (solo), and snd (default sound/volume) chips. The
 ### Projects
 Project auto-saves. On relaunch you'll be offered to restore your last session. Use Save As in settings for named projects. Projects can be exported as .rhy files.
 
-### Donation
-If you have the ability, consider supporting the developer at [https://ko-fi.com/prog_metronome](https://ko-fi.com/prog_metronome). All the donations will *only* go to the annual Apple developer fees of $99 so I can keep publishing this app for IOS and MacOS.
+### Examples
+[This file](./examples/examples.md) contains the explanation and link to a list of examples. Download and load these .rhy files into the app to see them in action.

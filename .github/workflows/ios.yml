@@ -9,7 +9,9 @@ jobs:
   build:
     runs-on: macos-latest
     timeout-minutes: 90
-
+    env:
+      HAS_CERT: ${{ secrets.APPLE_CERTIFICATE_P12 != '' }}
+      HAS_ASC:  ${{ secrets.ASC_P8_BASE64 != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -119,7 +121,7 @@ jobs:
       # ── Signed IPA + App Store upload (only when secrets are present) ─────────
 
       - name: Import certificate and provisioning profile
-        if: ${{ secrets.APPLE_CERTIFICATE_P12 != '' }}
+        if: env.HAS_CERT == 'true'
         env:
           CERTIFICATE_P12:      ${{ secrets.APPLE_CERTIFICATE_P12 }}
           CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
@@ -143,7 +145,7 @@ jobs:
             ~/Library/MobileDevice/Provisioning\ Profiles/
 
       - name: Archive for device
-        if: ${{ secrets.APPLE_CERTIFICATE_P12 != '' }}
+        if: env.HAS_CERT == 'true'
         run: |
           set -o pipefail
           xcodebuild archive \
@@ -155,7 +157,7 @@ jobs:
             2>&1 | tail -20
 
       - name: Export IPA
-        if: ${{ secrets.APPLE_CERTIFICATE_P12 != '' }}
+        if: env.HAS_CERT == 'true'
         run: |
           set -o pipefail
           xcodebuild -exportArchive \
@@ -165,7 +167,7 @@ jobs:
             2>&1 | tail -20
 
       - name: Upload to App Store Connect
-        if: ${{ secrets.APPLE_CERTIFICATE_P12 != '' && secrets.ASC_P8_BASE64 != '' }}
+        if: env.HAS_CERT == 'true' && env.HAS_ASC == 'true'
         env:
           ASC_KEY_ID:    ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
@@ -182,7 +184,7 @@ jobs:
             --apiIssuer "$ASC_ISSUER_ID"
 
       - name: Upload signed IPA artifact
-        if: ${{ secrets.APPLE_CERTIFICATE_P12 != '' }}
+        if: env.HAS_CERT == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: ProgMetronome-${{ github.run_number }}.ipa
