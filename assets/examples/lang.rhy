@@ -1,0 +1,221 @@
+{
+    "version": 1,
+    "name": "lang",
+    "bpm": 136.0,
+    "createdAt": "day=10 22:56:27 UTC",
+    "tracks": [
+        {
+            "label": "Track 1",
+            "denom": 4,
+            "items": [
+                {
+                    "type": "open"
+                },
+                {
+                    "type": "beat",
+                    "num": 4,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "close"
+                },
+                {
+                    "type": "repeat",
+                    "count": 12
+                },
+                {
+                    "type": "open"
+                },
+                {
+                    "type": "beat",
+                    "num": 3,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "close"
+                },
+                {
+                    "type": "repeat",
+                    "count": 6
+                },
+                {
+                    "type": "open"
+                },
+                {
+                    "type": "open"
+                },
+                {
+                    "type": "open"
+                },
+                {
+                    "type": "beat",
+                    "num": 3,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "close"
+                },
+                {
+                    "type": "repeat",
+                    "count": 6
+                },
+                {
+                    "type": "close"
+                },
+                {
+                    "type": "repeat",
+                    "count": 8
+                },
+                {
+                    "type": "close"
+                },
+                {
+                    "type": "repeat",
+                    "count": 2
+                },
+                {
+                    "type": "open"
+                },
+                {
+                    "type": "beat",
+                    "num": 4,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "close"
+                },
+                {
+                    "type": "repeat",
+                    "count": 4
+                },
+                {
+                    "type": "open"
+                },
+                {
+                    "type": "beat",
+                    "num": 4,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "close"
+                },
+                {
+                    "type": "repeat",
+                    "count": -1
+                }
+            ]
+        },
+        {
+            "label": "Track 2",
+            "denom": 1,
+            "items": [
+                {
+                    "type": "beat",
+                    "num": 12,
+                    "den": 1,
+                    "active": false,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 9,
+                    "den": 2,
+                    "active": false,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "open"
+                },
+                {
+                    "type": "open"
+                },
+                {
+                    "type": "beat",
+                    "num": 4,
+                    "den": 4,
+                    "soundId": "snd_perc_can_lo"
+                },
+                {
+                    "type": "close"
+                },
+                {
+                    "type": "repeat",
+                    "count": 31
+                },
+                {
+                    "type": "beat",
+                    "num": 2,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "open"
+                },
+                {
+                    "type": "beat",
+                    "num": 3,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "close"
+                },
+                {
+                    "type": "repeat",
+                    "count": 6
+                },
+                {
+                    "type": "close"
+                },
+                {
+                    "type": "repeat",
+                    "count": 2
+                },
+                {
+                    "type": "beat",
+                    "num": 4,
+                    "den": 1,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "open"
+                },
+                {
+                    "type": "beat",
+                    "num": 9,
+                    "den": 2,
+                    "soundId": "snd_perc_clackhead_hi"
+                },
+                {
+                    "type": "close"
+                },
+                {
+                    "type": "repeat",
+                    "count": 8
+                },
+                {
+                    "type": "open"
+                },
+                {
+                    "type": "beat",
+                    "num": 1,
+                    "den": 1,
+                    "active": false,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "close"
+                },
+                {
+                    "type": "repeat",
+                    "count": -1
+                }
+            ]
+        }
+    ]
+}

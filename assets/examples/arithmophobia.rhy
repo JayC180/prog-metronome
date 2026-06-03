@@ -1,0 +1,187 @@
+{
+    "version": 1,
+    "name": "arithmophobia",
+    "bpm": 150.0,
+    "createdAt": "day=10 23:17:39 UTC",
+    "tracks": [
+        {
+            "label": "Track 1",
+            "denom": 4,
+            "items": [
+                {
+                    "type": "open"
+                },
+                {
+                    "type": "beat",
+                    "num": 6,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 4,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 3,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "close"
+                },
+                {
+                    "type": "repeat",
+                    "count": 4
+                },
+                {
+                    "type": "beat",
+                    "num": 4,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 3,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 4,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 3,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 3,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 4,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 3,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 3,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 4,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 3,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 4,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 3,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 4,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 3,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 3,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 4,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 3,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 3,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 4,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 3,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 3,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 5,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                }
+            ]
+        },
+        {
+            "label": "Track 2",
+            "denom": 4,
+            "items": [
+                {
+                    "type": "beat",
+                    "num": 1,
+                    "den": 4,
+                    "soundId": "snd_perc_castanet_hi",
+                    "volume": 0.2541522
+                }
+            ]
+        }
+    ]
+}

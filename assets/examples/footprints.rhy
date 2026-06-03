@@ -1,0 +1,58 @@
+{
+    "version": 1,
+    "name": "footprints",
+    "bpm": 90.0,
+    "createdAt": "day=10 22:08:35 UTC",
+    "tracks": [
+        {
+            "label": "Track 1",
+            "denom": 4,
+            "items": [
+                {
+                    "type": "beat",
+                    "num": 4,
+                    "den": 4,
+                    "soundId": "snd_perc_castanet_hi"
+                }
+            ]
+        },
+        {
+            "label": "Track 2",
+            "denom": 4,
+            "items": [
+                {
+                    "type": "open"
+                },
+                {
+                    "type": "beat",
+                    "num": 4,
+                    "den": 4,
+                    "soundId": "snd_perc_can_lo",
+                    "volume": 0.40798336
+                },
+                {
+                    "type": "beat",
+                    "num": 3,
+                    "den": 4,
+                    "soundId": "snd_perc_can_lo",
+                    "volume": 0.4088202
+                },
+                {
+                    "type": "close"
+                },
+                {
+                    "type": "repeat",
+                    "count": 4
+                },
+                {
+                    "type": "beat",
+                    "num": 4,
+                    "den": 4,
+                    "soundId": "snd_perc_can_lo",
+                    "volume": 0.40141812
+                }
+            ],
+            "defaultSoundId": "snd_perc_can_lo"
+        }
+    ]
+}

@@ -10,6 +10,8 @@
 ## About
 Prog Metronome is a free and open source software made by a prog metal drummer for other prog musicians who wish to practice to complex rhythmic ideas without fiddling around in DAWs. It easily allows you to do polyrhythm, polymeters, metric modulations, and more. 
 
+Its usage is rather unconventional. See [usage](#usage) for more details.
+
 The logo stands for a 5:4 polyrhythm/polymeter because I really like 5:4. I also wrote a blog about some of the technical details of this project in [my website](https://jayc180.link/) if you're interested.
 
 ## Features
@@ -31,14 +33,16 @@ The logo stands for a 5:4 polyrhythm/polymeter because I really like 5:4. I also
 
 ## Download
 
-## Usage
+## <a name="usage"></a> Usage
 <div align="center">
   <img src="./assets/demo.gif" width="220" />
 </div>
 
 Full demo video: 
 
-See [help](./assets/help.md) for manual explanations. It can also be found in settings in the software.
+See [help](./assets/help.md) for manual explanations. This can also be found in settings in the software.
+
+Explanation for a list of examples can be found [here]. Download and load these .rhy files into the app to see them in action.
 
 ## Issues
 For any issues or feedback, please submit a GitHub Issue or email prog.metronome@gmail.com

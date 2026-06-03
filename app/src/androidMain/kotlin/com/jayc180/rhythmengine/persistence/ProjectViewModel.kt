@@ -84,6 +84,11 @@ class ProjectViewModel(application: Application) : AndroidViewModel(application)
         _hasSession.value = false
     }
 
+    fun newProject() {
+        _currentFile.value = null
+        _projectName.value = "Untitled"
+    }
+
     /**
      * Save with [name]. Creates a new file each time.
      * After save, the session file is cleared (work is now persisted).

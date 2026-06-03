@@ -1,0 +1,148 @@
+{
+    "version": 1,
+    "name": "la_danse",
+    "bpm": 145.0,
+    "createdAt": "day=10 23:36:29 UTC",
+    "tracks": [
+        {
+            "label": "Track 1",
+            "denom": 4,
+            "items": [
+                {
+                    "type": "open"
+                },
+                {
+                    "type": "open"
+                },
+                {
+                    "type": "beat",
+                    "num": 4,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "close"
+                },
+                {
+                    "type": "repeat",
+                    "count": 4
+                },
+                {
+                    "type": "close"
+                },
+                {
+                    "type": "repeat",
+                    "count": 6
+                },
+                {
+                    "type": "beat",
+                    "num": 12,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 12,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 10,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 10,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 8,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 8,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 6,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 6,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 4,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 4,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "open"
+                },
+                {
+                    "type": "beat",
+                    "num": 1,
+                    "den": 4,
+                    "active": false,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 5,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 5,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "beat",
+                    "num": 5,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi"
+                },
+                {
+                    "type": "close"
+                },
+                {
+                    "type": "repeat",
+                    "count": 3
+                }
+            ]
+        },
+        {
+            "label": "Track 2",
+            "denom": 4,
+            "items": [
+                {
+                    "type": "beat",
+                    "num": 1,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi",
+                    "volume": 0.20310171
+                }
+            ]
+        }
+    ]
+}

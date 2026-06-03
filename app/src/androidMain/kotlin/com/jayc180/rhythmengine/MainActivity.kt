@@ -303,10 +303,12 @@ private fun SettingsOverlay(
     onAppearance:    () -> Unit,
     onHelp:          () -> Unit,
 ) {
-    val projectName by projectVm.projectName.collectAsState()
-    val projects    by projectVm.projects.collectAsState()
-    var showSaveDialog by remember { mutableStateOf(false) }
-    var showOpenDialog by remember { mutableStateOf(false) }
+    val projectName  by projectVm.projectName.collectAsState()
+    val currentFile  by projectVm.currentFile.collectAsState()
+    val projects     by projectVm.projects.collectAsState()
+    var showSaveDialog    by remember { mutableStateOf(false) }
+    var showOverwriteDlg  by remember { mutableStateOf(false) }
+    var showOpenDialog    by remember { mutableStateOf(false) }
     val defaultSoundLabel = sounds.firstOrNull { it.id == rhythmVm.globalDefaultSoundId }?.label ?: "—"
     val pairedBracketDelete by rhythmVm.builder.pairedBracketDeleteFlow
         .collectAsState()
@@ -338,7 +340,10 @@ private fun SettingsOverlay(
                 fontSize = 11.sp, color = RhythmColors.textSecondary))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 SBtn("Save", modifier = Modifier.weight(1f),
-                    onClick = { projectVm.save(rhythmVm.builder.state.value); onDismiss() })
+                    onClick = {
+                        if (currentFile != null) showOverwriteDlg = true
+                        else showSaveDialog = true
+                    })
                 SBtn("Save As…", modifier = Modifier.weight(1f),
                     onClick = { showSaveDialog = true })
             }
@@ -354,6 +359,7 @@ private fun SettingsOverlay(
                                 bpm              = 120.0,
                             )
                         )
+                        projectVm.newProject()
                         onDismiss()
                     },
                     bg = RhythmColors.bg3, textColor = RhythmColors.textMuted)
@@ -452,6 +458,11 @@ private fun SettingsOverlay(
         onSave = { name -> projectVm.saveAs(rhythmVm.builder.state.value, name); showSaveDialog = false; onDismiss() },
         onCancel = { showSaveDialog = false })
 
+    if (showOverwriteDlg) OverwriteDialog(
+        name      = projectName,
+        onConfirm = { projectVm.save(rhythmVm.builder.state.value); showOverwriteDlg = false; onDismiss() },
+        onCancel  = { showOverwriteDlg = false })
+
     if (showOpenDialog) OpenDialog(
         projects = projects,
         onOpen = { info -> projectVm.load(info.file); showOpenDialog = false; onDismiss() },
@@ -502,6 +513,26 @@ private fun SettingsOverlay(
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 SBtn("Cancel", onClick = onCancel, bg = RhythmColors.bg3, textColor = RhythmColors.textMuted)
                 SBtn("Save", onClick = { if (name.isNotBlank()) onSave(name.trim()) },
+                    bg = RhythmColors.accentBg, textColor = RhythmColors.accent, border = RhythmColors.accentBorder)
+            }
+        }
+    }
+}
+
+@Composable private fun OverwriteDialog(name: String, onConfirm: () -> Unit, onCancel: () -> Unit) {
+    Dialog(onDismissRequest = onCancel) {
+        Column(modifier = Modifier.clip(RoundedCornerShape(12.dp))
+            .background(RhythmColors.bg2)
+            .border(0.5.dp, RhythmColors.border2, RoundedCornerShape(12.dp))
+            .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Text("Override \"$name\"?", style = RhythmType.bpmValue.copy(
+                fontSize = 15.sp, color = RhythmColors.textPrimary))
+            Text("This will overwrite the saved file.",
+                style = RhythmType.label.copy(fontSize = 12.sp, color = RhythmColors.textSecondary))
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                SBtn("Cancel", onClick = onCancel, bg = RhythmColors.bg3, textColor = RhythmColors.textMuted)
+                SBtn("Override", onClick = onConfirm,
                     bg = RhythmColors.accentBg, textColor = RhythmColors.accent, border = RhythmColors.accentBorder)
             }
         }

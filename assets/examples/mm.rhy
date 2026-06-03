@@ -1,0 +1,157 @@
+{
+    "version": 1,
+    "name": "mm",
+    "bpm": 120.0,
+    "createdAt": "day=10 22:56:19 UTC",
+    "tracks": [
+        {
+            "label": "Track 1",
+            "denom": 1,
+            "items": [
+                {
+                    "type": "open"
+                },
+                {
+                    "type": "beat",
+                    "num": 1,
+                    "den": 1,
+                    "soundId": "snd_perc_can_lo"
+                },
+                {
+                    "type": "close"
+                },
+                {
+                    "type": "repeat",
+                    "count": 8
+                },
+                {
+                    "type": "mod",
+                    "p": 3,
+                    "q": 4
+                },
+                {
+                    "type": "open"
+                },
+                {
+                    "type": "beat",
+                    "num": 1,
+                    "den": 1,
+                    "soundId": "snd_perc_can_lo"
+                },
+                {
+                    "type": "close"
+                },
+                {
+                    "type": "repeat",
+                    "count": 8
+                }
+            ]
+        },
+        {
+            "label": "Track 2",
+            "denom": 4,
+            "items": [
+                {
+                    "type": "open"
+                },
+                {
+                    "type": "open"
+                },
+                {
+                    "type": "beat",
+                    "num": 1,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi",
+                    "volume": 0.35243574
+                },
+                {
+                    "type": "close"
+                },
+                {
+                    "type": "repeat",
+                    "count": 4
+                },
+                {
+                    "type": "close"
+                },
+                {
+                    "type": "repeat",
+                    "count": 7
+                },
+                {
+                    "type": "open"
+                },
+                {
+                    "type": "beat",
+                    "num": 1,
+                    "den": 3,
+                    "soundId": "snd_perc_can_hi",
+                    "volume": 0.35613677
+                },
+                {
+                    "type": "close"
+                },
+                {
+                    "type": "repeat",
+                    "count": 3
+                },
+                {
+                    "type": "mod",
+                    "p": 3,
+                    "q": 4
+                },
+                {
+                    "type": "open"
+                },
+                {
+                    "type": "open"
+                },
+                {
+                    "type": "beat",
+                    "num": 1,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi",
+                    "volume": 0.3554207
+                },
+                {
+                    "type": "close"
+                },
+                {
+                    "type": "repeat",
+                    "count": 4
+                },
+                {
+                    "type": "close"
+                },
+                {
+                    "type": "repeat",
+                    "count": 7
+                },
+                {
+                    "type": "beat",
+                    "num": 1,
+                    "den": 4,
+                    "soundId": "snd_perc_can_hi",
+                    "volume": 0.35667235
+                },
+                {
+                    "type": "open"
+                },
+                {
+                    "type": "beat",
+                    "num": 3,
+                    "den": 16,
+                    "soundId": "snd_perc_can_hi",
+                    "volume": 0.35263512
+                },
+                {
+                    "type": "close"
+                },
+                {
+                    "type": "repeat",
+                    "count": 4
+                }
+            ]
+        }
+    ]
+}

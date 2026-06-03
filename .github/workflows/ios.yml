@@ -9,8 +9,6 @@ jobs:
   build:
     runs-on: macos-latest
     timeout-minutes: 90
-    env:
-      HAS_CERT: ${{ secrets.APPLE_CERTIFICATE_P12 != '' }}
 
     steps:
       - name: Checkout
@@ -26,9 +24,6 @@ jobs:
         run: chmod +x gradlew
 
       # ── Cache ─────────────────────────────────────────────────────────────────
-      # Three separate caches so a change in one doesn't bust the others.
-      # .konan is the Kotlin/Native toolchain (~600 MB) — the most expensive
-      # thing to re-download on a cold run.
 
       - name: Cache Kotlin/Native toolchain
         uses: actions/cache@v4
@@ -47,6 +42,7 @@ jobs:
           restore-keys: gradle-${{ runner.os }}-
 
       # ── Xcode ─────────────────────────────────────────────────────────────────
+
       - name: Select latest Xcode
         run: |
           XCODE=$(ls -1d /Applications/Xcode*.app 2>/dev/null | sort -r | head -1)
@@ -55,8 +51,6 @@ jobs:
           xcodebuild -version
 
       # ── Kotlin/Native compilation ─────────────────────────────────────────────
-      # Run as a standalone Gradle step so compiler errors are readable.
-      # xcodebuild's run-script phase re-uses this cached output.
 
       - name: Compile Kotlin/Native (all iOS targets)
         run: |
@@ -66,7 +60,7 @@ jobs:
             :app:compileKotlinIosArm64 \
             --stacktrace
 
-      # ── Xcode build ───────────────────────────────────────────────────────────
+      # ── Simulator build ───────────────────────────────────────────────────────
 
       - name: Build Xcode project (iOS Simulator)
         run: |
@@ -76,14 +70,23 @@ jobs:
             -scheme iosApp \
             -configuration Debug \
             -destination "platform=iOS Simulator,name=iPhone 16" \
+            CONFIGURATION_BUILD_DIR=/tmp/simulator-build \
             CODE_SIGNING_ALLOWED=NO \
-            2>&1 | tee /tmp/xcode_build.log
-          tail -40 /tmp/xcode_build.log
-          grep -q "BUILD SUCCEEDED" /tmp/xcode_build.log
+            2>&1 | tee /tmp/xcode_sim.log
+          tail -40 /tmp/xcode_sim.log
+          grep -q "BUILD SUCCEEDED" /tmp/xcode_sim.log
+
+      - name: Upload simulator build
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ProgMetronome-simulator-${{ github.run_number }}
+          path: /tmp/simulator-build/iosApp.app
+          retention-days: 14
+          if-no-files-found: warn
 
       # ── Unsigned device IPA (always) ──────────────────────────────────────────
-      # Builds for real hardware, skips signing. Sideloadly on Windows can
-      # re-sign this IPA with an Apple ID and install over USB — no Mac needed.
+      # Sideloadly on Windows can re-sign this with an Apple ID — no Mac needed.
 
       - name: Build unsigned device IPA
         run: |
@@ -101,7 +104,6 @@ jobs:
             2>&1 | tee /tmp/xcode_device.log
           tail -40 /tmp/xcode_device.log
           grep -q "BUILD SUCCEEDED" /tmp/xcode_device.log
-          # Wrap .app in IPA payload structure
           mkdir -p /tmp/Payload
           APP=$(find /tmp/device-build -maxdepth 1 -name "*.app" | head -1)
           cp -r "$APP" /tmp/Payload/
@@ -114,10 +116,10 @@ jobs:
           path: /tmp/ProgMetronome-unsigned.ipa
           retention-days: 30
 
-      # ── Device IPA (only when signing secrets are provided) ───────────────────
+      # ── Signed IPA + App Store upload (only when secrets are present) ─────────
 
       - name: Import certificate and provisioning profile
-        if: env.HAS_CERT == 'true'
+        if: ${{ secrets.APPLE_CERTIFICATE_P12 != '' }}
         env:
           CERTIFICATE_P12:      ${{ secrets.APPLE_CERTIFICATE_P12 }}
           CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
@@ -141,7 +143,7 @@ jobs:
             ~/Library/MobileDevice/Provisioning\ Profiles/
 
       - name: Archive for device
-        if: env.HAS_CERT == 'true'
+        if: ${{ secrets.APPLE_CERTIFICATE_P12 != '' }}
         run: |
           set -o pipefail
           xcodebuild archive \
@@ -153,7 +155,7 @@ jobs:
             2>&1 | tail -20
 
       - name: Export IPA
-        if: env.HAS_CERT == 'true'
+        if: ${{ secrets.APPLE_CERTIFICATE_P12 != '' }}
         run: |
           set -o pipefail
           xcodebuild -exportArchive \
@@ -162,20 +164,27 @@ jobs:
             -exportPath build/iosApp-export \
             2>&1 | tail -20
 
-      - name: Upload IPA
-        if: env.HAS_CERT == 'true'
+      - name: Upload to App Store Connect
+        if: ${{ secrets.APPLE_CERTIFICATE_P12 != '' && secrets.ASC_P8_BASE64 != '' }}
+        env:
+          ASC_KEY_ID:    ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_P8_BASE64: ${{ secrets.ASC_P8_BASE64 }}
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$ASC_P8_BASE64" | base64 --decode \
+            > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+
+          xcrun altool --upload-app \
+            --type ios \
+            --file build/iosApp-export/*.ipa \
+            --apiKey "$ASC_KEY_ID" \
+            --apiIssuer "$ASC_ISSUER_ID"
+
+      - name: Upload signed IPA artifact
+        if: ${{ secrets.APPLE_CERTIFICATE_P12 != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: ProgMetronome-${{ github.run_number }}.ipa
           path: build/iosApp-export/*.ipa
           retention-days: 30
-
-      # ── Always upload simulator build ─────────────────────────────────────────
-      - name: Upload simulator build
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ProgMetronome-simulator-${{ github.run_number }}
-          path: ~/Library/Developer/Xcode/DerivedData/**/Build/Products/Debug-iphonesimulator/iosApp.app
-          retention-days: 14
-          if-no-files-found: warn

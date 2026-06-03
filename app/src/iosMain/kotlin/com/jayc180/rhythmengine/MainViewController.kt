@@ -54,12 +54,13 @@ fun MainViewController(): UIViewController = ComposeUIViewController {
     val projectName      by vm.projectName.collectAsState()
     val importState      by vm.importState.collectAsState()
 
-    var showSettings     by remember { mutableStateOf(false) }
-    var showThemeDialog  by remember { mutableStateOf(false) }
-    var showSaveAsDialog by remember { mutableStateOf(false) }
-    var showOpenDialog   by remember { mutableStateOf(false) }
-    var showHelpDialog   by remember { mutableStateOf(false) }
-    var sessionHandled   by remember { mutableStateOf(false) }
+    var showSettings      by remember { mutableStateOf(false) }
+    var showThemeDialog   by remember { mutableStateOf(false) }
+    var showSaveAsDialog  by remember { mutableStateOf(false) }
+    var showOverwriteDlg  by remember { mutableStateOf(false) }
+    var showOpenDialog    by remember { mutableStateOf(false) }
+    var showHelpDialog    by remember { mutableStateOf(false) }
+    var sessionHandled    by remember { mutableStateOf(false) }
     var soundPickerTarget by remember { mutableStateOf<SoundPickerTarget?>(null) }
 
     val appVm = remember(vm) {
@@ -81,7 +82,10 @@ fun MainViewController(): UIViewController = ComposeUIViewController {
                         onDismiss       = { showSettings = false },
                         onAppearance    = { showThemeDialog = true },
                         onSaveAs        = { showSaveAsDialog = true; showSettings = false },
-                        onSave          = { vm.save(); showSettings = false },
+                        onSave          = {
+                            if (vm.currentPath.value != null) { showOverwriteDlg = true; showSettings = false }
+                            else { vm.save(); showSettings = false }
+                        },
                         onOpenProjects  = { vm.refreshProjects(); showOpenDialog = true; showSettings = false },
                         onNewProject    = { vm.newProject(); showSettings = false },
                         onHelp          = { showHelpDialog = true },
@@ -129,6 +133,14 @@ fun MainViewController(): UIViewController = ComposeUIViewController {
                 initialName = projectName,
                 onSave      = { name -> vm.saveAs(name); showSaveAsDialog = false },
                 onDismiss   = { showSaveAsDialog = false },
+            )
+        }
+
+        if (showOverwriteDlg) {
+            OverwriteDialog(
+                name      = projectName,
+                onConfirm = { vm.save(); showOverwriteDlg = false },
+                onDismiss = { showOverwriteDlg = false },
             )
         }
 
@@ -214,7 +226,7 @@ private fun SessionRestoreDialog(onRestore: () -> Unit, onDiscard: () -> Unit) {
 
 @Composable
 private fun SaveAsDialog(initialName: String, onSave: (String) -> Unit, onDismiss: () -> Unit) {
-    var name by remember { mutableStateOf(initialName) }
+    var name by remember { mutableStateOf(if (initialName == "Untitled") "" else initialName) }
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -258,6 +270,42 @@ private fun SaveAsDialog(initialName: String, onSave: (String) -> Unit, onDismis
                     bg = RhythmColors.bg3, textColor = RhythmColors.textMuted)
                 IosBtn("Save", modifier = Modifier.weight(1f),
                     onClick = { if (name.isNotBlank()) onSave(name.trim()) },
+                    bg = RhythmColors.accentBg, textColor = RhythmColors.accent)
+            }
+        }
+    }
+}
+
+// ── Overwrite confirm dialog ──────────────────────────────────────────────────
+
+@Composable
+private fun OverwriteDialog(name: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    Box(
+        modifier = Modifier.fillMaxSize()
+            .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.6f))
+            .clickable(onClick = onDismiss),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            modifier = Modifier
+                .width(280.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(RhythmColors.bg2)
+                .border(0.5.dp, RhythmColors.border2, RoundedCornerShape(12.dp))
+                .clickable { }
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Text("Override \"$name\"?", style = RhythmType.bpmValue.copy(
+                fontSize = 15.sp, color = RhythmColors.textPrimary))
+            Text("This will overwrite the saved file.",
+                style = RhythmType.label.copy(fontSize = 12.sp, color = RhythmColors.textSecondary))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                IosBtn("Cancel", modifier = Modifier.weight(1f),
+                    onClick = onDismiss,
+                    bg = RhythmColors.bg3, textColor = RhythmColors.textMuted)
+                IosBtn("Override", modifier = Modifier.weight(1f),
+                    onClick = onConfirm,
                     bg = RhythmColors.accentBg, textColor = RhythmColors.accent)
             }
         }
