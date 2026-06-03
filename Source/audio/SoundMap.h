@@ -6,7 +6,7 @@
 
 namespace rhythm {
 
-// The active sound map: soundId → SoundConfig. One per session/project.
+// The active sound map: soundId -> SoundConfig. One per session/project.
 // The audio dispatcher holds a reference to this.
 class SoundMap {
   public:

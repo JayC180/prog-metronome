@@ -21,6 +21,7 @@ captures/
 *.iws
 *.ipr
 out/
+app/release/
 
 # ios
 iosApp/build/

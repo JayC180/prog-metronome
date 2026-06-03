@@ -415,7 +415,7 @@ void TrackBuilder::setRepeatInfinite() {
         return;
     const auto &t = *tp;
 
-    // case 1: editing an existing repeat → replace
+    // case 1: editing an existing repeat -> replace
     const auto *cur = state_.cursorItem();
     if (cur != nullptr)
         if (const auto *r = cur->getIf<TrackItem::Repeat>();

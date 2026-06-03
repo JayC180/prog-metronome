@@ -538,6 +538,147 @@ void SoundPickerDialog::layoutContent(juce::Rectangle<int> b) {
     listContent_.setSize(w, y);
 }
 
+// help
+std::vector<HelpDialog::HelpEntry> HelpDialog::makeEntries()
+{
+    return {
+        { "Beat",
+          "The numpad enters beat values. The /4 button shows the current subdivision for "
+          "the next input. For example, /4 matches \"16th notes\" in classical western theory, "
+          "then entering 1 on the numpad gives an item with duration of 1/16th note relative to "
+          "the bpm. Entering 3 is equivalent to a dotted 8th note. For values above 9 press the "
+          "\"custom\" button. A beat can be turned on/off, its volume and sound adjusted in the "
+          "edit panel above the numpad." },
+        { "Subdivision",
+          "The default subdivision is /4. To change it, click the /N button then press "
+          "the numpad or \"custom\" for any value larger than 9. This gives easy access to all "
+          "tuplets. For nested tuplets you need to do the calculation. Example: a triplet out of "
+          "two notes from triplet-eighth-notes is 2/9 of the pulse, so set subdivision to 9 "
+          "then press 2." },
+        { "Brackets and Repeats",
+          "[ and ] wrap a section. Press xN after the closing bracket then click the numpad "
+          "to repeat that many times, or \"custom\" for more than 9. Infinite repeat is also an "
+          "option. Useful for simulating meters, hypermeters, or any repeating pattern. Brackets "
+          "can be nested. Example: [ 3 3 2 ]x4 [ 5 ]xinf plays a 3+3+2 group four "
+          "times, then loops 5 indefinitely." },
+        { "Editing",
+          "The E button in the numpad is used for editing. When an item is selected, click E "
+          "to enter edit mode -- number inputs will change the selected item instead of appending. "
+          "Del deletes the selected item, or the last item if nothing is selected. "
+          "Paired bracket delete (in settings) removes both brackets together when you delete either one." },
+        { "Keyboard Shortcuts",
+          "Space: play/stop. Left/Right arrows: move cursor. Up/Down arrows: switch tracks. "
+          "1-9: enter beat. Backspace/Delete: delete. M: mute active track. S: solo active track." },
+        { "Tempo Changes",
+          "mm inserts a metric modulation. After clicking it a popup prompts for two numbers. "
+          "For example at 120 bpm, mm of x3/2 gives 180. =bpm sets an absolute tempo at that "
+          "point. Both take effect at that position during playback and won't affect the global "
+          "bpm. You cannot put mm inside an infinitely-repeated group." },
+        { "Tracks",
+          "Each track is a row. Multiple tracks play simultaneously, useful for polyrhythm and "
+          "polymeters. Tap a track to select it and edit. Each track repeats from the start when "
+          "the end is reached (except when there is an infinite repeat)." },
+        { "Mute, Solo, Default Sound",
+          "Each track row has M (mute), S (solo), and snd (default sound/volume) chips. "
+          "The snd chip opens a picker to set the default sound and volume for new beats on that "
+          "track; the chip highlights when a custom sound is configured. "
+          "Item-level sound/volume overrides the track default, which overrides the global default "
+          "(set via Default sound... in the settings menu)." },
+        { "Projects",
+          "Projects auto-save every 30 seconds. Use Save As in the settings menu for named "
+          ".rhy project files that can be shared across devices. Open Project loads a .rhy file." },
+        { "About Prog Metronome",
+          "Prog Metronome is a free and open source project. Source code is available at\n"
+          "https://github.com/JayC180/prog-metronome\n\n"
+          "If you have the ability, consider supporting the developer at\n"
+          "https://ko-fi.com/prog_metronome" },
+    };
+}
+
+HelpDialog::ContentComp::ContentComp(std::vector<HelpEntry> entries)
+    : entries_(std::move(entries)) {}
+
+void HelpDialog::ContentComp::relayout(int width)
+{
+    if (width == cachedWidth_ || width <= 0)
+        return;
+    cachedWidth_ = width;
+
+    const juce::Font titleFont(juce::FontOptions(20.0f, juce::Font::bold));
+    const juce::Font bodyFont(juce::FontOptions(18.0f));
+    const float fw = (float)width;
+
+    sectionY_.clear();
+    int y = 4;
+    for (const auto &e : entries_) {
+        sectionY_.push_back(y);
+        y += 24; // title line
+
+        juce::AttributedString as;
+        as.setText(e.body);
+        as.setFont(bodyFont);
+        as.setColour(RhythmColors::textSecondary());
+        as.setWordWrap(juce::AttributedString::byWord);
+        juce::TextLayout tl;
+        tl.createLayout(as, fw);
+        y += (int)std::ceil(tl.getHeight()) + 14; // body + gap
+    }
+    totalH_ = y;
+    setSize(width, totalH_);
+}
+
+void HelpDialog::ContentComp::paint(juce::Graphics &g)
+{
+    if (cachedWidth_ <= 0 || sectionY_.size() != entries_.size())
+        return;
+
+    const juce::Font titleFont(juce::FontOptions(20.0f, juce::Font::bold));
+    const juce::Font bodyFont(juce::FontOptions(18.0f));
+    const float fw = (float)getWidth();
+
+    for (int i = 0; i < (int)entries_.size(); ++i) {
+        const int y = sectionY_[(size_t)i];
+        const auto &e = entries_[(size_t)i];
+
+        g.setFont(titleFont);
+        g.setColour(RhythmColors::accent());
+        g.drawText(e.title, 0, y, getWidth(), 24, juce::Justification::left, false);
+
+        juce::AttributedString as;
+        as.setText(e.body);
+        as.setFont(bodyFont);
+        as.setColour(RhythmColors::textSecondary());
+        as.setWordWrap(juce::AttributedString::byWord);
+        juce::TextLayout tl;
+        tl.createLayout(as, fw);
+        tl.draw(g, juce::Rectangle<float>(0.0f, (float)(y + 25), fw, (float)totalH_));
+    }
+}
+
+HelpDialog::HelpDialog()
+    : DialogPanel("Help", {}), content_(makeEntries())
+{
+    preferredWidth  = 420;
+    preferredHeight = 500;
+    viewport_.setViewedComponent(&content_, false);
+    viewport_.setScrollBarsShown(true, false);
+    content().addAndMakeVisible(viewport_);
+
+    addAction("Close", RhythmColors::bg3(), RhythmColors::border1(),
+              RhythmColors::textMuted(), [this] {
+                  if (auto *w = findParentComponentOfClass<juce::DialogWindow>())
+                      w->exitModalState(0);
+              });
+}
+
+HelpDialog::~HelpDialog() = default;
+
+void HelpDialog::layoutContent(juce::Rectangle<int> b)
+{
+    content_.relayout(b.getWidth() - 4);
+    viewport_.setBounds(b);
+}
+
 // ---------- showRhythmDialog ----------
 
 void showRhythmDialog(juce::Component *parent,

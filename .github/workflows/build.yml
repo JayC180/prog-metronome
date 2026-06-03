@@ -28,12 +28,12 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist | Out-Null
-          Copy-Item build/RhythmEngine_artefacts/Release/Standalone/RhythmEngine.exe dist/
-          Copy-Item build/RhythmEngine_artefacts/Release/VST3/RhythmEngine.vst3 dist/ -Recurse
+          Copy-Item "build/RhythmEngine_artefacts/Release/Standalone/Prog Metronome.exe" dist/
+          Copy-Item "build/RhythmEngine_artefacts/Release/VST3/Prog Metronome.vst3" dist/ -Recurse
 
       - uses: actions/upload-artifact@v4
         with:
-          name: RhythmEngine-windows-x64
+          name: ProgMetronome-windows-x64
           path: dist/
           if-no-files-found: error
 
@@ -59,13 +59,13 @@ jobs:
       - name: Stage artifacts
         run: |
           mkdir -p dist
-          cp -R build/RhythmEngine_artefacts/Release/Standalone/RhythmEngine.app dist/
-          cp -R build/RhythmEngine_artefacts/Release/VST3/RhythmEngine.vst3 dist/
-          cp -R build/RhythmEngine_artefacts/Release/AU/RhythmEngine.component dist/
+          cp -R "build/RhythmEngine_artefacts/Release/Standalone/Prog Metronome.app" dist/
+          cp -R "build/RhythmEngine_artefacts/Release/VST3/Prog Metronome.vst3" dist/
+          cp -R "build/RhythmEngine_artefacts/Release/AU/Prog Metronome.component" dist/
 
       - uses: actions/upload-artifact@v4
         with:
-          name: RhythmEngine-macos-universal
+          name: ProgMetronome-macos-universal
           path: dist/
           if-no-files-found: error
 
@@ -108,11 +108,11 @@ jobs:
       - name: Stage artifacts
         run: |
           mkdir -p dist
-          cp build/RhythmEngine_artefacts/Release/Standalone/RhythmEngine dist/
-          cp -R build/RhythmEngine_artefacts/Release/VST3/RhythmEngine.vst3 dist/
+          cp "build/RhythmEngine_artefacts/Release/Standalone/Prog Metronome" dist/
+          cp -R "build/RhythmEngine_artefacts/Release/VST3/Prog Metronome.vst3" dist/
 
       - uses: actions/upload-artifact@v4
         with:
-          name: RhythmEngine-linux-x64
+          name: ProgMetronome-linux-x64
           path: dist/
           if-no-files-found: error

@@ -28,7 +28,7 @@ class TopBarComponent : public juce::Component {
     void paintPlayStopButton(juce::Graphics &);
 
     TrackBuilder &builder_;
-    ChipButton settingsButton_{juce::String::fromUTF8(u8"⚙")};
+    ChipButton settingsButton_{juce::String::fromUTF8(u8"≡")};
     ChipButton tapButton_{"tap"};
 
     void paintProjectName(juce::Graphics &);

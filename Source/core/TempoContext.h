@@ -51,7 +51,7 @@ class TempoContext {
     }
 
     // The ratio describes what happens to the pulse LENGTH (not BPM).
-    // ratio < 1 → shorter pulse; ratio > 1 → longer pulse.
+    // ratio < 1 -> shorter pulse; ratio > 1 -> longer pulse.
     TempoContext withModulation(const Rational &ratio) const {
         return TempoContext(bpm_, pulseUnit_, (modulation_ * ratio).reduced());
     }

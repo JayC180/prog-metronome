@@ -19,7 +19,7 @@ MainComponent::MainComponent(RhythmEngineProcessor &processor)
         triggerAsyncUpdate();
     });
 
-    // Settings button → popup menu: file ops + theme
+    // Settings button -> popup menu: file ops + theme
     topBar_.onSettingsClicked = [this] {
         juce::PopupMenu themeMenu;
         const auto &themes = BuiltInThemes::all();
@@ -40,7 +40,11 @@ MainComponent::MainComponent(RhythmEngineProcessor &processor)
         menu.addItem(5, "Import Sound...");
         menu.addItem(6, "Default sound...");
         menu.addSeparator();
+        menu.addItem(7, "Paired bracket delete", true, builder_.pairedBracketDelete());
+        menu.addSeparator();
         menu.addSubMenu("Theme", themeMenu);
+        menu.addSeparator();
+        menu.addItem(8, "Help...");
 
         menu.showMenuAsync(
             juce::PopupMenu::Options().withTargetComponent(&topBar_),
@@ -57,6 +61,12 @@ MainComponent::MainComponent(RhythmEngineProcessor &processor)
                     importSound();
                 else if (result == 6)
                     openGlobalSoundPicker();
+                else if (result == 7) {
+                    builder_.setPairedBracketDelete(!builder_.pairedBracketDelete());
+                    saveSettings();
+                }
+                else if (result == 8)
+                    showRhythmDialog(this, std::make_unique<HelpDialog>());
                 else if (result >= 200) {
                     const int idx = result - 200;
                     const auto &themes = BuiltInThemes::all();
@@ -165,6 +175,7 @@ MainComponent::MainComponent(RhythmEngineProcessor &processor)
 
     trackList_.onTrackSound = [this](int idx) { openTrackSoundPicker(idx); };
 
+    loadSettings();
     loadUserSoundsFromDisk(); // populates availableSounds_ and load wavs
     updateProjectNameDisplay();
     rebuildFromState();
@@ -453,6 +464,34 @@ void MainComponent::importSound() {
             }
             rebuildAvailableSounds();
         });
+}
+
+static juce::File settingsFilePath() {
+    return juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
+        .getChildFile("RhythmEngine")
+        .getChildFile("settings.json");
+}
+
+void MainComponent::loadSettings() {
+    const auto f = settingsFilePath();
+    if (!f.existsAsFile())
+        return;
+    juce::var v;
+    if (juce::JSON::parse(f.loadFileAsString(), v).failed())
+        return;
+    if (auto *obj = v.getDynamicObject()) {
+        if (obj->hasProperty("pairedBracketDelete"))
+            builder_.setPairedBracketDelete((bool)obj->getProperty("pairedBracketDelete"));
+    }
+}
+
+void MainComponent::saveSettings() {
+    auto *obj = new juce::DynamicObject();
+    obj->setProperty("pairedBracketDelete", builder_.pairedBracketDelete());
+    const juce::String json = juce::JSON::toString(juce::var(obj), true);
+    const auto f = settingsFilePath();
+    f.getParentDirectory().createDirectory();
+    f.replaceWithText(json);
 }
 
 juce::File MainComponent::autosavePath() {

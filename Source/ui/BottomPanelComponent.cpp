@@ -7,7 +7,7 @@ BottomPanelComponent::BottomPanelComponent(TrackBuilder &builder)
       denomButton_(juce::String::fromUTF8(u8"÷4")), openBracketButton_("["),
       closeBracketButton_("]"), repeatButton_(juce::String::fromUTF8(u8"×N")),
       mmButton_("mm"), setBpmButton_("=bpm"),
-      navNextButton_(juce::String::fromUTF8(u8"→")) {
+      navNextButton_(juce::String::fromUTF8(u8"->")) {
     auto addToolButton = [this](ChipButton &b, std::function<void()> cb) {
         b.setFontSize(12.0f);
         b.setOnClick(std::move(cb));

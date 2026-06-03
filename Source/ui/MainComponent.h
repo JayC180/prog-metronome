@@ -38,6 +38,9 @@ private:
     void openTrackSoundPicker(int trackIdx);
     void openGlobalSoundPicker();
 
+    void loadSettings();
+    void saveSettings();
+
     void newProject();
     void openProject();
     void saveProject();

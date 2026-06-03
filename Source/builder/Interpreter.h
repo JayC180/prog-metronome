@@ -6,7 +6,7 @@
 
 namespace rhythm {
 
-// Interpreter - flat TrackItem list → pre-computed nanosecond events.
+// Interpreter - flat TrackItem list -> pre-computed nanosecond events.
 //
 // Tempo semantics:
 //

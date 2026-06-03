@@ -46,7 +46,7 @@ juce_add_plugin(RhythmEngine
     PLUGIN_MANUFACTURER_CODE Elsa
     PLUGIN_CODE Rhy1
     FORMATS VST3 AU Standalone
-    PRODUCT_NAME "RhythmEngine")
+    PRODUCT_NAME "Prog Metronome")
 
 target_sources(RhythmEngine PRIVATE
     Source/PluginProcessor.cpp

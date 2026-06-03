@@ -16,7 +16,7 @@ namespace rhythm {
 // Sample-playback audio engine living inside an AudioProcessor.
 //
 // Architecture:
-//   - SoundMap (config) → file path
+//   - SoundMap (config) -> file path
 //   - AudioFormatManager loads each unique resource into a shared AudioBuffer
 //   - trigger() pushes a Trigger onto a lock-free SPSC FIFO (called from
 //     the dispatcher thread); processBlock drains the FIFO and assigns

@@ -26,8 +26,6 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
 
-    // Sub-classes implement layout in resized() for the content area; default
-    // layout is: title (auto) + hint (auto) + content (flex) + buttons (auto)
     virtual void layoutContent (juce::Rectangle<int> /*contentBounds*/) {}
 
     int preferredWidth  { 360 };
@@ -104,16 +102,15 @@ private:
     juce::TextEditor field_;
 };
 
-// Generic single-column list picker - used by SoundPicker and ThemePicker.
-// Each entry has a label and an opaque payload identifier.
+// Generic single-column list picker.
 class ListPickerDialog : public DialogPanel
 {
 public:
     struct Entry
     {
         juce::String label;
-        juce::String badge;       // optional "user" / "built-in" tag, may be empty
-        juce::Colour badgeColour; // text colour for badge
+        juce::String badge;
+        juce::Colour badgeColour;
         juce::String payloadId;
     };
 
@@ -131,9 +128,7 @@ private:
     std::vector<std::unique_ptr<Row>>       rows_;
 };
 
-// Sound picker - a scrollable list of SoundInfo entries with the current
-// selection highlighted. Clicking an entry fires onSelect with that sound's id.
-// When currentVolume is provided a volume slider appears above the list.
+// Sound picker with optional default-volume slider above the list.
 class SoundPickerDialog : public DialogPanel
 {
 public:
@@ -157,8 +152,36 @@ private:
     std::vector<std::unique_ptr<Row>>       rows_;
 };
 
+// Scrollable help reference with section headings.
+class HelpDialog : public DialogPanel
+{
+public:
+    HelpDialog();
+    ~HelpDialog() override;
+    void layoutContent (juce::Rectangle<int>) override;
+
+private:
+    struct HelpEntry { juce::String title; juce::String body; };
+    static std::vector<HelpEntry> makeEntries();
+
+    class ContentComp : public juce::Component
+    {
+    public:
+        explicit ContentComp (std::vector<HelpEntry> entries);
+        void relayout (int width);
+        void paint (juce::Graphics&) override;
+    private:
+        std::vector<HelpEntry> entries_;
+        std::vector<int>       sectionY_;
+        int                    totalH_{0};
+        int                    cachedWidth_{0};
+    };
+
+    juce::Viewport viewport_;
+    ContentComp    content_;
+};
+
 // Helper: shows a DialogPanel inside a DialogWindow on top of `parent`.
-// Returns nothing - the panel owns its callback and self-destructs when closed.
 void showRhythmDialog (juce::Component* parent,
                        std::unique_ptr<DialogPanel> panel);
 

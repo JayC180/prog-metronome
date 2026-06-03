@@ -112,7 +112,7 @@ static void computeNode(const PNode &node, ComputeState &s,
 
 InterpretResult interpretTrackDraft(const TrackDraft &draft, double baseBpm,
                                     const std::string &defaultSound) {
-    // ----- parse: flat items → PNode tree -----
+    // ----- parse: flat items -> PNode tree -----
     std::vector<PNode> rootNodes;
     std::vector<Frame> stack;
 
@@ -175,7 +175,7 @@ InterpretResult interpretTrackDraft(const TrackDraft &draft, double baseBpm,
         addNode(g, rootNodes, stack);
     }
 
-    // ----- compute: PNode tree → events -----
+    // ----- compute: PNode tree -> events -----
     auto hasInfLoop = [&]() -> bool {
         if (rootNodes.empty())
             return false;
