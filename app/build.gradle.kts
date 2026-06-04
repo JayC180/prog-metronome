@@ -122,7 +122,7 @@ android {
         applicationId = "com.jayc180.rhythmengine"
         minSdk        = 26
         targetSdk     = 36
-        versionCode   = 1
+        versionCode   = 100
         versionName   = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

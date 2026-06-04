@@ -12,7 +12,7 @@ Prog Metronome is a free and open source software made by a prog metal drummer f
 
 Its usage is rather unconventional. See [usage](#usage) for more details.
 
-The logo stands for a 5:4 polyrhythm/polymeter because I really like 5:4. I also wrote a blog about some of the technical details of this project in [my website](https://jayc180.link/) if you're interested.
+The logo stands for a 5:4 polyrhythm/polymeter because I really like 5:4.
 
 ## Features
 - Polyrhythm and polymeter
