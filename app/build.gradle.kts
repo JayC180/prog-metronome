@@ -153,6 +153,11 @@ android {
         compose = true
         prefab  = true
     }
+
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
 }
 
 compose.desktop {
