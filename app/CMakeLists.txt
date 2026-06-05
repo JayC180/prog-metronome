@@ -20,4 +20,12 @@ target_link_libraries(
         log           # for __android_log_print
 )
 
+target_link_options(rhythmengine PRIVATE "-Wl,--build-id=none")
+
 target_include_directories(rhythmengine PRIVATE src/main/cpp)
+
+add_custom_command(TARGET rhythmengine POST_BUILD
+        COMMAND ${ANDROID_TOOLCHAIN_ROOT}/bin/llvm-objcopy
+        --remove-section .comment
+        $<TARGET_FILE:rhythmengine>
+)

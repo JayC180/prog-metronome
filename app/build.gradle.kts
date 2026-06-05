@@ -1,6 +1,3 @@
-// ── app/build.gradle.kts ──────────────────────────────────────────────────────
-// Plugin ORDER matters: kotlin.multiplatform must be first
-
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.compose.multiplatform)
@@ -117,6 +114,7 @@ kotlin {
 android {
     namespace   = "com.jayc180.rhythmengine"
     compileSdk  = 36
+    ndkVersion = "27.0.12077973"
 
     defaultConfig {
         applicationId = "com.jayc180.rhythmengine"

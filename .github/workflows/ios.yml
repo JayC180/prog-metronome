@@ -3,6 +3,8 @@ name: iOS Build
 on:
   push:
     branches: [ "**" ]
+    tags-ignore:
+      - 'v*'
   workflow_dispatch:
 
 jobs:
