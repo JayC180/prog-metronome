@@ -56,7 +56,7 @@ Prog Metronome is [Free Software](https://en.wikipedia.org/wiki/Free_software): 
 [Free Software Foundation](https://www.fsf.org/).
 
 ## Credits
-All the metronome sounds for the mobile version comes from Ludwig Peter Müller.
+All the metronome sounds for the mobile version was found online from Ludwig Peter Müller.
 
 ## Donation
 If you have the ability, consider to support me at [https://ko-fi.com/prog_metronome](https://ko-fi.com/prog_metronome). All the donations will *only* go towards the annual Apple developer fees of $99 so I can keep publishing this app for IOS and MacOS.
