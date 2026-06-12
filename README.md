@@ -33,14 +33,15 @@ The logo stands for a 5:4 polyrhythm/polymeter because I really like 5:4.
 
 ## Download
 [Click here for Android and desktop](https://github.com/JayC180/prog-metronome/releases/latest)
-iOS coming soon
+
+iOS version is available in App Store
 
 ## <a name="usage"></a> Usage
 <div align="center">
   <img src="./assets/demo.gif" width="220" />
 </div>
 
-Demo video: [coming soon...](https://youtu.be/xnNJNjJ9yNs)
+Demo video: [https://youtu.be/xnNJNjJ9yNs](https://youtu.be/xnNJNjJ9yNs)
 
 There's also a [manual explanation](./assets/help.md). This can also be found in settings in the software.
 
@@ -57,7 +58,7 @@ Prog Metronome is [Free Software](https://en.wikipedia.org/wiki/Free_software): 
 [Free Software Foundation](https://www.fsf.org/).
 
 ## Credits
-All the metronome sounds for the mobile version was found online from Ludwig Peter Müller.
+All the metronome sounds for the mobile version was found [here](https://freesound.org/people/LudwigMueller/packs/30914/) from Ludwig Peter Müller.
 
 ## Donation
 If you have the ability, consider to support me at [https://ko-fi.com/prog_metronome](https://ko-fi.com/prog_metronome). All the donations will *only* go towards the annual Apple developer fees of $99 so I can keep publishing this app for IOS and MacOS.

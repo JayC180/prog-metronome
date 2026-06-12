@@ -1,7 +1,3 @@
-todo...
-https://f-droid.org/en/docs/Submitting_to_F-Droid_Quick_Start_Guide/
-https://f-droid.org/en/docs/All_About_Descriptions_Graphics_and_Screenshots/
-
 Metronome for musicians who wish to practice to complex rhythmic ideas without fiddling around in DAWs. Features:
 - Polyrhythm and polymeter
 - Metric modulations and BPM changes
