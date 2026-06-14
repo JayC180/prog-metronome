@@ -12,7 +12,7 @@ import com.jayc180.rhythmengine.platform.nanoNow
  */
 class TapTempoCalculator(
     private val resetAfterMs: Long = 3000L,
-    private val maxTaps:      Int  = 8,
+    private val maxTaps:      Int  = 16,
 ) {
     private val taps = ArrayDeque<Long>()  // timestamps in ms
 

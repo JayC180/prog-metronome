@@ -90,7 +90,7 @@ fun TrackRow(
         ) {
             if (draft.items.isEmpty()) {
                 Text("tap a number to add beats",
-                    style = RhythmType.label.copy(color = RhythmColors.textDim, fontSize = 10.sp))
+                    style = RhythmType.label.copy(color = RhythmColors.textSecondary, fontSize = 12.sp))
             } else {
                 draft.items.forEachIndexed { index, item ->
                     TrackItemView(

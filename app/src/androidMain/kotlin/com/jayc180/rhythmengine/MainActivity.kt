@@ -362,7 +362,8 @@ private fun SettingsOverlay(
                         projectVm.newProject()
                         onDismiss()
                     },
-                    bg = RhythmColors.bg3, textColor = RhythmColors.textMuted)
+                    bg = RhythmColors.bg3, textColor = RhythmColors.textSecondary,
+                    border = RhythmColors.border1)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 SBtn("Share", modifier = Modifier.weight(1f),
@@ -409,8 +410,8 @@ private fun SettingsOverlay(
                 SBtn("Support",
                     onClick   = { uriHandler.openUri(com.jayc180.rhythmengine.ui.components.SUPPORT_URL) },
                     bg        = RhythmColors.bg3,
-                    textColor = RhythmColors.textDim,
-                    border    = RhythmColors.border0)
+                    textColor = RhythmColors.textSecondary,
+                    border    = RhythmColors.border1)
                 SBtn("Help", modifier = Modifier.weight(1f),
                     onClick   = onHelp,
                     bg        = RhythmColors.bg3,
@@ -491,7 +492,7 @@ private fun SettingsOverlay(
 }
 
 @Composable private fun SaveAsDialog(initialName: String, onSave: (String) -> Unit, onCancel: () -> Unit) {
-    var name by remember { mutableStateOf(if (initialName == "Untitled") "" else initialName) }
+    var name by remember { mutableStateOf(initialName) }
     Dialog(onDismissRequest = onCancel) {
         Column(modifier = Modifier.clip(RoundedCornerShape(12.dp))
             .background(RhythmColors.bg2)

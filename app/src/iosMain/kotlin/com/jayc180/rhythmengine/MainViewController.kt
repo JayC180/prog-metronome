@@ -226,7 +226,7 @@ private fun SessionRestoreDialog(onRestore: () -> Unit, onDiscard: () -> Unit) {
 
 @Composable
 private fun SaveAsDialog(initialName: String, onSave: (String) -> Unit, onDismiss: () -> Unit) {
-    var name by remember { mutableStateOf(if (initialName == "Untitled") "" else initialName) }
+    var name by remember { mutableStateOf(initialName) }
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -467,8 +467,7 @@ private fun IosSettingsOverlay(
             // Open / New row
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 IosBtn("Open…", modifier = Modifier.weight(1f), onClick = onOpenProjects)
-                IosBtn("New Project", modifier = Modifier.weight(1f), onClick = onNewProject,
-                    bg = RhythmColors.bg3, textColor = RhythmColors.textMuted)
+                IosBtn("New Project", modifier = Modifier.weight(1f), onClick = onNewProject)
             }
 
             // Export
@@ -525,8 +524,7 @@ private fun IosSettingsOverlay(
             val uriHandler = LocalUriHandler.current
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 IosBtn("Support",
-                    onClick = { uriHandler.openUri(com.jayc180.rhythmengine.ui.components.SUPPORT_URL) },
-                    textColor = RhythmColors.textDim)
+                    onClick = { uriHandler.openUri(com.jayc180.rhythmengine.ui.components.SUPPORT_URL) })
                 IosBtn("Help", modifier = Modifier.weight(1f), onClick = onHelp)
             }
 

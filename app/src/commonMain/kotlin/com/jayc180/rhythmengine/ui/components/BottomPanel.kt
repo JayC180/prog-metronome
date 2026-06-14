@@ -261,7 +261,6 @@ private fun NumpadSection(
     }
 
     val editBtnAvailable = state.canEdit_item || state.cursorItem is TrackItem.Modulation
-    val customEnabled = state.isRepeatMode || state.isEditMode
 
     Column(modifier = Modifier.fillMaxWidth().background(RhythmColors.bg0)
         .padding(horizontal = 8.dp)) {
@@ -286,17 +285,18 @@ private fun NumpadSection(
                 NumKey(
                     label  = "custom",
                     onClick = { if (numpadEnabled) onCustom()},
-                    textSize = 10.sp,
-                    color  = if (customEnabled) RhythmColors.textPrimary else RhythmColors.textMuted,
+                    textSize = 14.sp,
+                    color  = RhythmColors.textPrimary,
                     modifier = Modifier.weight(1f),
                 )
                 NumKey(
                     label  = "✎",
                     onClick = { if (numpadEnabled) onEditToggle()},
+                    textSize = 22.sp,
                     color  = when {
-                        state.isEditMode  -> RhythmColors.caution          // active edit
-                        state.canEdit_item -> RhythmColors.accent         // can edit
-                        else              -> RhythmColors.textDim        // unavailable
+                        state.isEditMode  -> RhythmColors.caution
+                        state.canEdit_item -> RhythmColors.accent
+                        else              -> RhythmColors.textDim
                     },
                     bg = when {
                         state.isEditMode  -> RhythmColors.cautionBg
@@ -310,8 +310,8 @@ private fun NumpadSection(
                     },
                     modifier = Modifier.weight(1f),
                 )
-                NumKey("⌫", onClick = { if (numpadEnabled) onBackspace()}, textSize = 14.sp,
-                    color = RhythmColors.textMuted, modifier = Modifier.weight(1f))
+                NumKey("⌫", onClick = { if (numpadEnabled) onBackspace()}, textSize = 20.sp,
+                    color = RhythmColors.textPrimary, modifier = Modifier.weight(1f))
             }
         }
     }
@@ -453,15 +453,16 @@ fun RepeatDialog(
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 DialogBtn("Cancel", onClick = onDismiss,
-                    bg = surfaceBg3, textColor = RhythmColors.textMuted, border = RhythmColors.border1)
+                    bg = surfaceBg3, textColor = RhythmColors.textPrimary, border = RhythmColors.border1)
                 // Infinite button
                 DialogBtn("∞ forever", onClick = { onConfirm(-1) },
                     bg = RhythmColors.infiniteBg, textColor = RhythmColors.infiniteText,
                     border = RhythmColors.infiniteBorder)
                 DialogBtn("OK", onClick = { if (isValid) onConfirm(countVal!!) },
-                    bg = if (isValid) RhythmColors.accentBg else surfaceBg3,
-                    textColor = if (isValid) RhythmColors.accent else RhythmColors.textDim,
-                    border = if (isValid) RhythmColors.accentBorder else RhythmColors.border0)
+                    enabled   = isValid,
+                    bg        = surfaceBg3,
+                    textColor = RhythmColors.textPrimary,
+                    border    = RhythmColors.accentBg)
             }
         }
     }
@@ -513,14 +514,14 @@ fun CustomNumberDialog(
 
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 DialogBtn("Cancel", onClick = onDismiss,
-                    bg = surfaceBg3, textColor = RhythmColors.textMuted,
+                    bg = surfaceBg3, textColor = RhythmColors.textPrimary,
                     border = RhythmColors.border1)
                 DialogBtn("OK",
                     onClick  = { if (valid) onConfirm(value!!) },
                     enabled  = valid,
-                    bg       = RhythmColors.accentBg,
-                    textColor = RhythmColors.accent,
-                    border   = RhythmColors.accentBorder)
+                    bg       = surfaceBg3,
+                    textColor = RhythmColors.textPrimary,
+                    border   = RhythmColors.accentBg)
             }
         }
     }

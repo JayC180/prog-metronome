@@ -80,6 +80,29 @@ fun BpmInputDialog(
                 modifier = Modifier.fillMaxWidth(),
             )
 
+            // nudge buttons
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                fun nudge(delta: Double) {
+                    val base = tapBpm ?: textBpm.toDoubleOrNull() ?: return
+                    tapBpm = null; calculator.reset(); tapCount = 0
+                    val next = delta.let {
+                        if (it == 2.0 || it == 0.5) (base * it) else (base + it)
+                    }.coerceIn(1.0, 999.0)
+                    textBpm = "${next.toInt()}"
+                }
+                for ((label, delta) in listOf("÷2" to 0.5, "-5" to -5.0, "-1" to -1.0,
+                                               "+1" to 1.0, "+5" to 5.0, "×2" to 2.0)) {
+                    BpmBtn(label, onClick = { nudge(delta) },
+                        bg        = RhythmColors.bg3,
+                        textColor = RhythmColors.textSecondary,
+                        border    = RhythmColors.border1,
+                        modifier  = Modifier.weight(1f))
+                }
+            }
+
             // tap tempo
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("or tap the beat:", style = RhythmType.label.copy(
@@ -183,17 +206,18 @@ private fun BpmBtn(
     bg:        Color = Color.Unspecified,
     textColor: Color = Color.Unspecified,
     border:    Color = Color.Unspecified,
+    modifier:  Modifier = Modifier,
 ) {
     val alpha = if (enabled) 1f else 0.35f
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier
+        modifier = modifier
             .height(36.dp)
             .clip(RoundedCornerShape(6.dp))
             .background(bg.copy(alpha = alpha))
             .border(0.5.dp, border.copy(alpha = alpha), RoundedCornerShape(6.dp))
             .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(horizontal = 14.dp),
+            .padding(horizontal = 6.dp),
     ) {
         Text(label, maxLines = 1, style = RhythmType.label.copy(
             fontSize = 12.sp, color = textColor.copy(alpha = alpha)))

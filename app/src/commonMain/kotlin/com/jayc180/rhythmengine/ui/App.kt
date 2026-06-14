@@ -485,7 +485,7 @@ private fun AddTrackRow(onAdd: () -> Unit, onCopy: () -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Text("⎘", style = RhythmType.label.copy(color = RhythmColors.beatActiveBorder, fontSize = 14.sp))
-            Text("copy track", style = RhythmType.label.copy(color = RhythmColors.textDim, fontSize = 11.sp))
+            Text("copy track", style = RhythmType.label.copy(color = RhythmColors.textSecondary, fontSize = 11.sp))
         }
         Box(Modifier.width(0.5.dp).fillMaxHeight().background(RhythmColors.border0))
         Row(
@@ -495,7 +495,7 @@ private fun AddTrackRow(onAdd: () -> Unit, onCopy: () -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Text("+", style = RhythmType.label.copy(color = RhythmColors.beatActiveBorder, fontSize = 14.sp))
-            Text("add track", style = RhythmType.label.copy(color = RhythmColors.textDim, fontSize = 11.sp))
+            Text("add track", style = RhythmType.label.copy(color = RhythmColors.textSecondary, fontSize = 11.sp))
         }
     }
 }
