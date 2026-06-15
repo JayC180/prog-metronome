@@ -52,6 +52,9 @@ For any issues or feedback, please submit a GitHub Issue or email prog.metronome
 
 Also I'm a CS student open to full time roles starting summer 2027 I can do software and security stuff hire me plz
 
+## Custom Themes
+Prog Metronome allows custom theme colors. See [this file](./assets/custom-theme.md) for detail.
+
 ## License
 Prog Metronome is [Free Software](https://en.wikipedia.org/wiki/Free_software): You can use, study, share and modify it at your will. The app can be redistributed and/or modified under the terms of the
 [GNU General Public License version 3 or later](https://www.gnu.org/licenses/gpl.html) published by the 
