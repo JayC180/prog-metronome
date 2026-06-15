@@ -65,7 +65,7 @@ class BottomPanelComponent : public juce::Component {
     std::array<std::unique_ptr<NumKeyButton>, 9> numKeys_{};
     NumKeyButton customKey_{"custom"};
 #if JUCE_WINDOWS
-    NumKeyButton editKey_{"E"};
+    NumKeyButton editKey_{"Edit"};
     NumKeyButton backspaceKey_{"Del"};
 #else
     NumKeyButton editKey_{juce::String::fromUTF8(u8"✎")};

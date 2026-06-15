@@ -3,7 +3,7 @@
 namespace rhythm {
 
 BottomPanelComponent::BottomPanelComponent(TrackBuilder &builder)
-    : builder_(builder), navPrevButton_(juce::String::fromUTF8(u8"←")),
+    : builder_(builder), navPrevButton_(juce::String::fromUTF8(u8"->")),
       denomButton_(juce::String::fromUTF8(u8"÷4")), openBracketButton_("["),
       closeBracketButton_("]"), repeatButton_(juce::String::fromUTF8(u8"×N")),
       mmButton_("mm"), setBpmButton_("=bpm"),
@@ -32,20 +32,20 @@ BottomPanelComponent::BottomPanelComponent(TrackBuilder &builder)
     // Edit panel labels
     auto makeStaticLabel = [this](juce::Label &l, juce::String text) {
         l.setText(std::move(text), juce::dontSendNotification);
-        l.setFont(juce::Font(juce::FontOptions(12.0f)));
+        l.setFont(juce::Font(juce::FontOptions(15.0f)));
         l.setColour(juce::Label::textColourId, RhythmColors::textMuted());
         addAndMakeVisible(l);
     };
     makeStaticLabel(onOffLabel_, "on/off");
     makeStaticLabel(volumeLabel_, "volume");
     makeStaticLabel(soundLabel_, "sound");
-    onOffStatus_.setFontSize(12.0f);
+    onOffStatus_.setFontSize(13.0f);
     onOffStatus_.setOnClick([this] { onToggleActive(); });
     addAndMakeVisible(onOffStatus_);
-    volumePercentLabel_.setFont(juce::Font(juce::FontOptions(12.0f)));
+    volumePercentLabel_.setFont(juce::Font(juce::FontOptions(15.0f)));
     volumePercentLabel_.setJustificationType(juce::Justification::centredRight);
     addAndMakeVisible(volumePercentLabel_);
-    soundValueLabel_.setFont(juce::Font(juce::FontOptions(12.0f)));
+    soundValueLabel_.setFont(juce::Font(juce::FontOptions(15.0f)));
     soundValueLabel_.setColour(juce::Label::textColourId,
                                RhythmColors::textSecondary());
     addAndMakeVisible(soundValueLabel_);
@@ -85,7 +85,7 @@ BottomPanelComponent::BottomPanelComponent(TrackBuilder &builder)
     addAndMakeVisible(changeSoundButton_);
 
     // Numpad
-    hintLabel_.setFont(juce::Font(juce::FontOptions(11.0f)));
+    hintLabel_.setFont(juce::Font(juce::FontOptions(15.0f)));
     hintLabel_.setColour(juce::Label::textColourId, RhythmColors::caution());
     addAndMakeVisible(hintLabel_);
 
@@ -96,15 +96,15 @@ BottomPanelComponent::BottomPanelComponent(TrackBuilder &builder)
         addAndMakeVisible(key.get());
         numKeys_[(size_t)i] = std::move(key);
     }
-    customKey_.setFontSize(10.0f);
+    customKey_.setFontSize(15.0f);
     customKey_.setOnClick([this] { onCustom(); });
     editKey_.setOnClick([this] { onEditToggle(); });
     backspaceKey_.setOnClick([this] { onBackspace(); });
 #if JUCE_WINDOWS
-    editKey_.setFontSize(13.0f); // "E" - slightly smaller than numeric 18pt
-    backspaceKey_.setFontSize(12.0f); // "Del" - fits the button width
+    editKey_.setFontSize(15.0f);
+    backspaceKey_.setFontSize(15.0f);
 #else
-    backspaceKey_.setFontSize(14.0f); // ⌫ symbol
+    backspaceKey_.setFontSize(15.0f);
 #endif
     addAndMakeVisible(customKey_);
     addAndMakeVisible(editKey_);

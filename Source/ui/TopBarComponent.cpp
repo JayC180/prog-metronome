@@ -6,7 +6,7 @@ TopBarComponent::TopBarComponent(TrackBuilder &builder) : builder_(builder) {
     settingsButton_.setStateColor(ChipButton::StateColor::Custom);
     settingsButton_.setColours(RhythmColors::bg3(), RhythmColors::border1(),
                                RhythmColors::textMuted());
-    settingsButton_.setFontSize(18.0f);
+    settingsButton_.setFontSize(20.0f);
     settingsButton_.setOnClick([this] {
         if (onSettingsClicked)
             onSettingsClicked();
@@ -16,7 +16,7 @@ TopBarComponent::TopBarComponent(TrackBuilder &builder) : builder_(builder) {
     tapButton_.setStateColor(ChipButton::StateColor::Custom);
     tapButton_.setColours(RhythmColors::bg3(), RhythmColors::border1(),
                           RhythmColors::textSecondary());
-    tapButton_.setFontSize(12.0f);
+    tapButton_.setFontSize(14.0f);
     tapButton_.setOnClick([this] {
         if (onTapClicked)
             onTapClicked();
@@ -59,7 +59,7 @@ void TopBarComponent::paintBpmCard(juce::Graphics &g) {
     g.drawRoundedRectangle(r, 6.0f, 1.0f);
 
     g.setColour(RhythmColors::textMuted());
-    g.setFont(juce::Font(juce::FontOptions(10.0f)));
+    g.setFont(juce::Font(juce::FontOptions(11.0f)));
     g.drawText("bpm", cardArea.removeFromTop(16), juce::Justification::centred,
                false);
 
@@ -71,7 +71,7 @@ void TopBarComponent::paintBpmCard(juce::Graphics &g) {
 
 void TopBarComponent::paintProjectName(juce::Graphics &g) {
     g.setColour(RhythmColors::textMuted());
-    g.setFont(juce::Font(juce::FontOptions(13.0f)));
+    g.setFont(juce::Font(juce::FontOptions(14.0f)));
     g.drawText(projectName_, projectNameArea_, juce::Justification::centredLeft,
                true);
 }

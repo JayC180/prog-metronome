@@ -1,4 +1,5 @@
 #include "RhythmDialogs.h"
+#include <algorithm>
 
 namespace rhythm {
 
@@ -90,10 +91,54 @@ void styleNumericField(juce::TextEditor &e) {
 BpmInputDialog::BpmInputDialog(double currentBpm,
                                std::function<void(double)> onConfirm)
     : DialogPanel("Set BPM", {}) {
+    preferredHeight = 290;
+
     styleNumericField(field_);
     field_.setText(juce::String((int)currentBpm), juce::dontSendNotification);
     field_.selectAll();
     content().addAndMakeVisible(field_);
+
+    struct NudgeSpec { const char* label; double delta; bool multiply; };
+    static const NudgeSpec specs[6] = {
+        {"/ 2", 0.5, true}, {"-5", -5.0, false}, {"-1", -1.0, false},
+        {"+1", 1.0, false}, {"+5", 5.0, false},  {"x 2", 2.0, true}
+    };
+    for (int i = 0; i < 6; ++i) {
+        nudgeButtons_[i] = std::make_unique<ChipButton>(juce::String(specs[i].label));
+        nudgeButtons_[i]->setFontSize(11.0f);
+        nudgeButtons_[i]->setStateColor(ChipButton::StateColor::Custom);
+        nudgeButtons_[i]->setColours(RhythmColors::bg3(), RhythmColors::border1(),
+                                     RhythmColors::textSecondary());
+        const double delta = specs[i].delta;
+        const bool multiply = specs[i].multiply;
+        nudgeButtons_[i]->setOnClick([this, delta, multiply] {
+            const double v = field_.getText().getDoubleValue();
+            if (v <= 0.0) return;
+            double next = multiply ? v * delta : v + delta;
+            next = std::max(1.0, std::min(999.0, next));
+            field_.setText(juce::String((int)std::round(next)), juce::dontSendNotification);
+        });
+        content().addAndMakeVisible(nudgeButtons_[i].get());
+    }
+
+    // tap bpm
+    tapButton_.setFontSize(11.0f);
+    tapButton_.setStateColor(ChipButton::StateColor::Custom);
+    tapButton_.setColours(RhythmColors::bg3(), RhythmColors::border1(),
+                          RhythmColors::textSecondary());
+    tapButton_.setOnClick([this] {
+        if (auto bpm = tapCalc_.tap()) {
+            field_.setText(juce::String((int)std::round(*bpm)), juce::dontSendNotification);
+        }
+        tapHintLabel_.setText(juce::String(tapCalc_.tapCount()) + "x",
+                              juce::dontSendNotification);
+    });
+    content().addAndMakeVisible(tapButton_);
+
+    tapHintLabel_.setFont(juce::Font(juce::FontOptions(11.0f)));
+    tapHintLabel_.setColour(juce::Label::textColourId, RhythmColors::textMuted());
+    tapHintLabel_.setJustificationType(juce::Justification::centredLeft);
+    content().addAndMakeVisible(tapHintLabel_);
 
     addAction("Cancel", RhythmColors::bg3(), RhythmColors::border1(),
               RhythmColors::textMuted(), [this] {
@@ -114,7 +159,21 @@ BpmInputDialog::BpmInputDialog(double currentBpm,
 }
 
 void BpmInputDialog::layoutContent(juce::Rectangle<int> b) {
-    field_.setBounds(b.reduced(0, 4));
+    field_.setBounds(b.removeFromTop(36));
+    b.removeFromTop(8);
+
+    auto nudgeRow = b.removeFromTop(30);
+    const int nudgeW = nudgeRow.getWidth() / 6;
+    for (int i = 0; i < 5; ++i)
+        nudgeButtons_[i]->setBounds(nudgeRow.removeFromLeft(nudgeW));
+    nudgeButtons_[5]->setBounds(nudgeRow);
+
+    b.removeFromTop(8);
+
+    auto tapRow = b.removeFromTop(30);
+    tapButton_.setBounds(tapRow.removeFromLeft(tapRow.getWidth() / 3));
+    tapRow.removeFromLeft(6);
+    tapHintLabel_.setBounds(tapRow);
 }
 
 // ---------- MmDialog ----------

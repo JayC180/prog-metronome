@@ -31,6 +31,8 @@ MainComponent::MainComponent(RhythmEngineProcessor &processor)
         }
 
         juce::PopupMenu menu;
+        menu.addSectionHeader("Prog Metronome  v1.01");
+        menu.addSeparator();
         menu.addItem(1, "New Project");
         menu.addItem(2, "Open Project...");
         menu.addSeparator();

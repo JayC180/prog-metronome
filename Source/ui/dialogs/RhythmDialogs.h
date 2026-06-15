@@ -2,8 +2,11 @@
 
 #include "../UiHelpers.h"
 #include "../../audio/SoundInfo.h"
+#include "../../builder/TapTempoCalculator.h"
 #include <juce_gui_basics/juce_gui_basics.h>
+#include <array>
 #include <functional>
+#include <memory>
 #include <vector>
 
 namespace rhythm
@@ -49,6 +52,10 @@ public:
 
 private:
     juce::TextEditor field_;
+    std::array<std::unique_ptr<ChipButton>, 6> nudgeButtons_;
+    TapTempoCalculator tapCalc_;
+    ChipButton tapButton_{"tap bpm"};
+    juce::Label tapHintLabel_;
 };
 
 // p/q metric modulation dialog.

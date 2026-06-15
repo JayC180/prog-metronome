@@ -251,7 +251,7 @@ TrackRowComponent::TrackRowComponent(TrackBuilder &builder, int trackIndex)
     : builder_(builder), trackIndex_(trackIndex),
       deleteButton_(juce::String::fromUTF8(u8"×")) {
     nameLabel_.setJustificationType(juce::Justification::centredLeft);
-    nameLabel_.setFont(juce::Font(juce::FontOptions(12.0f)));
+    nameLabel_.setFont(juce::Font(juce::FontOptions(13.0f)));
     addAndMakeVisible(nameLabel_);
     addAndMakeVisible(muteChip_);
     addAndMakeVisible(soloChip_);

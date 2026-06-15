@@ -11,7 +11,7 @@ namespace rhythm {
 // the gap since the last tap exceeds resetAfterMs. Minimum 2 taps required.
 class TapTempoCalculator {
   public:
-    explicit TapTempoCalculator(int64_t resetAfterMs = 3000, int maxTaps = 8)
+    explicit TapTempoCalculator(int64_t resetAfterMs = 3000, int maxTaps = 16)
         : resetAfterMs_(resetAfterMs), maxTaps_(maxTaps) {}
 
     // Record a tap at the current time. Returns the new BPM, or nullopt if
