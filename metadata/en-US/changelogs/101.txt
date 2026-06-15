@@ -1,0 +1,5 @@
+- UI improvements
+- Quick BPM change buttons
+- Texts in help model is now selectable
+- Save prefills default name
+- Added version number to settings

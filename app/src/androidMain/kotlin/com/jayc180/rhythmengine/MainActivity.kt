@@ -329,8 +329,12 @@ private fun SettingsOverlay(
             Row(modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment     = Alignment.CenterVertically) {
-                Text("Settings", style = RhythmType.bpmValue.copy(
-                    fontSize = 15.sp, color = RhythmColors.textPrimary))
+                Column {
+                    Text("Settings", style = RhythmType.bpmValue.copy(
+                        fontSize = 15.sp, color = RhythmColors.textPrimary))
+                    Text("v1.01", style = RhythmType.label.copy(
+                        fontSize = 12.sp, color = RhythmColors.textDim))
+                }
                 Text("✕", style = RhythmType.label.copy(
                     fontSize = 16.sp, color = RhythmColors.textMuted),
                     modifier = Modifier.clickable(onClick = onDismiss))
