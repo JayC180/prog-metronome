@@ -161,14 +161,20 @@ class MainActivity : ComponentActivity() {
 
         val appVm = remember(vm) {
             AppViewModel(
-                builder               = vm.builder,
-                audio                 = vm.audioEngine,
-                playheads             = vm.playheads,
-                sounds                = vm.sounds,
-                onSettingsClick       = { showSettings = true },
-                _globalDefaultSoundId        = vm.globalDefaultSoundId,
-                onSetGlobalDefault           = { id -> vm.setGlobalDefaultSound(id) },
-                onSetGlobalDefaultVolume     = { v  -> vm.setGlobalDefaultVolume(v) },
+                builder                    = vm.builder,
+                audio                      = vm.audioEngine,
+                playheads                  = vm.playheads,
+                sounds                     = vm.sounds,
+                onSettingsClick            = { showSettings = true },
+                _globalDefaultSoundId      = vm.globalDefaultSoundId,
+                onSetGlobalDefault         = { id -> vm.setGlobalDefaultSound(id) },
+                onSetGlobalDefaultVolume   = { v  -> vm.setGlobalDefaultVolume(v) },
+                initialBeatScrollToBeat    = vm.beatScrollToBeat,
+                onSetBeatScrollToBeat      = { v  -> vm.setBeatScrollToBeat(v) },
+                initialBeatBlockSizeIndex     = vm.beatBlockSizeIndex,
+                onSetBeatBlockSizeIndex       = { v  -> vm.setBeatBlockSizeIndex(v) },
+                initialBeatStackedFractions   = vm.beatStackedFractions,
+                onSetBeatStackedFractions     = { v  -> vm.setBeatStackedFractions(v) },
             )
         }
 
@@ -216,20 +222,26 @@ class MainActivity : ComponentActivity() {
             }
 
             if (showThemeDialog) {
+                val blockSizeIndex       by appVm.beatBlockSizeIndex.collectAsState()
+                val stackedFractions     by appVm.beatStackedFractions.collectAsState()
                 ThemeSettingsDialog(
-                    availableThemes  = availableThemes,
-                    activeTheme      = activeTheme,
-                    bgConfig         = bgConfig,
-                    onSelectTheme    = { vm.themeManager.setTheme(it) },
-                    onImportTheme    = { themePicker.launch("application/json") },
-                    onPickBackground = { bgPicker.launch("image/*") },
-                    onSetFitMode     = { vm.themeManager.setFitMode(it) },
-                    onSetDim         = { vm.themeManager.setDim(it) },
-                    onSetPanX        = { vm.themeManager.setPanX(it) },
-                    onSetPanY        = { vm.themeManager.setPanY(it) },
-                    onSetPanScale    = { vm.themeManager.setPanScale(it) },
-                    onRemoveBg       = { vm.themeManager.removeBackground() },
-                    onDismiss        = { showThemeDialog = false },
+                    availableThemes         = availableThemes,
+                    activeTheme             = activeTheme,
+                    bgConfig                = bgConfig,
+                    onSelectTheme           = { vm.themeManager.setTheme(it) },
+                    onImportTheme           = { themePicker.launch("application/json") },
+                    onPickBackground        = { bgPicker.launch("image/*") },
+                    onSetFitMode            = { vm.themeManager.setFitMode(it) },
+                    onSetDim                = { vm.themeManager.setDim(it) },
+                    onSetPanX               = { vm.themeManager.setPanX(it) },
+                    onSetPanY               = { vm.themeManager.setPanY(it) },
+                    onSetPanScale           = { vm.themeManager.setPanScale(it) },
+                    onRemoveBg              = { vm.themeManager.removeBackground() },
+                    onDismiss               = { showThemeDialog = false },
+                    beatBlockSizeIndex      = blockSizeIndex,
+                    onSetBeatBlockSize      = { appVm.setBeatBlockSizeIndex(it) },
+                    beatStackedFractions    = stackedFractions,
+                    onSetStackedFractions   = { appVm.setBeatStackedFractions(it) },
                 )
             }
 
@@ -380,7 +392,29 @@ private fun SettingsOverlay(
                     border = RhythmColors.border1)
             }
             SDivider()
-            // Paired bracket delete toggle
+            // ── Scroll-to-beat toggle ──────────────────────────────────────────
+            val beatScrollState = remember { mutableStateOf(rhythmVm.beatScrollToBeat) }
+            Row(modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically) {
+                Column {
+                    Text("Scroll to beat",
+                        style = RhythmType.label.copy(fontSize = 11.sp,
+                            color = RhythmColors.textSecondary))
+                    Text("autoscroll focuses on beat instead of repetition",
+                        style = RhythmType.label.copy(fontSize = 9.sp,
+                            color = RhythmColors.textDim))
+                }
+                RhythmToggle(
+                    checked  = beatScrollState.value,
+                    onToggle = {
+                        val v = !beatScrollState.value
+                        beatScrollState.value = v
+                        rhythmVm.setBeatScrollToBeat(v)
+                    }
+                )
+            }
+            // ── Paired bracket delete toggle ───────────────────────────────────
             Row(modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically) {

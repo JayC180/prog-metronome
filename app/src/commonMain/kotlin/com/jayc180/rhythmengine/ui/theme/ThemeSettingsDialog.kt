@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -19,22 +21,27 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.jayc180.rhythmengine.ui.theme.*
+import kotlin.math.roundToInt
 
 @Composable
 fun ThemeSettingsDialog(
-    availableThemes:  List<ThemeConfig>,
-    activeTheme:      ThemeConfig,
-    bgConfig:         BackgroundConfig,
-    onSelectTheme:    (ThemeConfig) -> Unit,
-    onImportTheme:    (() -> Unit)? = null,
-    onPickBackground: (() -> Unit)? = null,
-    onSetFitMode:     (BgFitMode) -> Unit,
-    onSetDim:         (Float) -> Unit,
-    onSetPanX:        (Float) -> Unit,
-    onSetPanY:        (Float) -> Unit,
-    onSetPanScale:    (Float) -> Unit,
-    onRemoveBg:       () -> Unit,
-    onDismiss:        () -> Unit,
+    availableThemes:      List<ThemeConfig>,
+    activeTheme:          ThemeConfig,
+    bgConfig:             BackgroundConfig,
+    onSelectTheme:        (ThemeConfig) -> Unit,
+    onImportTheme:        (() -> Unit)? = null,
+    onPickBackground:     (() -> Unit)? = null,
+    onSetFitMode:         (BgFitMode) -> Unit,
+    onSetDim:             (Float) -> Unit,
+    onSetPanX:            (Float) -> Unit,
+    onSetPanY:            (Float) -> Unit,
+    onSetPanScale:        (Float) -> Unit,
+    onRemoveBg:           () -> Unit,
+    onDismiss:            () -> Unit,
+    beatBlockSizeIndex:     Int = 2,
+    onSetBeatBlockSize:     (Int) -> Unit = {},
+    beatStackedFractions:   Boolean = false,
+    onSetStackedFractions:  (Boolean) -> Unit = {},
 ) {
     Dialog(
         onDismissRequest = onDismiss,
@@ -171,6 +178,54 @@ fun ThemeSettingsDialog(
                             textColor = RhythmColors.danger,
                             border    = RhythmColors.dangerBorder)
                     }
+                }
+
+                // block size picker
+                TSection("BLOCK SIZE")
+                val sizeLabels = listOf("S", "M", "L")
+                var sliderValue by remember(beatBlockSizeIndex) { mutableStateOf(beatBlockSizeIndex.toFloat()) }
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween) {
+                        sizeLabels.forEach { label ->
+                            Text(label, style = RhythmType.label.copy(
+                                fontSize = 9.sp, color = RhythmColors.textDim))
+                        }
+                    }
+                    Slider(
+                        value         = sliderValue,
+                        onValueChange = { sliderValue = it },
+                        onValueChangeFinished = { onSetBeatBlockSize(sliderValue.roundToInt().coerceIn(0, 2)) },
+                        valueRange    = 0f..2f,
+                        steps         = 1,
+                        colors        = SliderDefaults.colors(
+                            thumbColor          = RhythmColors.thumbColor,
+                            activeTrackColor    = RhythmColors.accent,
+                            inactiveTrackColor  = RhythmColors.border1,
+                            activeTickColor     = Color.Transparent,
+                            inactiveTickColor   = Color.Transparent,
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+
+                // stacked fraction display
+                TSection("BLOCK DISPLAY")
+                Row(
+                    modifier              = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment     = Alignment.CenterVertically,
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text("Stacked fractions",
+                            style = RhythmType.label.copy(fontSize = 12.sp, color = RhythmColors.textSecondary))
+                        Text("show x/y as num over denom",
+                            style = RhythmType.label.copy(fontSize = 10.sp, color = RhythmColors.textDim))
+                    }
+                    com.jayc180.rhythmengine.ui.components.RhythmToggle(
+                        checked  = beatStackedFractions,
+                        onToggle = { onSetStackedFractions(!beatStackedFractions) },
+                    )
                 }
 
                 Spacer(Modifier.height(4.dp))

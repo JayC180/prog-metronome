@@ -34,6 +34,15 @@ class RhythmViewModelIos {
     private val _globalDefaultVolume = MutableStateFlow(1.0f)
     val globalDefaultVolume: Float get() = _globalDefaultVolume.value
 
+    private val _beatScrollToBeat = MutableStateFlow(true)
+    val beatScrollToBeat: Boolean get() = _beatScrollToBeat.value
+
+    private val _beatBlockSizeIndex = MutableStateFlow(1)
+    val beatBlockSizeIndex: Int get() = _beatBlockSizeIndex.value
+
+    private val _beatStackedFractions = MutableStateFlow(true)
+    val beatStackedFractions: Boolean get() = _beatStackedFractions.value
+
     // ── Project state ──────────────────────────────────────────────────────────
 
     private val _projectName   = MutableStateFlow("Untitled")
@@ -83,6 +92,12 @@ class RhythmViewModelIos {
             _globalDefaultVolume.value = v
             builder.setDefaultVolume(v)
         }
+        if (prefs.objectForKey("beat_scroll_to_beat") != null)
+            _beatScrollToBeat.value = prefs.boolForKey("beat_scroll_to_beat")
+        if (prefs.objectForKey("beat_block_size") != null)
+            _beatBlockSizeIndex.value = prefs.integerForKey("beat_block_size").toInt().coerceIn(0, 2)
+        if (prefs.objectForKey("beat_stacked_fractions") != null)
+            _beatStackedFractions.value = prefs.boolForKey("beat_stacked_fractions")
     }
 
     private fun wireAudio() {
@@ -128,6 +143,22 @@ class RhythmViewModelIos {
         builder.setDefaultVolume(volume)
         platform.Foundation.NSUserDefaults.standardUserDefaults
             .setFloat(volume, "global_default_volume")
+    }
+
+    fun setBeatScrollToBeat(v: Boolean) {
+        _beatScrollToBeat.value = v
+        platform.Foundation.NSUserDefaults.standardUserDefaults.setBool(v, "beat_scroll_to_beat")
+    }
+
+    fun setBeatBlockSizeIndex(v: Int) {
+        _beatBlockSizeIndex.value = v.coerceIn(0, 2)
+        platform.Foundation.NSUserDefaults.standardUserDefaults
+            .setInteger(v.coerceIn(0, 2).toLong(), "beat_block_size")
+    }
+
+    fun setBeatStackedFractions(v: Boolean) {
+        _beatStackedFractions.value = v
+        platform.Foundation.NSUserDefaults.standardUserDefaults.setBool(v, "beat_stacked_fractions")
     }
 
     fun deleteUserSound(soundId: String) {
@@ -252,14 +283,20 @@ class RhythmViewModelIos {
     // ── Compose bridge ────────────────────────────────────────────────────────
 
     fun buildAppViewModel(onSettingsClick: () -> Unit) = AppViewModel(
-        builder               = builder,
-        audio                 = audioEngine,
-        playheads             = playheads,
-        sounds                = sounds,
-        onSettingsClick       = onSettingsClick,
-        _globalDefaultSoundId = globalDefaultSoundId,
-        onSetGlobalDefault           = { id -> setGlobalDefaultSound(id) },
-        onSetGlobalDefaultVolume     = { v  -> setGlobalDefaultVolume(v) },
+        builder                    = builder,
+        audio                      = audioEngine,
+        playheads                  = playheads,
+        sounds                     = sounds,
+        onSettingsClick            = onSettingsClick,
+        _globalDefaultSoundId      = globalDefaultSoundId,
+        onSetGlobalDefault         = { id -> setGlobalDefaultSound(id) },
+        onSetGlobalDefaultVolume   = { v  -> setGlobalDefaultVolume(v) },
+        initialBeatScrollToBeat    = beatScrollToBeat,
+        onSetBeatScrollToBeat      = { v  -> setBeatScrollToBeat(v) },
+        initialBeatBlockSizeIndex     = beatBlockSizeIndex,
+        onSetBeatBlockSizeIndex       = { v  -> setBeatBlockSizeIndex(v) },
+        initialBeatStackedFractions   = beatStackedFractions,
+        onSetBeatStackedFractions     = { v  -> setBeatStackedFractions(v) },
     )
 
     fun dispose() {

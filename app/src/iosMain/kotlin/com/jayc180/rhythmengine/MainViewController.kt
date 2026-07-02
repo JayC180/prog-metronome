@@ -110,21 +110,27 @@ fun MainViewController(): UIViewController = ComposeUIViewController {
         }
 
         if (showThemeDialog) {
-            val themeUiVC = LocalUIViewController.current
+            val themeUiVC        = LocalUIViewController.current
+            val blockSizeIndex   by appVm.beatBlockSizeIndex.collectAsState()
+            val stackedFractions by appVm.beatStackedFractions.collectAsState()
             ThemeSettingsDialog(
-                availableThemes  = availableThemes,
-                activeTheme      = activeTheme,
-                bgConfig         = bgConfig,
-                onSelectTheme    = { vm.themeManager.setTheme(it) },
-                onImportTheme    = { picker.pickJson(themeUiVC) { path -> vm.themeManager.importTheme(path) } },
-                onPickBackground = { photosPicker.pickImage(themeUiVC) { path -> vm.themeManager.importBackground(path) } },
-                onSetFitMode     = { vm.themeManager.setFitMode(it) },
-                onSetDim         = { vm.themeManager.setDim(it) },
-                onSetPanX        = { vm.themeManager.setPanX(it) },
-                onSetPanY        = { vm.themeManager.setPanY(it) },
-                onSetPanScale    = { vm.themeManager.setPanScale(it) },
-                onRemoveBg       = { vm.themeManager.removeBackground() },
-                onDismiss        = { showThemeDialog = false },
+                availableThemes         = availableThemes,
+                activeTheme             = activeTheme,
+                bgConfig                = bgConfig,
+                onSelectTheme           = { vm.themeManager.setTheme(it) },
+                onImportTheme           = { picker.pickJson(themeUiVC) { path -> vm.themeManager.importTheme(path) } },
+                onPickBackground        = { photosPicker.pickImage(themeUiVC) { path -> vm.themeManager.importBackground(path) } },
+                onSetFitMode            = { vm.themeManager.setFitMode(it) },
+                onSetDim                = { vm.themeManager.setDim(it) },
+                onSetPanX               = { vm.themeManager.setPanX(it) },
+                onSetPanY               = { vm.themeManager.setPanY(it) },
+                onSetPanScale           = { vm.themeManager.setPanScale(it) },
+                onRemoveBg              = { vm.themeManager.removeBackground() },
+                onDismiss               = { showThemeDialog = false },
+                beatBlockSizeIndex      = blockSizeIndex,
+                onSetBeatBlockSize      = { appVm.setBeatBlockSizeIndex(it) },
+                beatStackedFractions    = stackedFractions,
+                onSetStackedFractions   = { appVm.setBeatStackedFractions(it) },
             )
         }
 
@@ -479,6 +485,24 @@ private fun IosSettingsOverlay(
                 onClick = { exportProject(vm, projectName, uiVC) })
 
             Divider()
+
+            val beatScrollState = remember { mutableStateOf(vm.beatScrollToBeat) }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column {
+                    Text("Scroll to beat", style = RhythmType.label.copy(
+                        fontSize = 11.sp, color = RhythmColors.textSecondary))
+                    Text("auto-scroll focuses the playing beat", style = RhythmType.label.copy(
+                        fontSize = 9.sp, color = RhythmColors.textDim))
+                }
+                RhythmToggle(
+                    checked  = beatScrollState.value,
+                    onToggle = { val v = !beatScrollState.value; beatScrollState.value = v; vm.setBeatScrollToBeat(v) },
+                )
+            }
 
             val pairedBracketDelete by vm.builder.pairedBracketDeleteFlow.collectAsState()
             Row(

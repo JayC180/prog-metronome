@@ -258,7 +258,10 @@ private fun PortraitLayout(
     openSoundPicker: (SoundPickerTarget) -> Unit,
     buildErrors: List<String>,
 ) {
-    val globalDefaultLabel = sounds.firstOrNull { it.id == vm.globalDefaultSoundId }?.label
+    val globalDefaultLabel     = sounds.firstOrNull { it.id == vm.globalDefaultSoundId }?.label
+    val beatScrollToBeat       by vm.beatScrollToBeat.collectAsState()
+    val beatBlockSizeIndex     by vm.beatBlockSizeIndex.collectAsState()
+    val beatStackedFractions   by vm.beatStackedFractions.collectAsState()
 
     Column(modifier = Modifier
         .fillMaxSize()
@@ -281,12 +284,15 @@ private fun PortraitLayout(
         LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
             itemsIndexed(state.tracks) { index, draft ->
                 TrackRow(
-                    draft               = draft,
-                    isActive            = index == state.activeTrackIndex,
-                    cursorIndex         = if (index == state.activeTrackIndex) state.cursorIndex else null,
-                    isPlaying           = state.isPlaying,
-                    playingItemIndex    = playheads[draft.id],
-                    globalDefaultSound  = globalDefaultLabel,
+                    draft                 = draft,
+                    isActive              = index == state.activeTrackIndex,
+                    cursorIndex           = if (index == state.activeTrackIndex) state.cursorIndex else null,
+                    isPlaying             = state.isPlaying,
+                    playingItemIndex      = playheads[draft.id],
+                    globalDefaultSound    = globalDefaultLabel,
+                    beatScrollToBeat      = beatScrollToBeat,
+                    beatBlockSizeIndex    = beatBlockSizeIndex,
+                    beatStackedFractions  = beatStackedFractions,
                     onTrackClick        = { vm.builder.setActiveTrack(index) },
                     onItemClick         = { itemIdx ->
                         vm.builder.setActiveTrack(index)
@@ -299,7 +305,7 @@ private fun PortraitLayout(
                 )
                 HorizontalDivider()
             }
-            item { AddTrackRow(onAdd = { vm.builder.addTrack() }, onCopy = { vm.builder.copyTrack() }); HorizontalDivider() }
+            item { AddTrackRow(onAdd = { vm.builder.addTrack() }, onCopy = { vm.builder.copyTrack() }, enabled = !state.isPlaying); HorizontalDivider() }
         }
 
         HorizontalDivider()
@@ -329,7 +335,10 @@ private fun LandscapeLayout(
     openSoundPicker: (SoundPickerTarget) -> Unit,
     buildErrors: List<String>,
 ) {
-    val globalDefaultLabel = sounds.firstOrNull { it.id == vm.globalDefaultSoundId }?.label
+    val globalDefaultLabel     = sounds.firstOrNull { it.id == vm.globalDefaultSoundId }?.label
+    val beatScrollToBeat       by vm.beatScrollToBeat.collectAsState()
+    val beatBlockSizeIndex     by vm.beatBlockSizeIndex.collectAsState()
+    val beatStackedFractions   by vm.beatStackedFractions.collectAsState()
 
     Column(modifier = Modifier
         .fillMaxSize()
@@ -352,12 +361,15 @@ private fun LandscapeLayout(
             LazyColumn(modifier = Modifier.weight(1.4f).fillMaxHeight()) {
                 itemsIndexed(state.tracks) { index, draft ->
                     TrackRow(
-                        draft               = draft,
-                        isActive            = index == state.activeTrackIndex,
-                        cursorIndex         = if (index == state.activeTrackIndex) state.cursorIndex else null,
-                        isPlaying           = state.isPlaying,
-                        playingItemIndex    = playheads[draft.id],
-                        globalDefaultSound  = globalDefaultLabel,
+                        draft                 = draft,
+                        isActive              = index == state.activeTrackIndex,
+                        cursorIndex           = if (index == state.activeTrackIndex) state.cursorIndex else null,
+                        isPlaying             = state.isPlaying,
+                        playingItemIndex      = playheads[draft.id],
+                        globalDefaultSound    = globalDefaultLabel,
+                        beatScrollToBeat      = beatScrollToBeat,
+                        beatBlockSizeIndex    = beatBlockSizeIndex,
+                        beatStackedFractions  = beatStackedFractions,
                         onTrackClick        = { vm.builder.setActiveTrack(index) },
                         onItemClick         = { itemIdx ->
                             vm.builder.setActiveTrack(index)
@@ -370,7 +382,7 @@ private fun LandscapeLayout(
                     )
                     HorizontalDivider()
                 }
-                item { AddTrackRow(onAdd = { vm.builder.addTrack() }, onCopy = { vm.builder.copyTrack() }) }
+                item { AddTrackRow(onAdd = { vm.builder.addTrack() }, onCopy = { vm.builder.copyTrack() }, enabled = !state.isPlaying) }
             }
             Box(Modifier.width(0.5.dp).fillMaxHeight().background(RhythmColors.border0))
             BottomPanelWired(
@@ -473,29 +485,32 @@ private fun handleBackspace(state: TrackBuilderState, vm: AppViewModel) {
 }
 
 @Composable
-private fun AddTrackRow(onAdd: () -> Unit, onCopy: () -> Unit) {
+private fun AddTrackRow(onAdd: () -> Unit, onCopy: () -> Unit, enabled: Boolean = true) {
     Row(
         modifier = Modifier.fillMaxWidth().height(36.dp).background(RhythmColors.bg1),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(
-            modifier = Modifier.weight(1f).fillMaxHeight().clickable(onClick = onCopy)
+            modifier = Modifier.weight(1f).fillMaxHeight()
+                .then(if (enabled) Modifier.clickable(onClick = onCopy) else Modifier)
                 .padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Text("⎘", style = RhythmType.label.copy(color = RhythmColors.beatActiveBorder, fontSize = 14.sp))
-            Text("copy track", style = RhythmType.label.copy(color = RhythmColors.textSecondary, fontSize = 11.sp))
+            val fgColor = if (enabled) RhythmColors.beatActiveBorder else RhythmColors.textDim
+            Text("⎘", style = RhythmType.label.copy(color = fgColor, fontSize = 14.sp))
+            Text("copy track", style = RhythmType.label.copy(color = if (enabled) RhythmColors.textSecondary else RhythmColors.textDim, fontSize = 11.sp))
         }
         Box(Modifier.width(0.5.dp).fillMaxHeight().background(RhythmColors.border0))
         Row(
-            modifier = Modifier.weight(1f).fillMaxHeight().clickable(onClick = onAdd)
+            modifier = Modifier.weight(1f).fillMaxHeight()
+                .then(if (enabled) Modifier.clickable(onClick = onAdd) else Modifier)
                 .padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Text("+", style = RhythmType.label.copy(color = RhythmColors.beatActiveBorder, fontSize = 14.sp))
-            Text("add track", style = RhythmType.label.copy(color = RhythmColors.textSecondary, fontSize = 11.sp))
+            Text("+", style = RhythmType.label.copy(color = if (enabled) RhythmColors.beatActiveBorder else RhythmColors.textDim, fontSize = 14.sp))
+            Text("add track", style = RhythmType.label.copy(color = if (enabled) RhythmColors.textSecondary else RhythmColors.textDim, fontSize = 11.sp))
         }
     }
 }

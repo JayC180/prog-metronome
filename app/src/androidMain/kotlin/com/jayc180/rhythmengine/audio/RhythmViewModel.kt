@@ -50,6 +50,15 @@ class RhythmViewModel(application: Application) : AndroidViewModel(application) 
     private val _globalDefaultVolume = MutableStateFlow(1.0f)
     val globalDefaultVolume: Float get() = _globalDefaultVolume.value
 
+    private val _beatScrollToBeat = MutableStateFlow(true)
+    val beatScrollToBeat: Boolean get() = _beatScrollToBeat.value
+
+    private val _beatBlockSizeIndex = MutableStateFlow(1)
+    val beatBlockSizeIndex: Int get() = _beatBlockSizeIndex.value
+
+    private val _beatStackedFractions = MutableStateFlow(true)
+    val beatStackedFractions: Boolean get() = _beatStackedFractions.value
+
     val themeManager = ThemeManager(application)
 
     private val transport = Transport(soundMap = SoundMap())
@@ -75,6 +84,9 @@ class RhythmViewModel(application: Application) : AndroidViewModel(application) 
         val savedVol = prefs.getFloat("global_default_volume", 1.0f)
         _globalDefaultVolume.value = savedVol
         builder.setDefaultVolume(savedVol)
+        _beatScrollToBeat.value = prefs.getBoolean("beat_scroll_to_beat", true)
+        _beatBlockSizeIndex.value = prefs.getInt("beat_block_size", 1)
+        _beatStackedFractions.value = prefs.getBoolean("beat_stacked_fractions", true)
     }
 
     private fun wireAudio() {
@@ -129,6 +141,21 @@ class RhythmViewModel(application: Application) : AndroidViewModel(application) 
         _globalDefaultVolume.value = volume
         builder.setDefaultVolume(volume)
         prefs.edit().putFloat("global_default_volume", volume).apply()
+    }
+
+    fun setBeatScrollToBeat(v: Boolean) {
+        _beatScrollToBeat.value = v
+        prefs.edit().putBoolean("beat_scroll_to_beat", v).apply()
+    }
+
+    fun setBeatBlockSizeIndex(v: Int) {
+        _beatBlockSizeIndex.value = v.coerceIn(0, 2)
+        prefs.edit().putInt("beat_block_size", v.coerceIn(0, 2)).apply()
+    }
+
+    fun setBeatStackedFractions(v: Boolean) {
+        _beatStackedFractions.value = v
+        prefs.edit().putBoolean("beat_stacked_fractions", v).apply()
     }
 
     fun importSoundFromUri(uri: Uri) {

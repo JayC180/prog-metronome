@@ -3,6 +3,7 @@ package com.jayc180.rhythmengine.ui
 import com.jayc180.rhythmengine.audio.AudioEngine
 import com.jayc180.rhythmengine.audio.SoundInfo
 import com.jayc180.rhythmengine.builder.TrackBuilder
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -17,9 +18,24 @@ class AppViewModel(
     private val _globalDefaultSoundId:    String,
     private val onSetGlobalDefault:       (String) -> Unit,
     private val onSetGlobalDefaultVolume: (Float)  -> Unit = {},
+    initialBeatScrollToBeat:              Boolean = true,
+    private val onSetBeatScrollToBeat:    (Boolean) -> Unit = {},
+    initialBeatBlockSizeIndex:            Int = 1,
+    private val onSetBeatBlockSizeIndex:  (Int) -> Unit = {},
+    initialBeatStackedFractions:          Boolean = true,
+    private val onSetBeatStackedFractions:(Boolean) -> Unit = {},
 ) {
     val globalDefaultSoundId: String get() = _globalDefaultSoundId
     val globalDefaultVolume:  Float  get() = builder.defaultVolume
+
+    private val _beatScrollToBeat = MutableStateFlow(initialBeatScrollToBeat)
+    val beatScrollToBeat: StateFlow<Boolean> get() = _beatScrollToBeat
+
+    private val _beatBlockSizeIndex = MutableStateFlow(initialBeatBlockSizeIndex)
+    val beatBlockSizeIndex: StateFlow<Int> get() = _beatBlockSizeIndex
+
+    private val _beatStackedFractions = MutableStateFlow(initialBeatStackedFractions)
+    val beatStackedFractions: StateFlow<Boolean> get() = _beatStackedFractions
 
     fun setGlobalDefault(soundId: String) {
         onSetGlobalDefault(soundId)
@@ -29,5 +45,20 @@ class AppViewModel(
     fun setGlobalDefaultVolume(volume: Float) {
         onSetGlobalDefaultVolume(volume)
         builder.setDefaultVolume(volume)
+    }
+
+    fun setBeatScrollToBeat(v: Boolean) {
+        _beatScrollToBeat.value = v
+        onSetBeatScrollToBeat(v)
+    }
+
+    fun setBeatBlockSizeIndex(v: Int) {
+        _beatBlockSizeIndex.value = v.coerceIn(0, 2)
+        onSetBeatBlockSizeIndex(v.coerceIn(0, 2))
+    }
+
+    fun setBeatStackedFractions(v: Boolean) {
+        _beatStackedFractions.value = v
+        onSetBeatStackedFractions(v)
     }
 }
