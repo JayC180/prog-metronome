@@ -344,7 +344,7 @@ private fun SettingsOverlay(
                 Column {
                     Text("Settings", style = RhythmType.bpmValue.copy(
                         fontSize = 15.sp, color = RhythmColors.textPrimary))
-                    Text("v1.01", style = RhythmType.label.copy(
+                    Text("v1.02", style = RhythmType.label.copy(
                         fontSize = 12.sp, color = RhythmColors.textDim))
                 }
                 Text("✕", style = RhythmType.label.copy(
