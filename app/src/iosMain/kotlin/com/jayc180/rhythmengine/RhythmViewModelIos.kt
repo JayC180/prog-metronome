@@ -34,9 +34,6 @@ class RhythmViewModelIos {
     private val _globalDefaultVolume = MutableStateFlow(1.0f)
     val globalDefaultVolume: Float get() = _globalDefaultVolume.value
 
-    private val _beatScrollToBeat = MutableStateFlow(true)
-    val beatScrollToBeat: Boolean get() = _beatScrollToBeat.value
-
     private val _beatBlockSizeIndex = MutableStateFlow(1)
     val beatBlockSizeIndex: Int get() = _beatBlockSizeIndex.value
 
@@ -92,8 +89,6 @@ class RhythmViewModelIos {
             _globalDefaultVolume.value = v
             builder.setDefaultVolume(v)
         }
-        if (prefs.objectForKey("beat_scroll_to_beat") != null)
-            _beatScrollToBeat.value = prefs.boolForKey("beat_scroll_to_beat")
         if (prefs.objectForKey("beat_block_size") != null)
             _beatBlockSizeIndex.value = prefs.integerForKey("beat_block_size").toInt().coerceIn(0, 2)
         if (prefs.objectForKey("beat_stacked_fractions") != null)
@@ -143,11 +138,6 @@ class RhythmViewModelIos {
         builder.setDefaultVolume(volume)
         platform.Foundation.NSUserDefaults.standardUserDefaults
             .setFloat(volume, "global_default_volume")
-    }
-
-    fun setBeatScrollToBeat(v: Boolean) {
-        _beatScrollToBeat.value = v
-        platform.Foundation.NSUserDefaults.standardUserDefaults.setBool(v, "beat_scroll_to_beat")
     }
 
     fun setBeatBlockSizeIndex(v: Int) {
@@ -291,8 +281,6 @@ class RhythmViewModelIos {
         _globalDefaultSoundId      = globalDefaultSoundId,
         onSetGlobalDefault         = { id -> setGlobalDefaultSound(id) },
         onSetGlobalDefaultVolume   = { v  -> setGlobalDefaultVolume(v) },
-        initialBeatScrollToBeat    = beatScrollToBeat,
-        onSetBeatScrollToBeat      = { v  -> setBeatScrollToBeat(v) },
         initialBeatBlockSizeIndex     = beatBlockSizeIndex,
         onSetBeatBlockSizeIndex       = { v  -> setBeatBlockSizeIndex(v) },
         initialBeatStackedFractions   = beatStackedFractions,

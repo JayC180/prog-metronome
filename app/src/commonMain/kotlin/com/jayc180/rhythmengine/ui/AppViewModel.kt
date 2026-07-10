@@ -18,8 +18,6 @@ class AppViewModel(
     private val _globalDefaultSoundId:    String,
     private val onSetGlobalDefault:       (String) -> Unit,
     private val onSetGlobalDefaultVolume: (Float)  -> Unit = {},
-    initialBeatScrollToBeat:              Boolean = true,
-    private val onSetBeatScrollToBeat:    (Boolean) -> Unit = {},
     initialBeatBlockSizeIndex:            Int = 1,
     private val onSetBeatBlockSizeIndex:  (Int) -> Unit = {},
     initialBeatStackedFractions:          Boolean = true,
@@ -27,9 +25,6 @@ class AppViewModel(
 ) {
     val globalDefaultSoundId: String get() = _globalDefaultSoundId
     val globalDefaultVolume:  Float  get() = builder.defaultVolume
-
-    private val _beatScrollToBeat = MutableStateFlow(initialBeatScrollToBeat)
-    val beatScrollToBeat: StateFlow<Boolean> get() = _beatScrollToBeat
 
     private val _beatBlockSizeIndex = MutableStateFlow(initialBeatBlockSizeIndex)
     val beatBlockSizeIndex: StateFlow<Int> get() = _beatBlockSizeIndex
@@ -45,11 +40,6 @@ class AppViewModel(
     fun setGlobalDefaultVolume(volume: Float) {
         onSetGlobalDefaultVolume(volume)
         builder.setDefaultVolume(volume)
-    }
-
-    fun setBeatScrollToBeat(v: Boolean) {
-        _beatScrollToBeat.value = v
-        onSetBeatScrollToBeat(v)
     }
 
     fun setBeatBlockSizeIndex(v: Int) {

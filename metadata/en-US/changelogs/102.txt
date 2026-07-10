@@ -1,0 +1,4 @@
+- Stacked option (now default) for beat blocks
+- Beat block width options
+- Auto scroll during playback can now target beat or the repetition
+- Block interacting with trackrow items during playback

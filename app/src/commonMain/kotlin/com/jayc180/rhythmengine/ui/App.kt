@@ -259,7 +259,6 @@ private fun PortraitLayout(
     buildErrors: List<String>,
 ) {
     val globalDefaultLabel     = sounds.firstOrNull { it.id == vm.globalDefaultSoundId }?.label
-    val beatScrollToBeat       by vm.beatScrollToBeat.collectAsState()
     val beatBlockSizeIndex     by vm.beatBlockSizeIndex.collectAsState()
     val beatStackedFractions   by vm.beatStackedFractions.collectAsState()
 
@@ -290,7 +289,6 @@ private fun PortraitLayout(
                     isPlaying             = state.isPlaying,
                     playingItemIndex      = playheads[draft.id],
                     globalDefaultSound    = globalDefaultLabel,
-                    beatScrollToBeat      = beatScrollToBeat,
                     beatBlockSizeIndex    = beatBlockSizeIndex,
                     beatStackedFractions  = beatStackedFractions,
                     onTrackClick        = { vm.builder.setActiveTrack(index) },
@@ -336,7 +334,6 @@ private fun LandscapeLayout(
     buildErrors: List<String>,
 ) {
     val globalDefaultLabel     = sounds.firstOrNull { it.id == vm.globalDefaultSoundId }?.label
-    val beatScrollToBeat       by vm.beatScrollToBeat.collectAsState()
     val beatBlockSizeIndex     by vm.beatBlockSizeIndex.collectAsState()
     val beatStackedFractions   by vm.beatStackedFractions.collectAsState()
 
@@ -367,7 +364,6 @@ private fun LandscapeLayout(
                         isPlaying             = state.isPlaying,
                         playingItemIndex      = playheads[draft.id],
                         globalDefaultSound    = globalDefaultLabel,
-                        beatScrollToBeat      = beatScrollToBeat,
                         beatBlockSizeIndex    = beatBlockSizeIndex,
                         beatStackedFractions  = beatStackedFractions,
                         onTrackClick        = { vm.builder.setActiveTrack(index) },

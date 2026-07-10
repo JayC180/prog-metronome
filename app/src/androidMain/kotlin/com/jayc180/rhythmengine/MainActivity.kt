@@ -169,8 +169,6 @@ class MainActivity : ComponentActivity() {
                 _globalDefaultSoundId      = vm.globalDefaultSoundId,
                 onSetGlobalDefault         = { id -> vm.setGlobalDefaultSound(id) },
                 onSetGlobalDefaultVolume   = { v  -> vm.setGlobalDefaultVolume(v) },
-                initialBeatScrollToBeat    = vm.beatScrollToBeat,
-                onSetBeatScrollToBeat      = { v  -> vm.setBeatScrollToBeat(v) },
                 initialBeatBlockSizeIndex     = vm.beatBlockSizeIndex,
                 onSetBeatBlockSizeIndex       = { v  -> vm.setBeatBlockSizeIndex(v) },
                 initialBeatStackedFractions   = vm.beatStackedFractions,
@@ -392,28 +390,6 @@ private fun SettingsOverlay(
                     border = RhythmColors.border1)
             }
             SDivider()
-            // ── Scroll-to-beat toggle ──────────────────────────────────────────
-            val beatScrollState = remember { mutableStateOf(rhythmVm.beatScrollToBeat) }
-            Row(modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically) {
-                Column {
-                    Text("Scroll to beat",
-                        style = RhythmType.label.copy(fontSize = 11.sp,
-                            color = RhythmColors.textSecondary))
-                    Text("autoscroll focuses on beat instead of repetition",
-                        style = RhythmType.label.copy(fontSize = 9.sp,
-                            color = RhythmColors.textDim))
-                }
-                RhythmToggle(
-                    checked  = beatScrollState.value,
-                    onToggle = {
-                        val v = !beatScrollState.value
-                        beatScrollState.value = v
-                        rhythmVm.setBeatScrollToBeat(v)
-                    }
-                )
-            }
             // ── Paired bracket delete toggle ───────────────────────────────────
             Row(modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,

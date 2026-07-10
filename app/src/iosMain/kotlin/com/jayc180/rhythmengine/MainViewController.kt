@@ -486,24 +486,6 @@ private fun IosSettingsOverlay(
 
             Divider()
 
-            val beatScrollState = remember { mutableStateOf(vm.beatScrollToBeat) }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column {
-                    Text("Scroll to beat", style = RhythmType.label.copy(
-                        fontSize = 11.sp, color = RhythmColors.textSecondary))
-                    Text("auto-scroll focuses the playing beat", style = RhythmType.label.copy(
-                        fontSize = 9.sp, color = RhythmColors.textDim))
-                }
-                RhythmToggle(
-                    checked  = beatScrollState.value,
-                    onToggle = { val v = !beatScrollState.value; beatScrollState.value = v; vm.setBeatScrollToBeat(v) },
-                )
-            }
-
             val pairedBracketDelete by vm.builder.pairedBracketDeleteFlow.collectAsState()
             Row(
                 modifier = Modifier.fillMaxWidth(),

@@ -33,7 +33,6 @@ fun TrackRow(
     isPlaying:           Boolean,
     playingItemIndex:    Int?,
     globalDefaultSound:  String?,
-    beatScrollToBeat:      Boolean = true,
     beatBlockSizeIndex:    Int = 2,
     beatStackedFractions:  Boolean = false,
     onTrackClick:        () -> Unit,
@@ -47,30 +46,47 @@ fun TrackRow(
     val scrollState = rememberScrollState()
     val density     = LocalDensity.current
 
-    LaunchedEffect(draft.items.size, cursorIndex, playingItemIndex, isPlaying) {
-        val targetIndex = when {
-            isPlaying && playingItemIndex != null -> {
-                if (beatScrollToBeat) {
-                    // walk backward past structural items (], ×N, =bpm, ×p/q) to the beat
-                    var idx = playingItemIndex
-                    while (idx > 0 && draft.items.getOrNull(idx) !is TrackItem.Beat) idx--
-                    if (draft.items.getOrNull(idx) is TrackItem.Beat) idx else playingItemIndex
-                } else {
-                    playingItemIndex
-                }
-            }
-            !isPlaying && cursorIndex == null && draft.items.isNotEmpty() -> draft.items.lastIndex
-            !isPlaying && cursorIndex != null -> cursorIndex
-            else -> return@LaunchedEffect
-        }
-        if (targetIndex < 0 || draft.items.isEmpty()) return@LaunchedEffect
+    LaunchedEffect(draft.items.size, cursorIndex, playingItemIndex, isPlaying, beatBlockSizeIndex) {
+        if (draft.items.isEmpty()) return@LaunchedEffect
         with(density) {
-            val itemWidthPx = 56.dp.toPx()
-            val padPx       = 8.dp.toPx()
-            val viewportPx  = scrollState.viewportSize.toFloat()
-            val targetX     = (padPx + targetIndex * itemWidthPx - viewportPx / 2f)
-                .toInt().coerceAtLeast(0)
-            scrollState.animateScrollTo(targetX)
+            val beatWidthPx    = BEAT_WIDTHS.getOrElse(beatBlockSizeIndex) { 40.dp }.toPx()
+            val bracketWidthPx = 24.dp.toPx()
+            val structWidthPx  = 40.dp.toPx()  // repeat, mod, setbpm
+            val gapPx          = 4.dp.toPx()
+            val padPx          = 8.dp.toPx()
+            val vpPx           = scrollState.viewportSize.toFloat()
+            val scrollX        = scrollState.value.toFloat()
+
+            fun widthOf(i: Int): Float = when (draft.items.getOrNull(i)) {
+                is TrackItem.Beat                                  -> beatWidthPx
+                is TrackItem.BracketOpen, is TrackItem.BracketClose -> bracketWidthPx
+                else                                               -> structWidthPx
+            }
+            fun leftOf(idx: Int): Float {
+                var x = padPx
+                for (i in 0 until idx) x += widthOf(i) + gapPx
+                return x
+            }
+
+            if (isPlaying && playingItemIndex != null) {
+                var idx = playingItemIndex
+                while (idx > 0 && draft.items.getOrNull(idx) !is TrackItem.Beat) idx--
+                val beatIndex = if (draft.items.getOrNull(idx) is TrackItem.Beat) idx else playingItemIndex
+                // to leftmost
+                val targetX = (leftOf(beatIndex) - padPx).toInt().coerceAtLeast(0)
+                if (scrollState.value != targetX) scrollState.animateScrollTo(targetX)
+            } else {
+                val cursorTarget = cursorIndex ?: draft.items.lastIndex
+                if (cursorTarget < 0) return@with
+                val itemLeft  = leftOf(cursorTarget)
+                val itemRight = itemLeft + widthOf(cursorTarget)
+                if (itemLeft >= scrollX && itemRight <= scrollX + vpPx) return@with
+                val targetX = if (itemLeft < scrollX)
+                    (itemLeft - padPx).toInt().coerceAtLeast(0)
+                else
+                    (itemRight - vpPx + padPx).toInt().coerceAtLeast(0)
+                scrollState.animateScrollTo(targetX)
+            }
         }
     }
 
