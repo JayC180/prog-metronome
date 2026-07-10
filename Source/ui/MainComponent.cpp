@@ -30,8 +30,13 @@ MainComponent::MainComponent(RhythmEngineProcessor &processor)
                                   juce::String(RhythmColors::active().name));
         }
 
+        juce::PopupMenu beatSizeMenu;
+        const char* sizeLabels[] = {"Small", "Medium", "Large"};
+        for (int i = 0; i < 3; ++i)
+            beatSizeMenu.addItem(300 + i, sizeLabels[i], true, beatBlockSizeIndex_ == i);
+
         juce::PopupMenu menu;
-        menu.addSectionHeader("Prog Metronome  v1.01");
+        menu.addSectionHeader("Prog Metronome  v1.02");
         menu.addSeparator();
         menu.addItem(1, "New Project");
         menu.addItem(2, "Open Project...");
@@ -43,6 +48,8 @@ MainComponent::MainComponent(RhythmEngineProcessor &processor)
         menu.addItem(6, "Default sound...");
         menu.addSeparator();
         menu.addItem(7, "Paired bracket delete", true, builder_.pairedBracketDelete());
+        menu.addItem(9, "Stacked fractions", true, stackedFractions_);
+        menu.addSubMenu("Beat block size", beatSizeMenu);
         menu.addSeparator();
         menu.addSubMenu("Theme", themeMenu);
         menu.addSeparator();
@@ -69,11 +76,23 @@ MainComponent::MainComponent(RhythmEngineProcessor &processor)
                 }
                 else if (result == 8)
                     showRhythmDialog(this, std::make_unique<HelpDialog>());
+                else if (result == 9) {
+                    stackedFractions_ = !stackedFractions_;
+                    trackList_.setStackedFractions(stackedFractions_);
+                    saveSettings();
+                }
+                else if (result >= 300 && result < 303) {
+                    static const int beatWidths[] = {40, 52, 68};
+                    beatBlockSizeIndex_ = result - 300;
+                    trackList_.setBeatWidth(beatWidths[beatBlockSizeIndex_]);
+                    saveSettings();
+                }
                 else if (result >= 200) {
                     const int idx = result - 200;
                     const auto &themes = BuiltInThemes::all();
                     if (idx >= 0 && idx < (int)themes.size()) {
                         RhythmColors::setActive(themes[(size_t)idx]);
+                        saveSettings();
                         rebuildFromState();
                         repaint();
                     }
@@ -176,6 +195,17 @@ MainComponent::MainComponent(RhythmEngineProcessor &processor)
     bottomPanel_.onChangeBeatSound = [this] { openBeatSoundPicker(); };
 
     trackList_.onTrackSound = [this](int idx) { openTrackSoundPicker(idx); };
+
+    processor_.transport().setOnFired(
+        [safeThis = juce::Component::SafePointer<MainComponent>(this)](
+            const rhythm::ScheduledEvent &e) {
+            const std::string trackId = e.trackId;
+            const int itemIdx        = e.trackItemIndex;
+            juce::MessageManager::callAsync([safeThis, trackId, itemIdx] {
+                if (auto *self = safeThis.getComponent())
+                    self->trackList_.setTrackPlayingIndex(trackId, itemIdx);
+            });
+        });
 
     loadSettings();
     loadUserSoundsFromDisk(); // populates availableSounds_ and load wavs
@@ -484,12 +514,32 @@ void MainComponent::loadSettings() {
     if (auto *obj = v.getDynamicObject()) {
         if (obj->hasProperty("pairedBracketDelete"))
             builder_.setPairedBracketDelete((bool)obj->getProperty("pairedBracketDelete"));
+        if (obj->hasProperty("beatBlockSizeIndex")) {
+            static const int beatWidths[] = {40, 52, 68};
+            beatBlockSizeIndex_ = juce::jlimit(0, 2, (int)obj->getProperty("beatBlockSizeIndex"));
+            trackList_.setBeatWidth(beatWidths[beatBlockSizeIndex_]);
+        }
+        if (obj->hasProperty("stackedFractions")) {
+            stackedFractions_ = (bool)obj->getProperty("stackedFractions");
+            trackList_.setStackedFractions(stackedFractions_);
+        }
+        if (obj->hasProperty("theme")) {
+            const juce::String name = obj->getProperty("theme").toString();
+            for (const auto &t : BuiltInThemes::all())
+                if (juce::String(t.name) == name) {
+                    RhythmColors::setActive(t);
+                    break;
+                }
+        }
     }
 }
 
 void MainComponent::saveSettings() {
     auto *obj = new juce::DynamicObject();
     obj->setProperty("pairedBracketDelete", builder_.pairedBracketDelete());
+    obj->setProperty("beatBlockSizeIndex", beatBlockSizeIndex_);
+    obj->setProperty("stackedFractions", stackedFractions_);
+    obj->setProperty("theme", juce::String(RhythmColors::active().name));
     const juce::String json = juce::JSON::toString(juce::var(obj), true);
     const auto f = settingsFilePath();
     f.getParentDirectory().createDirectory();
@@ -504,6 +554,7 @@ juce::File MainComponent::autosavePath() {
 }
 
 MainComponent::~MainComponent() {
+    processor_.transport().setOnFired(nullptr);
     stopTimer();
     builder_.setOnStateChanged(nullptr);
     setLookAndFeel(nullptr);

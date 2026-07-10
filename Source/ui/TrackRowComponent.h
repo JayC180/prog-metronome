@@ -31,6 +31,10 @@ class TrackRowComponent : public juce::Component {
     std::function<void(int /*trackIdx*/)> onDeleteTrack;
     std::function<void(int /*trackIdx*/)> onTrackSound;
 
+    void setBeatWidth(int w);
+    void setStackedFractions(bool stacked);
+    void setPlayingIndex(int idx);
+
     void paint(juce::Graphics &) override;
     void resized() override;
     void mouseDown(const juce::MouseEvent &) override;
@@ -60,6 +64,9 @@ class TrackListComponent : public juce::Component {
     ~TrackListComponent() override;
 
     void syncToState();
+    void setBeatWidth(int w);
+    void setStackedFractions(bool stacked);
+    void setTrackPlayingIndex(const std::string &trackId, int itemIdx);
 
     std::function<void(int)> onTrackSound;
 
@@ -73,6 +80,8 @@ class TrackListComponent : public juce::Component {
     std::vector<std::unique_ptr<TrackRowComponent>> rows_;
     ChipButton addRowButton_{"+ add track"};
     ChipButton copyRowButton_{"copy track"};
+    int beatWidth_{52};
+    bool stackedFractions_{false};
 
     void rebuildRows();
 

@@ -7,6 +7,7 @@
 #include "../audio/SoundInfo.h"
 #include "../builder/TrackBuilder.h"
 #include "../builder/TapTempoCalculator.h"
+#include "../scheduler/ScheduledEvent.h"
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <memory>
@@ -59,6 +60,8 @@ private:
     TrackBuilder&            builder_;
     TapTempoCalculator       tapTempo_;
     std::vector<SoundInfo>   availableSounds_;
+    int                      beatBlockSizeIndex_{1};
+    bool                     stackedFractions_{false};
 
     RhythmLookAndFeel     lookAndFeel_;
     TopBarComponent       topBar_;
