@@ -337,7 +337,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.01;
+				MARKETING_VERSION = 1.02;
 				OTHER_CPLUSPLUSFLAGS = "-std=c++17";
 				PRODUCT_BUNDLE_IDENTIFIER = com.jayc180.rhythmengine;
 				PRODUCT_NAME = "Prog Metronome";
@@ -367,7 +367,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.01;
+				MARKETING_VERSION = 1.02;
 				OTHER_CPLUSPLUSFLAGS = "-std=c++17";
 				PRODUCT_BUNDLE_IDENTIFIER = com.jayc180.rhythmengine;
 				PRODUCT_NAME = "Prog Metronome";
