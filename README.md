@@ -57,6 +57,8 @@ The logo stands for a 5:4 polyrhythm/polymeter because I really like 5:4.
 
 Demo video: [https://youtu.be/xnNJNjJ9yNs](https://youtu.be/xnNJNjJ9yNs)
 
+More usage examples on instagram: [https://www.instagram.com/prog_metronome/](https://www.instagram.com/prog_metronome/)
+
 There's also a [manual explanation](./assets/help.md). This can also be found in settings in the software.
 
 Explanation for a list of examples can be found [here](./assets/examples/examples.md). Download and load these .rhy files into the app to see them in action.
