@@ -37,6 +37,14 @@ class TrackBuilder(
     val defaultVolume: Float get() = _defaultVolume
     fun setDefaultVolume(v: Float) { _defaultVolume = v.coerceIn(0f, 1f) }
 
+    private var _subdivisionSoundId: String = "default"
+    val subdivisionSoundId: String get() = _subdivisionSoundId
+    fun setSubdivisionSoundId(id: String) { _subdivisionSoundId = id }
+
+    private var _subdivisionVolume: Float = 1.0f
+    val subdivisionVolume: Float get() = _subdivisionVolume
+    fun setSubdivisionVolume(v: Float) { _subdivisionVolume = v.coerceIn(0f, 1f) }
+
     private val current get() = _state.value
     private fun emit(s: TrackBuilderState) { _state.value = s }
 
@@ -147,6 +155,10 @@ class TrackBuilder(
         emit(current.copy(inputMode = InputMode.Normal))
     }
 
+    fun setTrackDefaultSubdiv(trackIndex: Int, enabled: Boolean) {
+        updateTrack(trackIndex) { it.copy(defaultSubdiv = enabled) }
+    }
+
     // per track
     fun setTrackDefaultSound(trackIndex: Int, soundId: String) {
         updateTrack(trackIndex) { it.copy(defaultSoundId = soundId) }
@@ -163,14 +175,17 @@ class TrackBuilder(
     // use track default if set
     fun enterBeat(numerator: Int) {
         if (!current.canEnterBeats || numerator <= 0) return
-        val track  = current.activeTrack ?: return
+        val track   = current.activeTrack ?: return
         val soundId = track.defaultSoundId ?: _defaultSoundId
         val volume  = track.defaultVolume  ?: _defaultVolume
+        val subbeats = if (track.defaultSubdiv && numerator > 1)
+            List(numerator) { true } else null
         insertItem(TrackItem.Beat(
             displayNum   = numerator,
             displayDenom = track.denom,
             soundId      = soundId,
             volume       = volume,
+            subbeats     = subbeats,
         ))
     }
 
@@ -182,6 +197,33 @@ class TrackBuilder(
             it[beatIndex] = item.copy(soundId = soundId)
         }
         updateActiveTrack { it.copy(items = newItems) }
+    }
+
+    fun enableBeatSubdiv(beatIndex: Int) {
+        updateBeatAt(beatIndex) { beat ->
+            if (beat.subbeats != null || beat.displayNum <= 1) beat
+            else beat.copy(subbeats = List(beat.displayNum) { true })
+        }
+    }
+
+    fun disableBeatSubdiv(beatIndex: Int) {
+        updateBeatAt(beatIndex) { it.copy(subbeats = null) }
+    }
+
+    fun toggleSubbeat(beatIndex: Int, subbeatIndex: Int) {
+        if (subbeatIndex == 0) return
+        updateBeatAt(beatIndex) { beat ->
+            val cur = beat.subbeats ?: return@updateBeatAt beat
+            if (subbeatIndex !in cur.indices) return@updateBeatAt beat
+            beat.copy(subbeats = cur.toMutableList().also { it[subbeatIndex] = !it[subbeatIndex] })
+        }
+    }
+
+    fun setSubbeatAll(beatIndex: Int, active: Boolean) {
+        updateBeatAt(beatIndex) { beat ->
+            val cur = beat.subbeats ?: return@updateBeatAt beat
+            beat.copy(subbeats = cur.mapIndexed { i, v -> if (i == 0) v else active })
+        }
     }
 
     fun openBracket() {
@@ -278,7 +320,11 @@ class TrackBuilder(
         val track = current.activeTrack ?: return
         val item  = track.items.getOrNull(idx) as? TrackItem.Beat ?: return
         val newItems = track.items.toMutableList()
-        newItems[idx] = item.copy(displayNum = numerator, displayDenom = track.denom)
+        newItems[idx] = item.copy(
+            displayNum = numerator,
+            displayDenom = track.denom,
+            subbeats = resizeSubbeats(item.subbeats, numerator),
+        )
         updateActiveTrack { it.copy(items = newItems) }
         emit(current.copy(inputMode = InputMode.Normal))
     }
@@ -374,7 +420,11 @@ class TrackBuilder(
         when (val item = track.items.getOrNull(idx)) {
             is TrackItem.Beat -> {
                 // replaces directly, adopt current denom
-                newItems[idx] = item.copy(displayNum = n, displayDenom = track.denom)
+                newItems[idx] = item.copy(
+                    displayNum = n,
+                    displayDenom = track.denom,
+                    subbeats = resizeSubbeats(item.subbeats, n),
+                )
                 updateActiveTrack { it.copy(items = newItems) }
                 emit(current.copy(inputMode = InputMode.Normal))   // auto-exit
             }
@@ -500,8 +550,9 @@ class TrackBuilder(
             return
         }
         val sc = scope ?: return
+        val subdivSoundId = if (_subdivisionSoundId == "default") _defaultSoundId else _subdivisionSoundId
         val results = current.tracks.map { draft ->
-            interpretTrackDraft(draft, current.bpm, _defaultSoundId)
+            interpretTrackDraft(draft, current.bpm, _defaultSoundId, subdivSoundId, _subdivisionVolume)
                 .copy(muted = draft.muted, soloed = draft.soloed)
         }
         _lastBuildResults.value = results
@@ -546,5 +597,13 @@ class TrackBuilder(
         private var counter = 0
         fun newTrackDraft(index: Int) = TrackDraft(
             id = "track_${index}_${counter++}", label = "Track ${index + 1}")
+
+        // resize subbeats when displayNum changes
+        fun resizeSubbeats(subbeats: List<Boolean>?, newSize: Int): List<Boolean>? {
+            if (subbeats == null) return null
+            if (newSize <= 1) return null
+            if (subbeats.size == newSize) return subbeats
+            return List(newSize) { i -> if (i == 0) true else subbeats.getOrElse(i) { false } }
+        }
     }
 }

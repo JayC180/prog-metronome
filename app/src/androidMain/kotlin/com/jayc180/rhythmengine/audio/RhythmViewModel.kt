@@ -56,6 +56,12 @@ class RhythmViewModel(application: Application) : AndroidViewModel(application) 
     private val _beatStackedFractions = MutableStateFlow(true)
     val beatStackedFractions: Boolean get() = _beatStackedFractions.value
 
+    private val _subdivisionSoundId = MutableStateFlow("default")
+    val subdivisionSoundId: String get() = _subdivisionSoundId.value
+
+    private val _subdivisionVolume = MutableStateFlow(1.0f)
+    val subdivisionVolume: Float get() = _subdivisionVolume.value
+
     val themeManager = ThemeManager(application)
 
     private val transport = Transport(soundMap = SoundMap())
@@ -83,6 +89,8 @@ class RhythmViewModel(application: Application) : AndroidViewModel(application) 
         builder.setDefaultVolume(savedVol)
         _beatBlockSizeIndex.value = prefs.getInt("beat_block_size", 1)
         _beatStackedFractions.value = prefs.getBoolean("beat_stacked_fractions", true)
+        _subdivisionSoundId.value = prefs.getString("subdivision_sound_id", "default") ?: "default"
+        _subdivisionVolume.value = prefs.getFloat("subdivision_volume", 1.0f)
     }
 
     private fun wireAudio() {
@@ -147,6 +155,16 @@ class RhythmViewModel(application: Application) : AndroidViewModel(application) 
     fun setBeatStackedFractions(v: Boolean) {
         _beatStackedFractions.value = v
         prefs.edit().putBoolean("beat_stacked_fractions", v).apply()
+    }
+
+    fun setSubdivisionSoundId(id: String) {
+        _subdivisionSoundId.value = id
+        prefs.edit().putString("subdivision_sound_id", id).apply()
+    }
+
+    fun setSubdivisionVolume(v: Float) {
+        _subdivisionVolume.value = v.coerceIn(0f, 1f)
+        prefs.edit().putFloat("subdivision_volume", v.coerceIn(0f, 1f)).apply()
     }
 
     fun importSoundFromUri(uri: Uri) {

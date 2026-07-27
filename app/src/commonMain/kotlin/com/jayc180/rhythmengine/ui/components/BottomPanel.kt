@@ -51,8 +51,10 @@ fun BottomPanel(
     onCustom:           () -> Unit,
     onBackspace:        () -> Unit,
     onBeatActiveToggle: () -> Unit,
+    onBeatSubdivToggle: () -> Unit,
+    onBeatSubdivEdit:   () -> Unit,
     onSoundChange:      () -> Unit,
-    onVolumeChange: (Float) -> Unit,
+    onVolumeChange:     (Float) -> Unit,
     modifier:           Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth().background(RhythmColors.bg0)) {
@@ -60,7 +62,10 @@ fun BottomPanel(
             onOpenBracket, onCloseBracket, onRepeatToggle, onMmClick, onSetBpmClick)
         HorizontalDivider()
         EditPanel(cursorItem, enabled = cursorItem != null && !state.isPlaying,
-            onBeatActiveToggle = onBeatActiveToggle, onSoundChange = onSoundChange,
+            onBeatActiveToggle = onBeatActiveToggle,
+            onBeatSubdivToggle = onBeatSubdivToggle,
+            onBeatSubdivEdit   = onBeatSubdivEdit,
+            onSoundChange = onSoundChange,
             onVolumeChange = onVolumeChange)
         HorizontalDivider()
         NumpadSection(state, cursorItem, state.isPlaying, onNumpad, onCustom, onBackspace, onEditToggle, )
@@ -153,8 +158,10 @@ private fun EditPanel(
     cursorItem:         TrackItem?,
     enabled:            Boolean,
     onBeatActiveToggle: () -> Unit,
+    onBeatSubdivToggle: () -> Unit,
+    onBeatSubdivEdit:   () -> Unit,
     onSoundChange:      () -> Unit,
-    onVolumeChange:     (Float) -> Unit
+    onVolumeChange:     (Float) -> Unit,
 ) {
     val alpha = if (enabled) 1f else 0.25f
     val beat  = cursorItem as? TrackItem.Beat
@@ -164,7 +171,7 @@ private fun EditPanel(
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        // on/off
+        // on/off + sync in same row
         Row(verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Text("on/off", style = RhythmType.label.copy(
@@ -183,8 +190,28 @@ private fun EditPanel(
                     !enabled || beat == null -> RhythmColors.textDim
                     beat.active             -> RhythmColors.accent
                     else                    -> RhythmColors.textMuted
-                })
+                }),
+                modifier = Modifier.weight(1f),
             )
+            Text("subdiv", style = RhythmType.label.copy(
+                color = RhythmColors.textMuted.copy(alpha = alpha), fontSize = 13.sp))
+            RhythmToggle(
+                checked  = beat?.subbeats != null,
+                onToggle = onBeatSubdivToggle,
+                enabled  = enabled && beat != null && beat.active && beat.displayNum > 1,
+            )
+            if (beat?.subbeats != null && enabled) {
+                Box(modifier = Modifier
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(RhythmColors.accentBg)
+                    .border(0.5.dp, RhythmColors.accentBorder, RoundedCornerShape(4.dp))
+                    .clickable(onClick = onBeatSubdivEdit)
+                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                ) {
+                    Text("edit ›", style = RhythmType.label.copy(fontSize = 12.sp, color = RhythmColors.accent))
+
+                }
+            }
         }
 
         // volume

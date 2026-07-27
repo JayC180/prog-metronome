@@ -82,21 +82,23 @@ object ProjectSerializer {
     private fun serializeTrack(draft: TrackDraft): RhyTrack = RhyTrack(
         label  = draft.label,
         denom  = draft.denom,
-        muted  = if (draft.muted) true else null,    // omit false (encodeDefaults=false)
+        muted  = if (draft.muted) true else null,
         soloed = if (draft.soloed) true else null,
         items  = draft.items.map { serializeItem(it) },
         defaultSoundId = draft.defaultSoundId,
         defaultVolume  = draft.defaultVolume,
+        defaultSubdiv  = if (draft.defaultSubdiv) true else null,
     )
 
     private fun serializeItem(item: TrackItem): RhyItem = when (item) {
         is TrackItem.Beat -> RhyItem(
-            type    = "beat",
-            num     = item.displayNum,
-            den     = item.displayDenom,
-            active  = if (!item.active) false else null,  // omit true (default)
-            soundId = item.soundId,
-            volume  = if (item.volume != 1.0f) item.volume else null,  // omit 1.0
+            type      = "beat",
+            num       = item.displayNum,
+            den       = item.displayDenom,
+            active    = if (!item.active) false else null,      // omit true (default)
+            soundId   = item.soundId,
+            volume    = if (item.volume != 1.0f) item.volume else null,  // omit 1.0
+            subbeats  = item.subbeats?.joinToString("") { if (it) "1" else "0" },
         )
         is TrackItem.BracketOpen  -> RhyItem(type = "open")
         is TrackItem.BracketClose -> RhyItem(type = "close")
@@ -112,7 +114,7 @@ object ProjectSerializer {
 
         val tracks = dto.tracks.mapIndexed { index, rhyTrack ->
             TrackDraft(
-                id     = "track_$index",        // regenerate runtime ID
+                id     = "track_$index",
                 label  = rhyTrack.label,
                 denom  = rhyTrack.denom,
                 muted  = rhyTrack.muted  ?: false,
@@ -120,6 +122,7 @@ object ProjectSerializer {
                 items  = rhyTrack.items.mapNotNull { deserializeItem(it) },
                 defaultSoundId = rhyTrack.defaultSoundId,
                 defaultVolume  = rhyTrack.defaultVolume,
+                defaultSubdiv  = rhyTrack.defaultSubdiv ?: false,
             )
         }
 
@@ -137,12 +140,18 @@ object ProjectSerializer {
         "beat" -> {
             val num = item.num ?: return null
             val den = item.den ?: return null
+            val decodedSubbeats = when {
+                item.subbeats != null -> item.subbeats.map { it == '1' }
+                item.subdivide == true -> List(num) { true }   // legacy field
+                else -> null
+            }
             TrackItem.Beat(
                 displayNum   = num,
                 displayDenom = den,
                 active       = item.active ?: true,
                 soundId      = item.soundId,
                 volume       = item.volume ?: 1.0f,
+                subbeats     = decodedSubbeats,
             )
         }
         "open"   -> TrackItem.BracketOpen
@@ -186,22 +195,25 @@ private data class RhyProject(
 private data class RhyTrack(
     val label:  String,
     val denom:  Int,
-    val muted:  Boolean?         = null,
-    val soloed: Boolean?         = null,
+    val muted:  Boolean?        = null,
+    val soloed: Boolean?        = null,
     val items:  List<RhyItem>,
     val defaultSoundId: String? = null,
     val defaultVolume:  Float?  = null,
+    val defaultSubdiv:  Boolean? = null,
 )
 
 @Serializable
 private data class RhyItem(
     val type:    String,
     // beat fields
-    val num:     Int?    = null,
-    val den:     Int?    = null,
-    val active:  Boolean?= null,
-    val soundId: String? = null,
-    val volume:  Float?  = null,
+    val num:      Int?     = null,
+    val den:      Int?     = null,
+    val active:   Boolean? = null,
+    val soundId:  String?  = null,
+    val volume:   Float?   = null,
+    val subbeats: String?  = null,   // compact "1101" encoding; [0] always '1'
+    val subdivide: Boolean? = null,  // legacy; read-only for backward compat
     // repeat field
     val count:   Int?    = null,
     // modulation fields

@@ -36,6 +36,8 @@ sealed class SoundPickerTarget {
     data class TrackDefault(val trackIndex: Int) : SoundPickerTarget()
     // global default
     object GlobalDefault : SoundPickerTarget()
+    // subdivision sound
+    object SubdivisionDefault : SoundPickerTarget()
 }
 
 @Suppress("UnusedBoxWithConstraintsScope")
@@ -53,6 +55,7 @@ fun App(vm: AppViewModel) {
     var showCustomBeatDialog by remember { mutableStateOf(false) }
     var showCustomDenomDialog by remember { mutableStateOf(false) }
     var showBpmDialog        by remember { mutableStateOf(false) }
+    var showSubbeatEditor      by remember { mutableStateOf(false) }
     var soundPickerTarget    by remember { mutableStateOf<SoundPickerTarget?>(null) }
 
     LaunchedEffect(state.isPlaying) {
@@ -81,28 +84,30 @@ fun App(vm: AppViewModel) {
         if (maxWidth < 600.dp) {
             PortraitLayout(
                 state, playheads, cursorItem, vm, sounds,
-                onMmClick         = { showMmDialog = true },
-                onSetBpmClick     = { showSetBpmDialog = true },
-                onRepeatCustom    = { showRepeatDialog = true },
-                onEditToggle      = onEditToggle,
-                onCustomBeat      = onCustomBeat,
-                onCustomDenom     = onCustomDenom,
-                openSoundPicker   = openSoundPicker,
-                onBpmClick        = { showBpmDialog = true},
-                buildErrors       = buildErrors,
-                    )
+                onMmClick           = { showMmDialog = true },
+                onSetBpmClick       = { showSetBpmDialog = true },
+                onRepeatCustom      = { showRepeatDialog = true },
+                onEditToggle        = onEditToggle,
+                onCustomBeat        = onCustomBeat,
+                onCustomDenom       = onCustomDenom,
+                openSoundPicker     = openSoundPicker,
+                onBpmClick          = { showBpmDialog = true },
+                onOpenSubbeatEditor   = { showSubbeatEditor = true },
+                buildErrors         = buildErrors,
+            )
         } else {
             LandscapeLayout(
                 state, playheads, cursorItem, vm, sounds,
-                onMmClick         = { showMmDialog = true },
-                onSetBpmClick     = { showSetBpmDialog = true },
-                onRepeatCustom    = { showRepeatDialog = true },
-                onEditToggle      = onEditToggle,
-                onCustomBeat      = onCustomBeat,
-                onCustomDenom     = onCustomDenom,
-                openSoundPicker   = openSoundPicker,
-                onBpmClick        = { showBpmDialog = true},
-                buildErrors       = buildErrors,
+                onMmClick           = { showMmDialog = true },
+                onSetBpmClick       = { showSetBpmDialog = true },
+                onRepeatCustom      = { showRepeatDialog = true },
+                onEditToggle        = onEditToggle,
+                onCustomBeat        = onCustomBeat,
+                onCustomDenom       = onCustomDenom,
+                openSoundPicker     = openSoundPicker,
+                onBpmClick          = { showBpmDialog = true },
+                onOpenSubbeatEditor   = { showSubbeatEditor = true },
+                buildErrors         = buildErrors,
             )
         }
     }
@@ -191,7 +196,25 @@ fun App(vm: AppViewModel) {
         )
     }
 
+    if (showSubbeatEditor) {
+        val beat = cursorItem as? TrackItem.Beat
+        val idx  = state.cursorIndex
+        if (beat?.subbeats != null && idx != null) {
+            SubbeatEditorDialog(
+                beat            = beat,
+                onToggleSubbeat = { sub -> vm.toggleSubbeat(idx, sub) },
+                onSetAll        = { active -> vm.setSubbeatAll(idx, active) },
+                onDismiss       = { showSubbeatEditor = false },
+            )
+        } else {
+            showSubbeatEditor = false
+        }
+    }
+
     soundPickerTarget?.let { target ->
+        val globalDefaultVolume by vm.globalDefaultVolume.collectAsState()
+        val subdivisionVolume   by vm.subdivisionVolume.collectAsState()
+
         val currentSoundId = when (target) {
             is SoundPickerTarget.Beat ->
                 (state.tracks.getOrNull(target.trackIndex)
@@ -202,27 +225,40 @@ fun App(vm: AppViewModel) {
 
             is SoundPickerTarget.GlobalDefault ->
                 vm.globalDefaultSoundId
+
+            is SoundPickerTarget.SubdivisionDefault ->
+                vm.subdivisionSoundId.value
         }
 
         val currentVolume: Float? = when (target) {
-            is SoundPickerTarget.Beat         -> null
-            is SoundPickerTarget.TrackDefault ->
-                state.tracks.getOrNull(target.trackIndex)?.defaultVolume
-                    ?: vm.globalDefaultVolume
-            is SoundPickerTarget.GlobalDefault -> vm.globalDefaultVolume
+            is SoundPickerTarget.Beat              -> null
+            is SoundPickerTarget.TrackDefault      ->
+                state.tracks.getOrNull(target.trackIndex)?.defaultVolume ?: globalDefaultVolume
+            is SoundPickerTarget.GlobalDefault     -> globalDefaultVolume
+            is SoundPickerTarget.SubdivisionDefault -> subdivisionVolume
         }
+
+        val subdivideAll = if (target is SoundPickerTarget.TrackDefault)
+            state.tracks.getOrNull(target.trackIndex)?.defaultSubdiv
+        else null
 
         SoundPickerDialog(
             sounds         = sounds,
             currentSoundId = currentSoundId,
             currentVolume  = currentVolume,
             onVolumeChange = when (target) {
-                is SoundPickerTarget.Beat         -> null
-                is SoundPickerTarget.TrackDefault ->
+                is SoundPickerTarget.Beat              -> null
+                is SoundPickerTarget.TrackDefault      ->
                     { v -> vm.builder.setTrackDefaultVolume(target.trackIndex, v) }
-                is SoundPickerTarget.GlobalDefault ->
+                is SoundPickerTarget.GlobalDefault     ->
                     { v -> vm.setGlobalDefaultVolume(v) }
+                is SoundPickerTarget.SubdivisionDefault ->
+                    { v -> vm.setSubdivisionVolume(v) }
             },
+            subdivideAll         = subdivideAll,
+            onSubdivideAllToggle = if (target is SoundPickerTarget.TrackDefault)
+                { v -> vm.builder.setTrackDefaultSubdiv(target.trackIndex, v) }
+            else null,
             onSelect = { entry ->
                 when (target) {
                     is SoundPickerTarget.Beat ->
@@ -233,6 +269,9 @@ fun App(vm: AppViewModel) {
 
                     is SoundPickerTarget.GlobalDefault ->
                         vm.setGlobalDefault(entry.id)
+
+                    is SoundPickerTarget.SubdivisionDefault ->
+                        vm.setSubdivisionSound(entry.id)
                 }
                 soundPickerTarget = null
             },
@@ -256,6 +295,7 @@ private fun PortraitLayout(
     onCustomDenom: () -> Unit,
     onBpmClick: () -> Unit,
     openSoundPicker: (SoundPickerTarget) -> Unit,
+    onOpenSubbeatEditor: () -> Unit,
     buildErrors: List<String>,
 ) {
     val globalDefaultLabel     = sounds.firstOrNull { it.id == vm.globalDefaultSoundId }?.label
@@ -310,7 +350,7 @@ private fun PortraitLayout(
         BottomPanelWired(
             state, cursorItem, vm, sounds,
             onMmClick, onSetBpmClick, onRepeatCustom, onEditToggle, onCustomBeat,
-            onCustomDenom, openSoundPicker,
+            onCustomDenom, openSoundPicker, onOpenSubbeatEditor,
         )
     }
 }
@@ -329,9 +369,10 @@ private fun LandscapeLayout(
     onEditToggle:    () -> Unit,
     onCustomBeat:    () -> Unit,
     onCustomDenom:   () -> Unit,
-    onBpmClick: () -> Unit,
+    onBpmClick:      () -> Unit,
     openSoundPicker: (SoundPickerTarget) -> Unit,
-    buildErrors: List<String>,
+    onOpenSubbeatEditor: () -> Unit,
+    buildErrors:     List<String>,
 ) {
     val globalDefaultLabel     = sounds.firstOrNull { it.id == vm.globalDefaultSoundId }?.label
     val beatBlockSizeIndex     by vm.beatBlockSizeIndex.collectAsState()
@@ -384,7 +425,7 @@ private fun LandscapeLayout(
             BottomPanelWired(
                 state, cursorItem, vm, sounds,
                 onMmClick, onSetBpmClick, onRepeatCustom, onEditToggle, onCustomBeat, onCustomDenom,
-                openSoundPicker,
+                openSoundPicker, onOpenSubbeatEditor,
                 modifier = Modifier.weight(1f).fillMaxHeight(),
             )
         }
@@ -404,6 +445,7 @@ private fun BottomPanelWired(
     onCustomBeat:    () -> Unit,
     onCustomDenom:   () -> Unit,
     openSoundPicker: (SoundPickerTarget) -> Unit,
+    onOpenSubbeatEditor: () -> Unit = {},
     modifier:        Modifier = Modifier,
 ) {
     com.jayc180.rhythmengine.ui.components.BottomPanel(
@@ -426,6 +468,12 @@ private fun BottomPanelWired(
             val beat = cursorItem as? TrackItem.Beat ?: return@BottomPanel
             vm.builder.updateBeatAt(idx) { it.copy(active = !it.active) }
         },
+        onBeatSubdivToggle = {
+            val idx  = state.cursorIndex ?: return@BottomPanel
+            val beat = cursorItem as? TrackItem.Beat ?: return@BottomPanel
+            if (beat.subbeats != null) vm.disableBeatSubdiv(idx) else vm.enableBeatSubdiv(idx)
+        },
+        onBeatSubdivEdit = onOpenSubbeatEditor,
         onSoundChange = {
             // "change ›" in edit panel — assigns to the selected beat
             val idx = state.cursorIndex ?: return@BottomPanel

@@ -7,9 +7,10 @@ sealed class TrackItem {
     data class Beat(
         val displayNum:   Int,
         val displayDenom: Int,
-        val active:       Boolean = true,
-        val soundId:      String? = null,
-        val volume:       Float   = 1.0f,
+        val active:       Boolean         = true,
+        val soundId:      String?         = null,
+        val volume:       Float           = 1.0f,
+        val subbeats:     List<Boolean>?  = null,  // null=off; [0] always true; [1...N-1] is user set
     ) : TrackItem() {
         val duration: Rational get() = Rational(displayNum.toLong(), displayDenom.toLong())
         val label: String get() = if (displayDenom == 1) "$displayNum" else "$displayNum/$displayDenom"
@@ -42,8 +43,9 @@ data class TrackDraft(
     val items:  List<TrackItem> = emptyList(),
     val muted:  Boolean         = false,
     val soloed: Boolean         = false,
-    val defaultSoundId: String?        = null,   // null = use global default
-    val defaultVolume:  Float?         = null,   // null = use global default (1.0)
+    val defaultSoundId: String? = null,   // null = use global default
+    val defaultVolume:  Float?  = null,   // null = use global default (1.0)
+    val defaultSubdiv:  Boolean = false,  // if true, new beats get subbeats initialized
 ) {
     val bracketDepth: Int get() {
         var d = 0

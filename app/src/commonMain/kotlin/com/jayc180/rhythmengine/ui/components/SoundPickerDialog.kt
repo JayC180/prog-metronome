@@ -26,13 +26,15 @@ import kotlin.math.roundToInt
 
 @Composable
 fun SoundPickerDialog(
-    sounds:          List<SoundInfo>,
-    currentSoundId:  String?,
-    onSelect:        (SoundInfo) -> Unit,
-    onDismiss:       () -> Unit,
-    onDeleteUser:    ((String) -> Unit)? = null,   // null = delete not available
-    currentVolume:   Float?              = null,   // null = no volume section
-    onVolumeChange:  ((Float) -> Unit)?  = null,
+    sounds:                List<SoundInfo>,
+    currentSoundId:        String?,
+    onSelect:              (SoundInfo) -> Unit,
+    onDismiss:             () -> Unit,
+    onDeleteUser:          ((String) -> Unit)?  = null,   // null = delete not available
+    currentVolume:         Float?               = null,   // null = no volume section
+    onVolumeChange:        ((Float) -> Unit)?   = null,
+    subdivideAll:          Boolean?             = null,   // null = no subdivide section
+    onSubdivideAllToggle:  ((Boolean) -> Unit)? = null,
     bg:        Color = Color.Unspecified,
     textColor: Color = Color.Unspecified,
     border:    Color = Color.Unspecified,
@@ -126,6 +128,28 @@ fun SoundPickerDialog(
                     )
                     Text("${(localVolume * 100).roundToInt()}%",
                         style = RhythmType.label.copy(fontSize = 11.sp, color = RhythmColors.textSecondary))
+                }
+                HorizontalDivider()
+            }
+
+            // subdivide all beats toggle
+            if (onSubdivideAllToggle != null && subdivideAll != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Column {
+                        Text("Auto-subdiv new beats",
+                            style = RhythmType.label.copy(fontSize = 11.sp, color = RhythmColors.textSecondary))
+                        Text("new beats added to this track are subdivided by default",
+                            style = RhythmType.label.copy(fontSize = 9.sp, color = RhythmColors.textDim))
+                    }
+                    RhythmToggle(
+                        checked  = subdivideAll,
+                        onToggle = { onSubdivideAllToggle(!subdivideAll) },
+                    )
                 }
                 HorizontalDivider()
             }

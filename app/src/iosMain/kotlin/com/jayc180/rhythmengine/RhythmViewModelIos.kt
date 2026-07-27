@@ -40,6 +40,12 @@ class RhythmViewModelIos {
     private val _beatStackedFractions = MutableStateFlow(true)
     val beatStackedFractions: Boolean get() = _beatStackedFractions.value
 
+    private val _subdivisionSoundId = MutableStateFlow("default")
+    val subdivisionSoundId: String get() = _subdivisionSoundId.value
+
+    private val _subdivisionVolume = MutableStateFlow(1.0f)
+    val subdivisionVolume: Float get() = _subdivisionVolume.value
+
     // ── Project state ──────────────────────────────────────────────────────────
 
     private val _projectName   = MutableStateFlow("Untitled")
@@ -93,6 +99,10 @@ class RhythmViewModelIos {
             _beatBlockSizeIndex.value = prefs.integerForKey("beat_block_size").toInt().coerceIn(0, 2)
         if (prefs.objectForKey("beat_stacked_fractions") != null)
             _beatStackedFractions.value = prefs.boolForKey("beat_stacked_fractions")
+        if (prefs.objectForKey("subdivision_sound_id") != null)
+            _subdivisionSoundId.value = prefs.stringForKey("subdivision_sound_id") ?: "default"
+        if (prefs.objectForKey("subdivision_volume") != null)
+            _subdivisionVolume.value = prefs.floatForKey("subdivision_volume")
     }
 
     private fun wireAudio() {
@@ -149,6 +159,17 @@ class RhythmViewModelIos {
     fun setBeatStackedFractions(v: Boolean) {
         _beatStackedFractions.value = v
         platform.Foundation.NSUserDefaults.standardUserDefaults.setBool(v, "beat_stacked_fractions")
+    }
+
+    fun setSubdivisionSoundId(id: String) {
+        _subdivisionSoundId.value = id
+        platform.Foundation.NSUserDefaults.standardUserDefaults.setObject(id, "subdivision_sound_id")
+    }
+
+    fun setSubdivisionVolume(v: Float) {
+        _subdivisionVolume.value = v.coerceIn(0f, 1f)
+        platform.Foundation.NSUserDefaults.standardUserDefaults
+            .setFloat(v.coerceIn(0f, 1f), "subdivision_volume")
     }
 
     fun deleteUserSound(soundId: String) {
@@ -281,10 +302,15 @@ class RhythmViewModelIos {
         _globalDefaultSoundId      = globalDefaultSoundId,
         onSetGlobalDefault         = { id -> setGlobalDefaultSound(id) },
         onSetGlobalDefaultVolume   = { v  -> setGlobalDefaultVolume(v) },
+        initialGlobalDefaultVolume    = globalDefaultVolume,
         initialBeatBlockSizeIndex     = beatBlockSizeIndex,
         onSetBeatBlockSizeIndex       = { v  -> setBeatBlockSizeIndex(v) },
         initialBeatStackedFractions   = beatStackedFractions,
         onSetBeatStackedFractions     = { v  -> setBeatStackedFractions(v) },
+        initialSubdivisionSoundId     = subdivisionSoundId,
+        onSetSubdivisionSound         = { id -> setSubdivisionSoundId(id) },
+        initialSubdivisionVolume      = subdivisionVolume,
+        onSetSubdivisionVolume        = { v  -> setSubdivisionVolume(v) },
     )
 
     fun dispose() {

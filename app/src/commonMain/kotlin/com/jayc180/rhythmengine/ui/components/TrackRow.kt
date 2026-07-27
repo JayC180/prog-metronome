@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -57,10 +58,10 @@ fun TrackRow(
             val vpPx           = scrollState.viewportSize.toFloat()
             val scrollX        = scrollState.value.toFloat()
 
-            fun widthOf(i: Int): Float = when (draft.items.getOrNull(i)) {
-                is TrackItem.Beat                                  -> beatWidthPx
+            fun widthOf(i: Int): Float = when (val item = draft.items.getOrNull(i)) {
+                is TrackItem.Beat -> if (item.subbeats != null) BEAT_WIDTHS[2].toPx() else beatWidthPx
                 is TrackItem.BracketOpen, is TrackItem.BracketClose -> bracketWidthPx
-                else                                               -> structWidthPx
+                else -> structWidthPx
             }
             fun leftOf(idx: Int): Float {
                 var x = padPx
@@ -222,6 +223,9 @@ fun TrackItemView(
 private val BEAT_WIDTHS = listOf(32.dp, 38.dp, 44.dp)
 private val ITEM_HEIGHT = 42.dp
 
+private const val SUBBEAT_DOT_MAX = 12
+private const val SUBBEAT_DOTS_PER_ROW = 4
+
 @Composable
 private fun BeatView(
     beat:    TrackItem.Beat,
@@ -232,19 +236,22 @@ private fun BeatView(
     dynamic: Boolean,
     stacked: Boolean = false,
 ) {
+    // use large block when subbeat active
+    val effectiveWidth = if (beat.subbeats != null) BEAT_WIDTHS[2] else width
+    val hasDots = beat.subbeats != null
+
     val (bg, border, textColor) = when {
         playing     -> Triple(RhythmColors.beatPlayingBg, RhythmColors.accentBright, RhythmColors.accentBright)
         selected    -> Triple(RhythmColors.beatSelectedBg, RhythmColors.beatSelectedBorder, RhythmColors.beatSelectedText)
         beat.isRest -> Triple(RhythmColors.beatRestBg, RhythmColors.bg3, RhythmColors.textDim)
         else        -> Triple(RhythmColors.beatActiveBg, RhythmColors.beatActiveBorder, RhythmColors.accent)
     }
-    val stackedFontSp = (width.value * 0.33f).coerceIn(11f, 16f)
-    val baseFontSp    = (width.value / 3f).coerceIn(8f, 18f)
-    val innerPad      = (width.value * 0.08f).coerceIn(3f, 7f).dp
+    val stackedFontSp = (effectiveWidth.value * 0.33f).coerceIn(11f, 16f)
+    val baseFontSp    = (effectiveWidth.value / 3f).coerceIn(8f, 18f)
+    val innerPad      = (effectiveWidth.value * 0.08f).coerceIn(3f, 7f).dp
 
-    // Box has no padding — padding lives on the content so it counts toward natural width
-    // for dynamic expansion but doesn't widen the block's footprint in the parent Row
-    val sizeModifier = if (dynamic) Modifier.widthIn(min = width) else Modifier.width(width)
+    val sizeModifier = if (dynamic && beat.subbeats == null) Modifier.widthIn(min = effectiveWidth)
+                       else Modifier.width(effectiveWidth)
 
     Box(contentAlignment = Alignment.Center,
         modifier = sizeModifier.height(ITEM_HEIGHT)
@@ -255,7 +262,8 @@ private fun BeatView(
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
-                modifier = Modifier.padding(horizontal = innerPad),
+                modifier = Modifier.padding(horizontal = innerPad)
+                    .then(if (hasDots) Modifier.padding(bottom = 10.dp) else Modifier),
             ) {
                 Text("${beat.displayNum}",
                     softWrap = false,
@@ -276,9 +284,47 @@ private fun BeatView(
             val labelFontSp = if (beat.label.length > 5) (baseFontSp * 0.7f).coerceAtLeast(8f) else baseFontSp
             Text(beat.label,
                 softWrap = false,
-                modifier = Modifier.padding(horizontal = innerPad),
+                modifier = Modifier.padding(horizontal = innerPad)
+                    .then(if (hasDots) Modifier.padding(bottom = 10.dp) else Modifier),
                 style = RhythmType.beatValue.copy(
                     color = textColor, fontSize = labelFontSp.sp))
+        }
+
+        if (hasDots) {
+            SubbeatDots(
+                subbeats = beat.subbeats!!,
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 3.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun SubbeatDots(subbeats: List<Boolean>, modifier: Modifier = Modifier) {
+    val count = subbeats.size.coerceAtMost(SUBBEAT_DOT_MAX)
+    val rows  = (count + SUBBEAT_DOTS_PER_ROW - 1) / SUBBEAT_DOTS_PER_ROW
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        for (row in 0 until rows) {
+            Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                val from = row * SUBBEAT_DOTS_PER_ROW
+                val to   = minOf(from + SUBBEAT_DOTS_PER_ROW, count)
+                for (idx in from until to) {
+                    val isBase   = idx == 0
+                    val isActive = subbeats.getOrElse(idx) { false }
+                    Box(modifier = Modifier
+                        .size(4.dp)
+                        .clip(CircleShape)
+                        .background(when {
+                            isBase   -> RhythmColors.accentBright
+                            isActive -> RhythmColors.caution
+                            else     -> RhythmColors.border1
+                        }))
+                }
+            }
         }
     }
 }

@@ -169,10 +169,15 @@ class MainActivity : ComponentActivity() {
                 _globalDefaultSoundId      = vm.globalDefaultSoundId,
                 onSetGlobalDefault         = { id -> vm.setGlobalDefaultSound(id) },
                 onSetGlobalDefaultVolume   = { v  -> vm.setGlobalDefaultVolume(v) },
+                initialGlobalDefaultVolume    = vm.globalDefaultVolume,
                 initialBeatBlockSizeIndex     = vm.beatBlockSizeIndex,
                 onSetBeatBlockSizeIndex       = { v  -> vm.setBeatBlockSizeIndex(v) },
                 initialBeatStackedFractions   = vm.beatStackedFractions,
                 onSetBeatStackedFractions     = { v  -> vm.setBeatStackedFractions(v) },
+                initialSubdivisionSoundId     = vm.subdivisionSoundId,
+                onSetSubdivisionSound         = { id -> vm.setSubdivisionSoundId(id) },
+                initialSubdivisionVolume      = vm.subdivisionVolume,
+                onSetSubdivisionVolume        = { v  -> vm.setSubdivisionVolume(v) },
             )
         }
 
@@ -186,6 +191,7 @@ class MainActivity : ComponentActivity() {
                         SettingsOverlay(
                             projectVm       = projectVm,
                             rhythmVm        = vm,
+                            appVm           = appVm,
                             sounds          = sounds,
                             importState     = importState,
                             onDismiss       = { showSettings = false },
@@ -255,6 +261,8 @@ class MainActivity : ComponentActivity() {
                             .getOrNull(target.trackIndex)?.defaultSoundId
                     is SoundPickerTarget.GlobalDefault ->
                         vm.globalDefaultSoundId
+                    is SoundPickerTarget.SubdivisionDefault ->
+                        vm.subdivisionSoundId
                 }
                 SoundPickerDialog(
                     sounds         = sounds,
@@ -267,6 +275,8 @@ class MainActivity : ComponentActivity() {
                                 vm.builder.setTrackDefaultSound(target.trackIndex, info.id)
                             is SoundPickerTarget.GlobalDefault ->
                                 vm.setGlobalDefaultSound(info.id)
+                            is SoundPickerTarget.SubdivisionDefault ->
+                                appVm.setSubdivisionSound(info.id)
                         }
                         soundPickerTarget = null
                     },
@@ -295,14 +305,11 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// ── SettingsOverlay and dialog composables ────────────────────────────────────
-// (identical to previous version — omitted for brevity)
-// Copy from previous MainActivity.kt
-
 @Composable
 private fun SettingsOverlay(
     projectVm:       ProjectViewModel,
     rhythmVm:        RhythmViewModel,
+    appVm:           com.jayc180.rhythmengine.ui.AppViewModel,
     sounds:          List<SoundInfo>,
     importState:     RhythmViewModel.ImportState,
     onDismiss:       () -> Unit,
@@ -319,7 +326,10 @@ private fun SettingsOverlay(
     var showSaveDialog    by remember { mutableStateOf(false) }
     var showOverwriteDlg  by remember { mutableStateOf(false) }
     var showOpenDialog    by remember { mutableStateOf(false) }
-    val defaultSoundLabel = sounds.firstOrNull { it.id == rhythmVm.globalDefaultSoundId }?.label ?: "—"
+    val defaultSoundLabel  = sounds.firstOrNull { it.id == rhythmVm.globalDefaultSoundId }?.label ?: "—"
+    val subdivSoundLabel   = sounds.firstOrNull { it.id == rhythmVm.subdivisionSoundId }?.label ?: "—"
+    val globalDefaultVol by appVm.globalDefaultVolume.collectAsState()
+    val subdivisionVol   by appVm.subdivisionVolume.collectAsState()
     val pairedBracketDelete by rhythmVm.builder.pairedBracketDeleteFlow
         .collectAsState()
 
@@ -342,7 +352,7 @@ private fun SettingsOverlay(
                 Column {
                     Text("Settings", style = RhythmType.bpmValue.copy(
                         fontSize = 15.sp, color = RhythmColors.textPrimary))
-                    Text("v1.02", style = RhythmType.label.copy(
+                    Text("v1.03", style = RhythmType.label.copy(
                         fontSize = 12.sp, color = RhythmColors.textDim))
                 }
                 Text("✕", style = RhythmType.label.copy(
@@ -433,6 +443,7 @@ private fun SettingsOverlay(
                     border    = RhythmColors.border1)
             }
             SDivider()
+            // default sound + vol
             Row(modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically) {
@@ -446,6 +457,41 @@ private fun SettingsOverlay(
                     Text(defaultSoundLabel, style = RhythmType.label.copy(
                         fontSize = 11.sp, color = RhythmColors.textPrimary))
                 }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                com.jayc180.rhythmengine.ui.components.VolumeSlider(
+                    value         = globalDefaultVol,
+                    onValueChange = { appVm.setGlobalDefaultVolume(it) },
+                    modifier      = Modifier.weight(1f),
+                )
+                Text("${(globalDefaultVol * 100).toInt()}%", style = RhythmType.label.copy(
+                    fontSize = 11.sp, color = RhythmColors.textMuted))
+            }
+            // sudivision sound + vol
+            Row(modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically) {
+                Text("Subdivision sound", style = RhythmType.label.copy(
+                    fontSize = 11.sp, color = RhythmColors.textSecondary))
+                Box(modifier = Modifier.clip(RoundedCornerShape(4.dp))
+                    .background(RhythmColors.bg3)
+                    .border(0.5.dp, RhythmColors.border1, RoundedCornerShape(4.dp))
+                    .clickable { openSoundPicker(SoundPickerTarget.SubdivisionDefault) }
+                    .padding(horizontal = 8.dp, vertical = 4.dp)) {
+                    Text(subdivSoundLabel, style = RhythmType.label.copy(
+                        fontSize = 11.sp, color = RhythmColors.textPrimary))
+                }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                com.jayc180.rhythmengine.ui.components.VolumeSlider(
+                    value         = subdivisionVol,
+                    onValueChange = { appVm.setSubdivisionVolume(it) },
+                    modifier      = Modifier.weight(1f),
+                )
+                Text("${(subdivisionVol * 100).toInt()}%", style = RhythmType.label.copy(
+                    fontSize = 11.sp, color = RhythmColors.textMuted))
             }
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 SBtn("Import Sound…", modifier = Modifier.fillMaxWidth(),

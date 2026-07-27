@@ -38,9 +38,11 @@ sealed class PNode {
  *   Inline mm inside []: local (restored each pass). Use as modifier on ] for compound.
  */
 fun interpretTrackDraft(
-    draft:        TrackDraft,
-    baseBpm:      Double,
-    defaultSound: String = "default",
+    draft:               TrackDraft,
+    baseBpm:             Double,
+    defaultSound:        String = "default",
+    subdivisionSoundId:  String = "default",
+    subdivisionVolume:   Float  = 1.0f,
 ): InterpretResult {
     // parse
     data class Frame(val children: MutableList<PNode>, val openIdx: Int)
@@ -108,14 +110,31 @@ fun interpretTrackDraft(
         val out = mutableListOf<PrecomputedEvent>()
         when (node) {
             is PNode.Beat -> {
-                val dur = (s.npp * node.item.displayNum / node.item.displayDenom).toLong()
-                out += PrecomputedEvent(
-                    offsetNanos    = s.cursor,
-                    soundId        = if (node.item.active) node.item.soundId ?: defaultSound else null,
-                    trackItemIndex = node.idx,
-                    firedCount     = s.fired,
-                    volume         = node.item.volume,
-                )
+                val beat = node.item
+                val dur  = (s.npp * beat.displayNum / beat.displayDenom).toLong()
+                val subbeats = beat.subbeats
+                if (beat.active && subbeats != null && subbeats.size == beat.displayNum) {
+                    val subDur = (s.npp / beat.displayDenom).toLong()
+                    subbeats.forEachIndexed { i, active ->
+                        if (active) {
+                            out += PrecomputedEvent(
+                                offsetNanos    = s.cursor + i * subDur,
+                                soundId        = if (i == 0) beat.soundId ?: defaultSound else subdivisionSoundId,
+                                trackItemIndex = node.idx,
+                                firedCount     = s.fired,
+                                volume         = if (i == 0) beat.volume else subdivisionVolume,
+                            )
+                        }
+                    }
+                } else {
+                    out += PrecomputedEvent(
+                        offsetNanos    = s.cursor,
+                        soundId        = if (beat.active) beat.soundId ?: defaultSound else null,
+                        trackItemIndex = node.idx,
+                        firedCount     = s.fired,
+                        volume         = beat.volume,
+                    )
+                }
                 s.cursor += dur
                 s.fired++
             }
