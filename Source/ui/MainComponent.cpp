@@ -36,7 +36,7 @@ MainComponent::MainComponent(RhythmEngineProcessor &processor)
             beatSizeMenu.addItem(300 + i, sizeLabels[i], true, beatBlockSizeIndex_ == i);
 
         juce::PopupMenu menu;
-        menu.addSectionHeader("Prog Metronome  v1.02");
+        menu.addSectionHeader("Prog Metronome  v1.03");
         menu.addSeparator();
         menu.addItem(1, "New Project");
         menu.addItem(2, "Open Project...");
@@ -46,6 +46,7 @@ MainComponent::MainComponent(RhythmEngineProcessor &processor)
         menu.addSeparator();
         menu.addItem(5, "Import Sound...");
         menu.addItem(6, "Default sound...");
+        menu.addItem(10, "Subdivision sound...");
         menu.addSeparator();
         menu.addItem(7, "Paired bracket delete", true, builder_.pairedBracketDelete());
         menu.addItem(9, "Stacked fractions", true, stackedFractions_);
@@ -70,6 +71,8 @@ MainComponent::MainComponent(RhythmEngineProcessor &processor)
                     importSound();
                 else if (result == 6)
                     openGlobalSoundPicker();
+                else if (result == 10)
+                    openSubdivisionSoundPicker();
                 else if (result == 7) {
                     builder_.setPairedBracketDelete(!builder_.pairedBracketDelete());
                     saveSettings();
@@ -193,6 +196,7 @@ MainComponent::MainComponent(RhythmEngineProcessor &processor)
     };
 
     bottomPanel_.onChangeBeatSound = [this] { openBeatSoundPicker(); };
+    bottomPanel_.onEditSubbeats = [this] { openSubbeatEditor(); };
 
     trackList_.onTrackSound = [this](int idx) { openTrackSoundPicker(idx); };
 
@@ -272,7 +276,53 @@ void MainComponent::openTrackSoundPicker(int trackIdx) {
             currentVol,
             [this, trackIdx](float v) {
                 builder_.setTrackDefaultVolume(trackIdx, v);
+            },
+            std::optional<bool>{track.defaultSubdiv},
+            [this, trackIdx](bool enabled) {
+                builder_.setTrackDefaultSubdiv(trackIdx, enabled);
             }));
+}
+
+void MainComponent::openSubdivisionSoundPicker() {
+    showRhythmDialog(
+        this,
+        std::make_unique<SoundPickerDialog>(
+            availableSounds_,
+            std::optional<std::string>{builder_.subdivisionSoundId()},
+            [this](const std::string &soundId) {
+                builder_.setSubdivisionSoundId(soundId);
+                saveSettings();
+            },
+            builder_.subdivisionVolume(),
+            [this](float v) {
+                builder_.setSubdivisionVolume(v);
+                saveSettings();
+            }));
+}
+
+void MainComponent::openSubbeatEditor() {
+    const auto &s = builder_.state();
+    if (!s.cursorIndex.has_value())
+        return;
+    const auto *t = s.activeTrack();
+    if (t == nullptr)
+        return;
+    const int idx = *s.cursorIndex;
+    if (idx < 0 || idx >= (int)t->items.size())
+        return;
+    const auto *beat = t->items[(size_t)idx].getIf<TrackItem::Beat>();
+    if (beat == nullptr || !beat->subbeats.has_value())
+        return;
+
+    showRhythmDialog(
+        this, std::make_unique<SubbeatEditorDialog>(
+                  *beat->subbeats, juce::String(beat->label()),
+                  [this, idx](int subIdx) {
+                      builder_.toggleSubbeat(idx, subIdx);
+                  },
+                  [this, idx](bool active) {
+                      builder_.setSubbeatAll(idx, active);
+                  }));
 }
 
 void MainComponent::newProject() {
@@ -531,6 +581,12 @@ void MainComponent::loadSettings() {
                     break;
                 }
         }
+        if (obj->hasProperty("subdivisionSoundId"))
+            builder_.setSubdivisionSoundId(
+                obj->getProperty("subdivisionSoundId").toString().toStdString());
+        if (obj->hasProperty("subdivisionVolume"))
+            builder_.setSubdivisionVolume(
+                (float)(double)obj->getProperty("subdivisionVolume"));
     }
 }
 
@@ -540,6 +596,9 @@ void MainComponent::saveSettings() {
     obj->setProperty("beatBlockSizeIndex", beatBlockSizeIndex_);
     obj->setProperty("stackedFractions", stackedFractions_);
     obj->setProperty("theme", juce::String(RhythmColors::active().name));
+    obj->setProperty("subdivisionSoundId",
+                     juce::String(builder_.subdivisionSoundId()));
+    obj->setProperty("subdivisionVolume", (double)builder_.subdivisionVolume());
     const juce::String json = juce::JSON::toString(juce::var(obj), true);
     const auto f = settingsFilePath();
     f.getParentDirectory().createDirectory();

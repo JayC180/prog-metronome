@@ -129,6 +129,7 @@ void TrackBuilder::copyTrack() {
     copy.denom = src->denom;
     copy.defaultSoundId = src->defaultSoundId;
     copy.defaultVolume = src->defaultVolume;
+    copy.defaultSubdiv = src->defaultSubdiv;
     auto next = state_;
     next.tracks.push_back(std::move(copy));
     next.activeTrackIndex = idx;
@@ -231,6 +232,13 @@ void TrackBuilder::setTrackDefaultVolume(int index, float volume) {
         return c;
     });
 }
+void TrackBuilder::setTrackDefaultSubdiv(int index, bool enabled) {
+    updateTrack(index, [enabled](const TrackDraft &d) {
+        auto c = d;
+        c.defaultSubdiv = enabled;
+        return c;
+    });
+}
 
 void TrackBuilder::setBpm(double bpm) {
     if (bpm <= 0)
@@ -281,6 +289,8 @@ void TrackBuilder::enterBeat(int numerator) {
     b.displayDenom = t->denom;
     b.soundId = soundId;
     b.volume = volume;
+    if (t->defaultSubdiv && numerator > 1)
+        b.subbeats = std::vector<bool>((size_t)numerator, true);
     insertItem(TrackItem(std::move(b)));
 }
 
@@ -302,6 +312,7 @@ void TrackBuilder::replaceBeat(int numerator) {
     auto copy = *b;
     copy.displayNum = numerator;
     copy.displayDenom = t->denom;
+    copy.subbeats = resizeSubbeats(copy.subbeats, numerator);
     newItems[(size_t)idx] = TrackItem(copy);
     updateActiveTrack([&newItems](const TrackDraft &d) {
         auto c = d;
@@ -351,6 +362,66 @@ void TrackBuilder::updateBeatAt(
         c.items = newItems;
         return c;
     });
+}
+
+void TrackBuilder::enableBeatSubdiv(int beatIndex) {
+    updateBeatAt(beatIndex, [](const TrackItem::Beat &b) {
+        if (b.subbeats.has_value() || b.displayNum <= 1)
+            return b;
+        auto c = b;
+        c.subbeats = std::vector<bool>((size_t)b.displayNum, true);
+        return c;
+    });
+}
+
+void TrackBuilder::disableBeatSubdiv(int beatIndex) {
+    updateBeatAt(beatIndex, [](const TrackItem::Beat &b) {
+        auto c = b;
+        c.subbeats.reset();
+        return c;
+    });
+}
+
+void TrackBuilder::toggleSubbeat(int beatIndex, int subbeatIndex) {
+    if (subbeatIndex == 0)
+        return;
+    updateBeatAt(beatIndex, [subbeatIndex](const TrackItem::Beat &b) {
+        if (!b.subbeats.has_value() || subbeatIndex < 0 ||
+            subbeatIndex >= (int)b.subbeats->size())
+            return b;
+        auto c = b;
+        (*c.subbeats)[(size_t)subbeatIndex] =
+            !(*c.subbeats)[(size_t)subbeatIndex];
+        return c;
+    });
+}
+
+void TrackBuilder::setSubbeatAll(int beatIndex, bool active) {
+    updateBeatAt(beatIndex, [active](const TrackItem::Beat &b) {
+        if (!b.subbeats.has_value())
+            return b;
+        auto c = b;
+        for (int i = 1; i < (int)c.subbeats->size(); ++i)
+            (*c.subbeats)[(size_t)i] = active;
+        return c;
+    });
+}
+
+std::optional<std::vector<bool>>
+TrackBuilder::resizeSubbeats(const std::optional<std::vector<bool>> &subbeats,
+                             int newSize) {
+    if (!subbeats.has_value())
+        return std::nullopt;
+    if (newSize <= 1)
+        return std::nullopt;
+    if ((int)subbeats->size() == newSize)
+        return subbeats;
+    std::vector<bool> out((size_t)newSize, false);
+    for (int i = 0; i < newSize; ++i)
+        out[(size_t)i] = (i == 0) ? true
+                         : (i < (int)subbeats->size()) ? (*subbeats)[(size_t)i]
+                                                       : false;
+    return out;
 }
 
 void TrackBuilder::openBracket() {
@@ -616,6 +687,7 @@ void TrackBuilder::editDigit(int n) {
         auto copy = *b;
         copy.displayNum = n;
         copy.displayDenom = t->denom;
+        copy.subbeats = resizeSubbeats(copy.subbeats, n);
         newItems[(size_t)idx] = TrackItem(copy);
         updateActiveTrack([&newItems](const TrackDraft &d) {
             auto c = d;
@@ -767,10 +839,14 @@ void TrackBuilder::play() {
         return;
     }
 
+    const std::string subdivSound = subdivisionSoundId_ == "default"
+                                        ? defaultSoundId_
+                                        : subdivisionSoundId_;
     std::vector<InterpretResult> results;
     results.reserve(state_.tracks.size());
     for (const auto &d : state_.tracks) {
-        auto r = interpretTrackDraft(d, state_.bpm, defaultSoundId_);
+        auto r = interpretTrackDraft(d, state_.bpm, defaultSoundId_, subdivSound,
+                                     subdivisionVolume_);
         r.muted = d.muted;
         r.soloed = d.soloed;
         results.push_back(std::move(r));

@@ -509,10 +509,46 @@ SoundPickerDialog::SoundPickerDialog(
     std::vector<SoundInfo> sounds, std::optional<std::string> currentSoundId,
     std::function<void(const std::string &)> onSelect,
     std::optional<float> currentVolume,
-    std::function<void(float)> onVolumeChange)
+    std::function<void(float)> onVolumeChange,
+    std::optional<bool> subdivideAll,
+    std::function<void(bool)> onSubdivideAllToggle)
     : DialogPanel("Choose sound", {}) {
     preferredWidth = 400;
     preferredHeight = juce::jmin(116 + (int)sounds.size() * 40, 520);
+
+    if (subdivideAll.has_value()) {
+        hasSubdivToggle_ = true;
+        subdivideAll_ = *subdivideAll;
+        onSubdivideAllToggle_ = std::move(onSubdivideAllToggle);
+        preferredHeight = juce::jmin(preferredHeight + 40, 560);
+
+        subdivToggleLabel_.setText("Subdivide new beats",
+                                   juce::dontSendNotification);
+        subdivToggleLabel_.setFont(juce::Font(juce::FontOptions(11.0f)));
+        subdivToggleLabel_.setColour(juce::Label::textColourId,
+                                     RhythmColors::textSecondary());
+
+        auto applyChipLook = [this] {
+            subdivToggleChip_.setLabel(subdivideAll_ ? "on" : "off");
+            subdivToggleChip_.setColours(
+                subdivideAll_ ? RhythmColors::accentBg() : RhythmColors::bg3(),
+                subdivideAll_ ? RhythmColors::accentBorder()
+                              : RhythmColors::border1(),
+                subdivideAll_ ? RhythmColors::accent()
+                              : RhythmColors::textMuted());
+        };
+        subdivToggleChip_.setStateColor(ChipButton::StateColor::Custom);
+        subdivToggleChip_.setFontSize(12.0f);
+        applyChipLook();
+        subdivToggleChip_.setOnClick([this, applyChipLook] {
+            subdivideAll_ = !subdivideAll_;
+            applyChipLook();
+            if (onSubdivideAllToggle_)
+                onSubdivideAllToggle_(subdivideAll_);
+        });
+        content().addAndMakeVisible(subdivToggleLabel_);
+        content().addAndMakeVisible(subdivToggleChip_);
+    }
 
     if (currentVolume.has_value()) {
         hasVolume_ = true;
@@ -577,6 +613,12 @@ SoundPickerDialog::SoundPickerDialog(
 SoundPickerDialog::~SoundPickerDialog() = default;
 
 void SoundPickerDialog::layoutContent(juce::Rectangle<int> b) {
+    if (hasSubdivToggle_) {
+        auto row = b.removeFromTop(32);
+        b.removeFromTop(4);
+        subdivToggleLabel_.setBounds(row.removeFromLeft(row.getWidth() - 70));
+        subdivToggleChip_.setBounds(row.removeFromRight(64).reduced(0, 2));
+    }
     if (hasVolume_) {
         auto volRow = b.removeFromTop(36);
         b.removeFromTop(4);
@@ -595,6 +637,133 @@ void SoundPickerDialog::layoutContent(juce::Rectangle<int> b) {
         y += rowH + gap;
     }
     listContent_.setSize(w, y);
+}
+
+// subbeat edit
+
+class SubbeatEditorDialog::Cell : public juce::Component {
+  public:
+    Cell(int index, bool base, bool active, std::function<void()> onClick)
+        : index_(index), base_(base), active_(active),
+          onClick_(std::move(onClick)) {
+        if (!base_)
+            setMouseCursor(juce::MouseCursor::PointingHandCursor);
+    }
+
+    void setActive(bool a) {
+        active_ = a;
+        repaint();
+    }
+
+    void paint(juce::Graphics &g) override {
+        const auto r = getLocalBounds().toFloat().reduced(1.0f);
+        juce::Colour bg, border, text;
+        if (base_) {
+            bg = RhythmColors::accentBg();
+            border = RhythmColors::accentBright();
+            text = RhythmColors::accentBright();
+        } else if (active_) {
+            bg = RhythmColors::cautionBg();
+            border = RhythmColors::cautionBorder();
+            text = RhythmColors::caution();
+        } else {
+            bg = RhythmColors::bg3();
+            border = RhythmColors::border1();
+            text = RhythmColors::textDim();
+        }
+        g.setColour(bg);
+        g.fillRoundedRectangle(r, 6.0f);
+        g.setColour(border);
+        g.drawRoundedRectangle(r, 6.0f, 1.0f);
+        g.setColour(text);
+        g.setFont(juce::Font(juce::FontOptions(base_ ? 10.0f : 13.0f)));
+        g.drawText(base_ ? "base" : juce::String(index_ + 1), getLocalBounds(),
+                   juce::Justification::centred, false);
+    }
+
+    void mouseDown(const juce::MouseEvent &) override {
+        if (!base_ && onClick_)
+            onClick_();
+    }
+
+  private:
+    int index_;
+    bool base_;
+    bool active_;
+    std::function<void()> onClick_;
+};
+
+SubbeatEditorDialog::SubbeatEditorDialog(std::vector<bool> subbeats,
+                                         juce::String beatLabel,
+                                         std::function<void(int)> onToggle,
+                                         std::function<void(bool)> onSetAll)
+    : DialogPanel("Subbeats " + beatLabel,
+                  "Tap a subbeat to toggle it for syncopation"),
+      subbeats_(std::move(subbeats)), onToggle_(std::move(onToggle)) {
+    const int n = (int)subbeats_.size();
+    const int perRow = 4;
+    const int rows = juce::jmax(1, (n + perRow - 1) / perRow);
+    preferredWidth = 360;
+    preferredHeight = juce::jmin(150 + rows * 56, 520);
+
+    for (int i = 0; i < n; ++i) {
+        const bool base = (i == 0);
+        auto cell = std::make_unique<Cell>(
+            i, base, subbeats_[(size_t)i], [this, i] {
+                if (i <= 0 || i >= (int)subbeats_.size())
+                    return;
+                subbeats_[(size_t)i] = !subbeats_[(size_t)i];
+                cells_[(size_t)i]->setActive(subbeats_[(size_t)i]);
+                if (onToggle_)
+                    onToggle_(i);
+            });
+        content().addAndMakeVisible(cell.get());
+        cells_.push_back(std::move(cell));
+    }
+
+    addAction("All on", RhythmColors::bg3(), RhythmColors::border1(),
+              RhythmColors::textSecondary(), [this, onSetAll] {
+                  for (int i = 1; i < (int)subbeats_.size(); ++i) {
+                      subbeats_[(size_t)i] = true;
+                      cells_[(size_t)i]->setActive(true);
+                  }
+                  if (onSetAll)
+                      onSetAll(true);
+              });
+    addAction("All off", RhythmColors::bg3(), RhythmColors::border1(),
+              RhythmColors::textSecondary(), [this, onSetAll] {
+                  for (int i = 1; i < (int)subbeats_.size(); ++i) {
+                      subbeats_[(size_t)i] = false;
+                      cells_[(size_t)i]->setActive(false);
+                  }
+                  if (onSetAll)
+                      onSetAll(false);
+              });
+    addAction("Close", RhythmColors::accentBg(), RhythmColors::accentBorder(),
+              RhythmColors::accent(), [this] {
+                  if (auto *w = findParentComponentOfClass<juce::DialogWindow>())
+                      w->exitModalState(1);
+              });
+}
+
+SubbeatEditorDialog::~SubbeatEditorDialog() = default;
+
+void SubbeatEditorDialog::layoutContent(juce::Rectangle<int> b) {
+    const int perRow = 4;
+    const int gap = 6;
+    const int cellW = (b.getWidth() - gap * (perRow - 1)) / perRow;
+    const int cellH = 48;
+    int x = b.getX();
+    int y = b.getY();
+    for (int i = 0; i < (int)cells_.size(); ++i) {
+        const int col = i % perRow;
+        if (i > 0 && col == 0) {
+            x = b.getX();
+            y += cellH + gap;
+        }
+        cells_[(size_t)i]->setBounds(x, y, cellW, cellH);
+        x += cellW + gap;
+    }
 }
 
 // help

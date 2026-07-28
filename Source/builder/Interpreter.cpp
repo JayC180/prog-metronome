@@ -66,26 +66,50 @@ static void applyTempo(const TrackItem &item, ComputeState &s,
 static void computeNode(const PNode &node, ComputeState &s,
                         std::vector<PrecomputedEvent> &out,
                         std::vector<std::pair<int64_t, double>> &tempoMap,
-                        const std::string &defaultSound);
+                        const std::string &defaultSound,
+                        const std::string &subdivisionSound,
+                        float subdivisionVolume);
 
 static void computeNode(const PNode &node, ComputeState &s,
                         std::vector<PrecomputedEvent> &out,
                         std::vector<std::pair<int64_t, double>> &tempoMap,
-                        const std::string &defaultSound) {
+                        const std::string &defaultSound,
+                        const std::string &subdivisionSound,
+                        float subdivisionVolume) {
     if (const auto *beat = std::get_if<PBeat>(&node)) {
-        const auto dur = (int64_t)(s.nanosPerPulse * beat->item.displayNum /
-                                   beat->item.displayDenom);
-        PrecomputedEvent e;
-        e.offsetNanos = s.cursor;
-        if (beat->item.active)
-            e.soundId = beat->item.soundId.has_value() ? *beat->item.soundId
-                                                       : defaultSound;
-        else
-            e.soundId = std::nullopt;
-        e.trackItemIndex = beat->idx;
-        e.firedCount = s.fired;
-        e.volume = beat->item.volume;
-        out.push_back(std::move(e));
+        const auto &b = beat->item;
+        const auto dur =
+            (int64_t)(s.nanosPerPulse * b.displayNum / b.displayDenom);
+        if (b.active && b.subbeats.has_value() &&
+            (int)b.subbeats->size() == b.displayNum) {
+            const auto &subs = *b.subbeats;
+            const int64_t subDur = (int64_t)(s.nanosPerPulse / b.displayDenom);
+            for (int i = 0; i < (int)subs.size(); ++i) {
+                if (!subs[(size_t)i])
+                    continue;
+                PrecomputedEvent e;
+                e.offsetNanos = s.cursor + (int64_t)i * subDur;
+                e.soundId =
+                    (i == 0)
+                        ? (b.soundId.has_value() ? *b.soundId : defaultSound)
+                        : subdivisionSound;
+                e.trackItemIndex = beat->idx;
+                e.firedCount = s.fired;
+                e.volume = (i == 0) ? b.volume : subdivisionVolume;
+                out.push_back(std::move(e));
+            }
+        } else {
+            PrecomputedEvent e;
+            e.offsetNanos = s.cursor;
+            if (b.active)
+                e.soundId = b.soundId.has_value() ? *b.soundId : defaultSound;
+            else
+                e.soundId = std::nullopt;
+            e.trackItemIndex = beat->idx;
+            e.firedCount = s.fired;
+            e.volume = b.volume;
+            out.push_back(std::move(e));
+        }
         s.cursor += dur;
         ++s.fired;
         return;
@@ -101,18 +125,21 @@ static void computeNode(const PNode &node, ComputeState &s,
                                : std::max(1, g.repeatCount);
         for (int p = 0; p < passes; ++p)
             for (const auto &c : g.children)
-                computeNode(c, s, out, tempoMap, defaultSound);
+                computeNode(c, s, out, tempoMap, defaultSound, subdivisionSound,
+                            subdivisionVolume);
         // modifiers apply once after all passes, and persist outward
         for (const auto &mod : g.modifiers)
             applyTempo(mod, s, tempoMap);
     }
 }
 
-} // namespace
+}
 
 InterpretResult interpretTrackDraft(const TrackDraft &draft, double baseBpm,
-                                    const std::string &defaultSound) {
-    // ----- parse: flat items -> PNode tree -----
+                                    const std::string &defaultSound,
+                                    const std::string &subdivisionSoundId,
+                                    float subdivisionVolume) {
+    // parse flat items -> PNode tree
     std::vector<PNode> rootNodes;
     std::vector<Frame> stack;
 
@@ -160,10 +187,9 @@ InterpretResult interpretTrackDraft(const TrackDraft &draft, double baseBpm,
             g->openIdx = frame.openIdx;
             addNode(g, rootNodes, stack);
         }
-        // bare Repeat / Modulation / SetBpm consumed inline above; nothing to
-        // do here
         ++i;
     }
+
     // unclosed brackets become unrepeated groups
     while (!stack.empty()) {
         Frame frame = std::move(stack.back());
@@ -175,7 +201,7 @@ InterpretResult interpretTrackDraft(const TrackDraft &draft, double baseBpm,
         addNode(g, rootNodes, stack);
     }
 
-    // ----- compute: PNode tree -> events -----
+    // compute PNode tree -> events
     auto hasInfLoop = [&]() -> bool {
         if (rootNodes.empty())
             return false;
@@ -192,7 +218,8 @@ InterpretResult interpretTrackDraft(const TrackDraft &draft, double baseBpm,
     const int prefixEnd =
         hasInfLoop ? (int)rootNodes.size() - 1 : (int)rootNodes.size();
     for (int k = 0; k < prefixEnd; ++k)
-        computeNode(rootNodes[(size_t)k], s, events, tempoMap, defaultSound);
+        computeNode(rootNodes[(size_t)k], s, events, tempoMap, defaultSound,
+                    subdivisionSoundId, subdivisionVolume);
 
     const int64_t loopNanos = s.cursor;
 
@@ -204,7 +231,8 @@ InterpretResult interpretTrackDraft(const TrackDraft &draft, double baseBpm,
         const PGroup &infGroup = *infGroupPtr;
         ComputeState is2{s.nanosPerPulse, 0, 0};
         for (const auto &c : infGroup.children)
-            computeNode(c, is2, infPassEvents, tempoMap, defaultSound);
+            computeNode(c, is2, infPassEvents, tempoMap, defaultSound,
+                        subdivisionSoundId, subdivisionVolume);
         for (const auto &mod : infGroup.modifiers)
             applyTempo(mod, is2, tempoMap);
         infPassNanos = is2.cursor;

@@ -53,6 +53,17 @@ class TrackBuilder {
     void setDefaultVolume(float v) { defaultVolume_ = v < 0.0f ? 0.0f : (v > 1.0f ? 1.0f : v); }
     float defaultVolume() const { return defaultVolume_; }
 
+    void setSubdivisionSoundId(std::string id) {
+        subdivisionSoundId_ = std::move(id);
+    }
+    const std::string &subdivisionSoundId() const {
+        return subdivisionSoundId_;
+    }
+    void setSubdivisionVolume(float v) {
+        subdivisionVolume_ = v < 0.0f ? 0.0f : (v > 1.0f ? 1.0f : v);
+    }
+    float subdivisionVolume() const { return subdivisionVolume_; }
+
     bool pairedBracketDelete() const { return pairedBracketDelete_; }
     void setPairedBracketDelete(bool v) { pairedBracketDelete_ = v; }
 
@@ -73,6 +84,7 @@ class TrackBuilder {
     void setTrackDefaultSound(int index, const std::string &soundId);
     void clearTrackDefaultSound(int index);
     void setTrackDefaultVolume(int index, float volume);
+    void setTrackDefaultSubdiv(int index, bool enabled);
 
     // bpm
     void setBpm(double bpm);
@@ -88,6 +100,12 @@ class TrackBuilder {
     void updateBeatAt(
         int index,
         const std::function<TrackItem::Beat(const TrackItem::Beat &)> &update);
+
+    // sub-beats / subdivision
+    void enableBeatSubdiv(int beatIndex);
+    void disableBeatSubdiv(int beatIndex);
+    void toggleSubbeat(int beatIndex, int subbeatIndex);
+    void setSubbeatAll(int beatIndex, bool active);
 
     // brackets
     void openBracket();
@@ -130,6 +148,11 @@ class TrackBuilder {
     // factory
     static TrackDraft newTrackDraft(int index);
 
+    // resize subbeats when displayNum changes; nullopt stays nullopt
+    static std::optional<std::vector<bool>>
+    resizeSubbeats(const std::optional<std::vector<bool>> &subbeats,
+                   int newSize);
+
   private:
     void emit(TrackBuilderState newState);
     int insertionPoint() const;
@@ -146,6 +169,8 @@ class TrackBuilder {
     Transport *transport_{nullptr};
     std::string defaultSoundId_{"default"};
     float defaultVolume_{1.0f};
+    std::string subdivisionSoundId_{"default"};
+    float subdivisionVolume_{1.0f};
     bool pairedBracketDelete_{true};
 
     std::vector<InterpretResult> lastBuildResults_;

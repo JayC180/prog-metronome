@@ -17,6 +17,7 @@ class TrackDraft {
     bool soloed{false};
     std::optional<std::string> defaultSoundId{}; // nullopt = use global default
     std::optional<float> defaultVolume{};
+    bool defaultSubdiv{false}; // if true, new beats has subbeats
 
     int bracketDepth() const;
     int bracketDepthAt(int index) const;

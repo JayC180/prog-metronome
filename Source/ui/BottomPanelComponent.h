@@ -24,6 +24,7 @@ class BottomPanelComponent : public juce::Component {
     std::function<void()> onCustomDenomRequested;
     std::function<void()> onRepeatCustomRequested;
     std::function<void()> onChangeBeatSound;
+    std::function<void()> onEditSubbeats;
 
     void paint(juce::Graphics &) override;
     void resized() override;
@@ -37,6 +38,7 @@ class BottomPanelComponent : public juce::Component {
     void onEditToggle();
     void onBackspace();
     void onToggleActive();
+    void onSubdivToggle();
 
     TrackBuilder &builder_;
 
@@ -59,6 +61,9 @@ class BottomPanelComponent : public juce::Component {
     juce::Label soundLabel_;
     juce::Label soundValueLabel_;
     ChipButton changeSoundButton_{juce::String::fromUTF8(u8"change ›")};
+    juce::Label subdivLabel_;
+    ChipButton subdivStatus_{"off"};
+    ChipButton editSubbeatsButton_{juce::String::fromUTF8(u8"edit ›")};
 
     // numpad
     juce::Label hintLabel_;

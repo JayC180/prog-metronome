@@ -104,6 +104,8 @@ class TrackRowComponent::ItemStrip : public juce::Component {
         float borderWidth{0.5f};
         int displayNum{1}, displayDenom{1};
         bool stacked{false};
+        bool wide{false};
+        std::vector<bool> subbeats;
 
         void paint(juce::Graphics &g) override {
             const auto r = getLocalBounds().toFloat().reduced(0.5f);
@@ -112,28 +114,67 @@ class TrackRowComponent::ItemStrip : public juce::Component {
             g.setColour(border);
             g.drawRoundedRectangle(r, corner, borderWidth);
             g.setColour(text);
+
+            auto textArea = getLocalBounds();
+            const bool hasDots = !subbeats.empty();
+            if (hasDots)
+                textArea.removeFromBottom(13);
+
             if (stacked && displayDenom != 1) {
                 const float w = (float)getWidth();
                 const float numSz   = juce::jlimit(11.0f, 16.0f, w * 0.33f);
                 const float denomSz = numSz * 0.85f;
                 const float totalH  = numSz + denomSz + 2.0f;
-                const float startY  = ((float)getHeight() - totalH) * 0.5f;
+                const float startY  = ((float)textArea.getHeight() - totalH) * 0.5f;
                 g.setFont(juce::Font(juce::FontOptions(numSz)).boldened());
                 g.drawText(juce::String(displayNum),
-                           getLocalBounds().withTrimmedBottom((int)std::round(denomSz + 2.0f)),
+                           textArea.withTrimmedBottom((int)std::round(denomSz + 2.0f)),
                            juce::Justification::centredBottom, false);
                 g.setColour(text.withAlpha(0.6f));
                 g.setFont(juce::Font(juce::FontOptions(denomSz)).boldened());
                 g.drawText(juce::String(displayDenom),
-                           getLocalBounds().withTrimmedTop((int)std::round(startY + numSz + 2.0f)),
+                           textArea.withTrimmedTop((int)std::round(startY + numSz + 2.0f)),
                            juce::Justification::centredTop, false);
                 (void)startY;
             } else {
                 g.setFont(juce::Font(juce::FontOptions(fontSize)));
-                g.drawText(label, getLocalBounds(), juce::Justification::centred, false);
+                g.drawText(label, textArea, juce::Justification::centred, false);
+            }
+
+            if (hasDots)
+                paintDots(g);
+        }
+
+        void paintDots(juce::Graphics &g) {
+            const int count = juce::jmin(12, (int)subbeats.size());
+            if (count <= 0)
+                return;
+            const int perRow = 4;
+            const float dia = 3.0f, gap = 2.0f;
+            const int rows = (count + perRow - 1) / perRow;
+            const float rowH = dia + gap;
+            const float totalH = (float)rows * rowH - gap;
+            float startY = (float)getHeight() - 4.0f - totalH;
+            for (int row = 0; row < rows; ++row) {
+                const int inRow = juce::jmin(perRow, count - row * perRow);
+                const float rowW = (float)inRow * dia + (float)(inRow - 1) * gap;
+                float x = ((float)getWidth() - rowW) * 0.5f;
+                const float y = startY + (float)row * rowH;
+                for (int c = 0; c < inRow; ++c) {
+                    const int i = row * perRow + c;
+                    juce::Colour col = (i == 0) ? RhythmColors::accentBright()
+                                       : subbeats[(size_t)i]
+                                           ? RhythmColors::caution()
+                                           : RhythmColors::border1();
+                    g.setColour(col);
+                    g.fillEllipse(x, y, dia, dia);
+                    x += dia + gap;
+                }
             }
         }
     };
+
+    static constexpr int kSubbeatBeatWidth = 68;
 
     void layoutItems() {
         const auto &st = builder_.state();
@@ -152,11 +193,19 @@ class TrackRowComponent::ItemStrip : public juce::Component {
         bool needsRebuild = items_.size() != draft.items.size() ||
                             lastBeatWidth_ != beatWidth_;
         if (!needsRebuild) {
-            for (int i = 0; i < (int)draft.items.size(); ++i)
-                if (draft.items[(size_t)i].kind() != items_[(size_t)i]->kind) {
+            for (int i = 0; i < (int)draft.items.size(); ++i) {
+                const auto &it = draft.items[(size_t)i];
+                if (it.kind() != items_[(size_t)i]->kind) {
                     needsRebuild = true;
                     break;
                 }
+                // subbeat toggles change a beat's width, so re-check
+                if (const auto *bb = it.getIf<TrackItem::Beat>())
+                    if (bb->subbeats.has_value() != items_[(size_t)i]->wide) {
+                        needsRebuild = true;
+                        break;
+                    }
+            }
         }
 
         if (needsRebuild) {
@@ -167,13 +216,17 @@ class TrackRowComponent::ItemStrip : public juce::Component {
             int x = pad;
             for (int i = 0; i < (int)draft.items.size(); ++i) {
                 const auto &item = draft.items[(size_t)i];
-                int width = item.isBeat() ? beatWidth_
+                const auto *beatPtr = item.getIf<TrackItem::Beat>();
+                const bool wide = beatPtr != nullptr && beatPtr->subbeats.has_value();
+                int width = item.isBeat()
+                                ? (wide ? kSubbeatBeatWidth : beatWidth_)
                             : (item.isBracketOpen() || item.isBracketClose())
                                 ? bracketW
                                 : glyphW;
                 auto hit = std::make_unique<ItemHit>();
                 hit->index = i;
                 hit->kind = item.kind();
+                hit->wide = wide;
                 hit->onClick = [this, i] {
                     if (!builder_.state().isPlaying())
                         builder_.setActiveTrackAndCursor(trackIndex_, i);
@@ -208,6 +261,8 @@ class TrackRowComponent::ItemStrip : public juce::Component {
             hit.displayNum   = beat->displayNum;
             hit.displayDenom = beat->displayDenom;
             hit.stacked      = stacked;
+            hit.subbeats     = beat->subbeats.has_value() ? *beat->subbeats
+                                                          : std::vector<bool>{};
             const float w = (float)hit.getWidth();
             const float baseSz = juce::jlimit(8.0f, 18.0f, w / 3.0f);
             hit.fontSize = beat->label().length() > 5 ? baseSz * 0.7f : baseSz;

@@ -39,6 +39,7 @@ BottomPanelComponent::BottomPanelComponent(TrackBuilder &builder)
     makeStaticLabel(onOffLabel_, "on/off");
     makeStaticLabel(volumeLabel_, "volume");
     makeStaticLabel(soundLabel_, "sound");
+    makeStaticLabel(subdivLabel_, "subdiv");
     onOffStatus_.setFontSize(13.0f);
     onOffStatus_.setOnClick([this] { onToggleActive(); });
     addAndMakeVisible(onOffStatus_);
@@ -83,6 +84,20 @@ BottomPanelComponent::BottomPanelComponent(TrackBuilder &builder)
             onChangeBeatSound();
     });
     addAndMakeVisible(changeSoundButton_);
+
+    subdivStatus_.setFontSize(13.0f);
+    subdivStatus_.setOnClick([this] { onSubdivToggle(); });
+    addAndMakeVisible(subdivStatus_);
+
+    editSubbeatsButton_.setStateColor(ChipButton::StateColor::Custom);
+    editSubbeatsButton_.setColours(RhythmColors::accentBg(),
+                                   RhythmColors::accentBorder(),
+                                   RhythmColors::accent());
+    editSubbeatsButton_.setOnClick([this] {
+        if (onEditSubbeats)
+            onEditSubbeats();
+    });
+    addAndMakeVisible(editSubbeatsButton_);
 
     // Numpad
     hintLabel_.setFont(juce::Font(juce::FontOptions(15.0f)));
@@ -224,6 +239,26 @@ void BottomPanelComponent::rebuildNumpad() {
     volumeSlider_.setEnabled(enabled && beatSelected);
     changeSoundButton_.setEnabledLook(enabled && beatSelected);
     changeSoundButton_.setVisible(enabled && beatSelected);
+
+    // subdiv row
+    const auto *beat = beatSelected ? item->getIf<TrackItem::Beat>() : nullptr;
+    const bool canSubdiv =
+        enabled && beat != nullptr && beat->active && beat->displayNum > 1;
+    const bool hasSubs = beat != nullptr && beat->subbeats.has_value();
+    if (canSubdiv) {
+        subdivStatus_.setLabel(hasSubs ? "on" : "off");
+        subdivStatus_.setColours(
+            hasSubs ? RhythmColors::accentBg() : RhythmColors::bg3(),
+            hasSubs ? RhythmColors::accentBorder() : RhythmColors::border1(),
+            hasSubs ? RhythmColors::accent() : RhythmColors::textMuted());
+        subdivStatus_.setEnabledLook(true);
+    } else {
+        subdivStatus_.setLabel(juce::String::fromUTF8(u8"—"));
+        subdivStatus_.setColours(RhythmColors::bg3(), RhythmColors::border0(),
+                                 RhythmColors::textDim());
+        subdivStatus_.setEnabledLook(false);
+    }
+    editSubbeatsButton_.setVisible(canSubdiv && hasSubs);
 }
 
 void BottomPanelComponent::syncToState() {
@@ -267,7 +302,7 @@ void BottomPanelComponent::resized() {
         navNextButton_.setBounds(r.removeFromRight(36));
     }
 
-    editArea_ = bounds.removeFromTop(110);
+    editArea_ = bounds.removeFromTop(146);
     {
         auto r = editArea_.reduced(12, 10);
         const int labelW = 56;
@@ -290,6 +325,14 @@ void BottomPanelComponent::resized() {
         changeSoundButton_.setBounds(row3.removeFromRight(80));
         row3.removeFromRight(8);
         soundValueLabel_.setBounds(row3);
+
+        r.removeFromTop(4);
+        auto row4 = r.removeFromTop(28);
+        subdivLabel_.setBounds(row4.removeFromLeft(labelW));
+        row4.removeFromLeft(10);
+        editSubbeatsButton_.setBounds(row4.removeFromRight(80));
+        row4.removeFromRight(8);
+        subdivStatus_.setBounds(row4.removeFromLeft(80));
     }
 
     numpadArea_ = bounds;
@@ -400,6 +443,25 @@ void BottomPanelComponent::onToggleActive() {
         c.active = !b.active;
         return c;
     });
+}
+
+void BottomPanelComponent::onSubdivToggle() {
+    const auto &s = builder_.state();
+    if (!s.cursorIndex.has_value())
+        return;
+    const auto *t = s.activeTrack();
+    if (t == nullptr)
+        return;
+    const int idx = *s.cursorIndex;
+    if (idx < 0 || idx >= (int)t->items.size())
+        return;
+    const auto *b = t->items[(size_t)idx].getIf<TrackItem::Beat>();
+    if (b == nullptr)
+        return;
+    if (b->subbeats.has_value())
+        builder_.disableBeatSubdiv(idx);
+    else if (b->active && b->displayNum > 1)
+        builder_.enableBeatSubdiv(idx);
 }
 
 } // namespace rhythm

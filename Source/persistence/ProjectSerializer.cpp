@@ -21,6 +21,12 @@ juce::var itemToVar(const TrackItem &item) {
             obj->setProperty("soundId", juce::String(*b->soundId));
         if (b->volume != 1.0f)
             obj->setProperty("volume", (double)b->volume);
+        if (b->subbeats.has_value()) {
+            juce::String s;
+            for (bool on : *b->subbeats)
+                s += on ? "1" : "0";
+            obj->setProperty("subbeats", s);
+        }
     } else if (item.isBracketOpen())
         obj->setProperty("type", "open");
     else if (item.isBracketClose())
@@ -59,6 +65,20 @@ std::optional<TrackItem> varToItem(const juce::var &v) {
             b.soundId = obj->getProperty("soundId").toString().toStdString();
         if (obj->hasProperty("volume"))
             b.volume = (float)(double)obj->getProperty("volume");
+        if (obj->hasProperty("subbeats")) {
+            const juce::String s = obj->getProperty("subbeats").toString();
+            if (s.isNotEmpty()) {
+                std::vector<bool> subs;
+                subs.reserve((size_t)s.length());
+                for (int k = 0; k < s.length(); ++k)
+                    subs.push_back(s[k] == '1');
+                b.subbeats = std::move(subs);
+            }
+        } else if (obj->hasProperty("subdivide") &&
+                   (bool)obj->getProperty("subdivide") && b.displayNum > 1) {
+            // backward compat, all subbeats on
+            b.subbeats = std::vector<bool>((size_t)b.displayNum, true);
+        }
         return TrackItem(b);
     }
     if (type == "open")
@@ -97,6 +117,8 @@ juce::var trackToVar(const TrackDraft &d) {
         obj->setProperty("defaultSoundId", juce::String(*d.defaultSoundId));
     if (d.defaultVolume.has_value())
         obj->setProperty("defaultVolume", (double)*d.defaultVolume);
+    if (d.defaultSubdiv)
+        obj->setProperty("defaultSubdiv", true);
 
     juce::Array<juce::var> items;
     items.ensureStorageAllocated((int)d.items.size());
@@ -191,6 +213,9 @@ ProjectSerializer::deserialize(const std::string &jsonString) {
                                        .toStdString();
             if (tobj->hasProperty("defaultVolume"))
                 d.defaultVolume = (float)(double)tobj->getProperty("defaultVolume");
+            d.defaultSubdiv = tobj->hasProperty("defaultSubdiv")
+                                  ? (bool)tobj->getProperty("defaultSubdiv")
+                                  : false;
 
             if (auto *itemsArr = tobj->getProperty("items").getArray()) {
                 d.items.reserve((size_t)itemsArr->size());

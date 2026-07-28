@@ -143,7 +143,9 @@ public:
                        std::optional<std::string> currentSoundId,
                        std::function<void (const std::string&)> onSelect,
                        std::optional<float> currentVolume = std::nullopt,
-                       std::function<void (float)> onVolumeChange = nullptr);
+                       std::function<void (float)> onVolumeChange = nullptr,
+                       std::optional<bool> subdivideAll = std::nullopt,
+                       std::function<void (bool)> onSubdivideAllToggle = nullptr);
     ~SoundPickerDialog() override;
     void layoutContent (juce::Rectangle<int>) override;
 
@@ -154,9 +156,32 @@ private:
     juce::Slider                            volumeSlider_;
     juce::Label                             volumePercent_;
     std::function<void(float)>              onVolumeChange_;
+    bool                                    hasSubdivToggle_{false};
+    juce::Label                             subdivToggleLabel_;
+    ChipButton                              subdivToggleChip_{"off"};
+    std::function<void(bool)>               onSubdivideAllToggle_;
+    bool                                    subdivideAll_{false};
     juce::Viewport                          viewport_;
     juce::Component                         listContent_;
     std::vector<std::unique_ptr<Row>>       rows_;
+};
+
+// subbeat editor for syncopation
+class SubbeatEditorDialog : public DialogPanel
+{
+public:
+    SubbeatEditorDialog (std::vector<bool> subbeats,
+                         juce::String beatLabel,
+                         std::function<void (int)> onToggle,
+                         std::function<void (bool)> onSetAll);
+    ~SubbeatEditorDialog() override;
+    void layoutContent (juce::Rectangle<int>) override;
+
+private:
+    class Cell;
+    std::vector<bool>                       subbeats_;
+    std::function<void (int)>               onToggle_;
+    std::vector<std::unique_ptr<Cell>>      cells_;
 };
 
 // Scrollable help reference with section headings.

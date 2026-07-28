@@ -24,6 +24,8 @@ namespace rhythm {
 //   restore). Use modifier position on ] for compound modulation.
 InterpretResult
 interpretTrackDraft(const TrackDraft &draft, double baseBpm,
-                    const std::string &defaultSound = "default");
+                    const std::string &defaultSound = "default",
+                    const std::string &subdivisionSoundId = "default",
+                    float subdivisionVolume = 1.0f);
 
 } // namespace rhythm

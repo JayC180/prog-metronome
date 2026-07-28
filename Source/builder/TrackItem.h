@@ -4,6 +4,7 @@
 #include <optional>
 #include <string>
 #include <variant>
+#include <vector>
 
 namespace rhythm {
 
@@ -27,6 +28,8 @@ class TrackItem {
         bool active{true};
         std::optional<std::string> soundId{};
         float volume{1.0f};
+        // nullopt = off; [0] always true; [1...N-1] user-toggled for syncopation
+        std::optional<std::vector<bool>> subbeats{};
 
         Rational duration() const {
             return Rational((int64_t)displayNum, (int64_t)displayDenom);
