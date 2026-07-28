@@ -1,4 +1,4 @@
-- added sub-beat/subdivision option for beats
+- added sub-beat/subdivision option for beat blocks
 - each subbeat can be toggled on/off for syncopation
 - added subbeat sound and volume options in menu
 - subbeat visualization in trackrow
