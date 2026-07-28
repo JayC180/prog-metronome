@@ -32,9 +32,23 @@ The logo stands for a 5:4 polyrhythm/polymeter because I really like 5:4.
 - MacOS (Standalone and VST3)
 
 ## Download
-[Click here for Android and desktop](https://github.com/JayC180/prog-metronome/releases/latest)
+<div>
+  <a href="https://f-droid.org/en/packages/com.jayc180.rhythmengine/">
+    <img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" height="60">
+  </a>
+</div>
 
-iOS version is available in App Store
+<div>
+  <a href="https://github.com/JayC180/prog-metronome/releases/latest">
+    <img src="https://raw.githubusercontent.com/machiav3lli/oandbackupx/master/badge_github.png" height="60">
+  </a>
+</div>
+
+<div>
+  <a href="https://apps.apple.com/us/app/prog-metronome/id6776389032">
+    <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" height="70">
+  </a>
+</div>
 
 ## <a name="usage"></a> Usage
 <div align="center">
@@ -42,6 +56,8 @@ iOS version is available in App Store
 </div>
 
 Demo video: [https://youtu.be/xnNJNjJ9yNs](https://youtu.be/xnNJNjJ9yNs)
+
+More usage examples on instagram: [https://www.instagram.com/prog_metronome/](https://www.instagram.com/prog_metronome/)
 
 There's also a [manual explanation](./assets/help.md). This can also be found in settings in the software.
 
