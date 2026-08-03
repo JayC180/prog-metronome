@@ -259,6 +259,9 @@ fun App(vm: AppViewModel) {
             onSubdivideAllToggle = if (target is SoundPickerTarget.TrackDefault)
                 { v -> vm.builder.setTrackDefaultSubdiv(target.trackIndex, v) }
             else null,
+            onApplyToAll = if (target is SoundPickerTarget.TrackDefault)
+                { -> vm.builder.applyTrackDefaultSoundToAllBeats(target.trackIndex) }
+            else null,
             onSelect = { entry ->
                 when (target) {
                     is SoundPickerTarget.Beat ->
@@ -298,7 +301,7 @@ private fun PortraitLayout(
     onOpenSubbeatEditor: () -> Unit,
     buildErrors: List<String>,
 ) {
-    val globalDefaultLabel     = sounds.firstOrNull { it.id == vm.globalDefaultSoundId }?.label
+    val globalDefaultSoundId   = vm.globalDefaultSoundId
     val beatBlockSizeIndex     by vm.beatBlockSizeIndex.collectAsState()
     val beatStackedFractions   by vm.beatStackedFractions.collectAsState()
 
@@ -328,7 +331,7 @@ private fun PortraitLayout(
                     cursorIndex           = if (index == state.activeTrackIndex) state.cursorIndex else null,
                     isPlaying             = state.isPlaying,
                     playingItemIndex      = playheads[draft.id],
-                    globalDefaultSound    = globalDefaultLabel,
+                    globalDefaultSoundId  = globalDefaultSoundId,
                     beatBlockSizeIndex    = beatBlockSizeIndex,
                     beatStackedFractions  = beatStackedFractions,
                     onTrackClick        = { vm.builder.setActiveTrack(index) },
@@ -374,7 +377,7 @@ private fun LandscapeLayout(
     onOpenSubbeatEditor: () -> Unit,
     buildErrors:     List<String>,
 ) {
-    val globalDefaultLabel     = sounds.firstOrNull { it.id == vm.globalDefaultSoundId }?.label
+    val globalDefaultSoundId   = vm.globalDefaultSoundId
     val beatBlockSizeIndex     by vm.beatBlockSizeIndex.collectAsState()
     val beatStackedFractions   by vm.beatStackedFractions.collectAsState()
 
@@ -404,7 +407,7 @@ private fun LandscapeLayout(
                         cursorIndex           = if (index == state.activeTrackIndex) state.cursorIndex else null,
                         isPlaying             = state.isPlaying,
                         playingItemIndex      = playheads[draft.id],
-                        globalDefaultSound    = globalDefaultLabel,
+                        globalDefaultSoundId  = globalDefaultSoundId,
                         beatBlockSizeIndex    = beatBlockSizeIndex,
                         beatStackedFractions  = beatStackedFractions,
                         onTrackClick        = { vm.builder.setActiveTrack(index) },

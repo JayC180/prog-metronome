@@ -33,7 +33,7 @@ fun TrackRow(
     cursorIndex:         Int?,
     isPlaying:           Boolean,
     playingItemIndex:    Int?,
-    globalDefaultSound:  String?,
+    globalDefaultSoundId: String?,
     beatBlockSizeIndex:    Int = 2,
     beatStackedFractions:  Boolean = false,
     onTrackClick:        () -> Unit,
@@ -101,13 +101,13 @@ fun TrackRow(
     ) {
         // left side track controls
         TrackControls(
-            draft              = draft,
-            isActive           = isActive,
-            isPlaying          = isPlaying,
-            globalDefaultSound = globalDefaultSound,
-            onMuteClick        = onMuteClick,
-            onSoloClick        = onSoloClick,
-            onTrackSoundClick  = onTrackSoundClick,
+            draft                = draft,
+            isActive             = isActive,
+            isPlaying            = isPlaying,
+            globalDefaultSoundId = globalDefaultSoundId,
+            onMuteClick          = onMuteClick,
+            onSoloClick          = onSoloClick,
+            onTrackSoundClick    = onTrackSoundClick,
         )
 
         // beat items
@@ -157,13 +157,13 @@ fun TrackRow(
 
 @Composable
 private fun TrackControls(
-    draft:              TrackDraft,
-    isActive:           Boolean,
-    isPlaying:          Boolean,
-    globalDefaultSound: String?,
-    onMuteClick:        () -> Unit,
-    onSoloClick:        () -> Unit,
-    onTrackSoundClick:  () -> Unit,
+    draft:                TrackDraft,
+    isActive:             Boolean,
+    isPlaying:            Boolean,
+    globalDefaultSoundId: String?,
+    onMuteClick:          () -> Unit,
+    onSoloClick:          () -> Unit,
+    onTrackSoundClick:    () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -191,9 +191,9 @@ private fun TrackControls(
             TrackChip("M", draft.muted,  RhythmColors.muteColor, { if (!isPlaying) onMuteClick() })
             TrackChip("S", draft.soloed, RhythmColors.soloColor, { if (!isPlaying) onSoloClick() })
             TrackChip(
-                label = if (draft.defaultSoundId != null) "C" else "D",
-                active = draft.defaultSoundId != null,
-                color = RhythmColors.accent,
+                label  = "T",
+                active = draft.defaultSoundId != null && draft.defaultSoundId != globalDefaultSoundId,
+                color  = RhythmColors.accent,
                 onClick = { if (!isPlaying) onTrackSoundClick() },
             )
         }

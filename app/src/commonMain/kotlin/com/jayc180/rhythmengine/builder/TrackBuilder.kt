@@ -168,6 +168,20 @@ class TrackBuilder(
         updateTrack(trackIndex) { it.copy(defaultSoundId = null) }
     }
 
+    fun applyTrackDefaultSoundToAllBeats(trackIndex: Int) {
+        val track   = current.tracks.getOrNull(trackIndex) ?: return
+        val soundId = track.defaultSoundId
+        val volume  = track.defaultVolume
+        updateTrack(trackIndex) { t ->
+            t.copy(items = t.items.map { item ->
+                if (item is TrackItem.Beat) item.copy(
+                    soundId = soundId,
+                    volume  = volume ?: item.volume,
+                ) else item
+            })
+        }
+    }
+
     fun setTrackDefaultVolume(trackIndex: Int, volume: Float) {
         updateTrack(trackIndex) { it.copy(defaultVolume = volume.coerceIn(0f, 1f)) }
     }
