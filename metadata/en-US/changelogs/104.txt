@@ -1,0 +1,3 @@
+- option to change sound of all existing beat in track from track specific setting modal
+- allow 2 digit decimal for bpm
+- able to cycle first beat between beat, subbeat, off in subbeat editor
