@@ -115,15 +115,23 @@ fun interpretTrackDraft(
                 val subbeats = beat.subbeats
                 if (beat.active && subbeats != null && subbeats.size == beat.displayNum) {
                     val subDur = (s.npp / beat.displayDenom).toLong()
-                    subbeats.forEachIndexed { i, active ->
-                        if (active) {
-                            out += PrecomputedEvent(
+                    subbeats.forEachIndexed { i, state ->
+                        when (state) {
+                            SubbeatState.BEAT -> out += PrecomputedEvent(
                                 offsetNanos    = s.cursor + i * subDur,
-                                soundId        = if (i == 0) beat.soundId ?: defaultSound else subdivisionSoundId,
+                                soundId        = beat.soundId ?: defaultSound,
                                 trackItemIndex = node.idx,
                                 firedCount     = s.fired,
-                                volume         = if (i == 0) beat.volume else subdivisionVolume,
+                                volume         = beat.volume,
                             )
+                            SubbeatState.SUBBEAT -> out += PrecomputedEvent(
+                                offsetNanos    = s.cursor + i * subDur,
+                                soundId        = subdivisionSoundId,
+                                trackItemIndex = node.idx,
+                                firedCount     = s.fired,
+                                volume         = subdivisionVolume,
+                            )
+                            SubbeatState.OFF -> Unit
                         }
                     }
                 } else {

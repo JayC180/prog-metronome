@@ -2,15 +2,22 @@ package com.jayc180.rhythmengine.builder
 
 import com.jayc180.rhythmengine.core.Rational
 
+enum class SubbeatState { BEAT, SUBBEAT, OFF }
+fun SubbeatState.cycle(): SubbeatState = when (this) {
+    SubbeatState.BEAT -> SubbeatState.SUBBEAT
+    SubbeatState.SUBBEAT -> SubbeatState.OFF
+    SubbeatState.OFF -> SubbeatState.BEAT
+}
+
 sealed class TrackItem {
 
     data class Beat(
         val displayNum:   Int,
         val displayDenom: Int,
-        val active:       Boolean         = true,
-        val soundId:      String?         = null,
-        val volume:       Float           = 1.0f,
-        val subbeats:     List<Boolean>?  = null,  // null=off; [0] always true; [1...N-1] is user set
+        val active:       Boolean              = true,
+        val soundId:      String?              = null,
+        val volume:       Float                = 1.0f,
+        val subbeats:     List<SubbeatState>?  = null,  // null=subdivision off; [i] is BEAT/SUBBEAT/OFF
     ) : TrackItem() {
         val duration: Rational get() = Rational(displayNum.toLong(), displayDenom.toLong())
         val label: String get() = if (displayDenom == 1) "$displayNum" else "$displayNum/$displayDenom"

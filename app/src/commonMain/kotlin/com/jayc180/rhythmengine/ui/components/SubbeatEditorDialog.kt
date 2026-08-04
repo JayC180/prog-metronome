@@ -17,20 +17,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.jayc180.rhythmengine.builder.SubbeatState
 import com.jayc180.rhythmengine.builder.TrackItem
 import com.jayc180.rhythmengine.ui.theme.RhythmColors
 import com.jayc180.rhythmengine.ui.theme.RhythmType
-import com.jayc180.rhythmengine.ui.theme.surfaceBg2
 import com.jayc180.rhythmengine.ui.theme.surfaceBg3
 
-private const val SUBBEAT_CELLS_PER_ROW = 4 
+private const val SUBBEAT_CELLS_PER_ROW = 4
 
 @Composable
 fun SubbeatEditorDialog(
-    beat:            TrackItem.Beat,
-    onToggleSubbeat: (Int) -> Unit,
-    onSetAll:        (Boolean) -> Unit,
-    onDismiss:       () -> Unit,
+    beat:           TrackItem.Beat,
+    onCycleSubbeat: (Int) -> Unit,
+    onSetAll:       (Boolean) -> Unit,
+    onDismiss:      () -> Unit,
 ) {
     val subbeats = beat.subbeats ?: return
     val n        = subbeats.size
@@ -52,12 +52,8 @@ fun SubbeatEditorDialog(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Column {
-                    Text("Subbeat editor",
-                        style = RhythmType.bpmValue.copy(fontSize = 15.sp, color = RhythmColors.textPrimary))
-                    Text("${beat.label}  •  $n sub-beats",
-                        style = RhythmType.label.copy(fontSize = 11.sp, color = RhythmColors.textSecondary))
-                }
+                Text("Subbeat Editor",
+                    style = RhythmType.bpmValue.copy(fontSize = 15.sp, color = RhythmColors.textPrimary))
                 Text("✕", style = RhythmType.label.copy(fontSize = 16.sp, color = RhythmColors.textMuted),
                     modifier = Modifier.clickable(onClick = onDismiss))
             }
@@ -78,16 +74,17 @@ fun SubbeatEditorDialog(
             // legend
             Row(
                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 LegendCircle(RhythmColors.accentBright)
-                Text("base beat (locked)", style = RhythmType.label.copy(
-                    fontSize = 10.sp, color = RhythmColors.textSecondary))
-                Spacer(Modifier.width(4.dp))
+                Text("base beat", style = RhythmType.label.copy(fontSize = 10.sp, color = RhythmColors.textSecondary))
+                Spacer(Modifier.width(2.dp))
                 LegendCircle(RhythmColors.caution)
-                Text("sub-beat on", style = RhythmType.label.copy(
-                    fontSize = 10.sp, color = RhythmColors.textSecondary))
+                Text("sub-beat", style = RhythmType.label.copy(fontSize = 10.sp, color = RhythmColors.textSecondary))
+                Spacer(Modifier.width(2.dp))
+                LegendCircle(RhythmColors.border1)
+                Text("off", style = RhythmType.label.copy(fontSize = 10.sp, color = RhythmColors.textSecondary))
             }
 
             HorizontalDivider()
@@ -110,13 +107,10 @@ fun SubbeatEditorDialog(
                         val from = row * SUBBEAT_CELLS_PER_ROW
                         val to   = minOf(from + SUBBEAT_CELLS_PER_ROW, n)
                         for (idx in from until to) {
-                            val isBase   = idx == 0
-                            val isActive = subbeats[idx]
                             SubbeatCell(
-                                index    = idx,
-                                isBase   = isBase,
-                                isActive = isActive,
-                                onClick  = { if (!isBase) onToggleSubbeat(idx) },
+                                index   = idx,
+                                state   = subbeats[idx],
+                                onClick = { onCycleSubbeat(idx) },
                                 modifier = Modifier.weight(1f),
                             )
                         }
@@ -130,26 +124,27 @@ fun SubbeatEditorDialog(
 
 @Composable
 private fun SubbeatCell(
-    index:    Int,
-    isBase:   Boolean,
-    isActive: Boolean,
-    onClick:  () -> Unit,
+    index:   Int,
+    state:   SubbeatState,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val bg = when {
-        isBase   -> RhythmColors.accentBright.copy(alpha = 0.15f)
-        isActive -> RhythmColors.caution.copy(alpha = 0.15f)
-        else     -> surfaceBg3
-    }
-    val borderColor = when {
-        isBase   -> RhythmColors.accentBright.copy(alpha = 0.5f)
-        isActive -> RhythmColors.caution.copy(alpha = 0.5f)
-        else     -> RhythmColors.border1
-    }
-    val textColor = when {
-        isBase   -> RhythmColors.accentBright
-        isActive -> RhythmColors.caution
-        else     -> RhythmColors.textDim
+    val (bg, borderColor, textColor) = when (state) {
+        SubbeatState.BEAT -> Triple(
+            RhythmColors.accentBright.copy(alpha = 0.15f),
+            RhythmColors.accentBright.copy(alpha = 0.5f),
+            RhythmColors.accentBright,
+        )
+        SubbeatState.SUBBEAT -> Triple(
+            RhythmColors.caution.copy(alpha = 0.15f),
+            RhythmColors.caution.copy(alpha = 0.5f),
+            RhythmColors.caution,
+        )
+        SubbeatState.OFF -> Triple(
+            surfaceBg3,
+            RhythmColors.border1,
+            RhythmColors.textDim,
+        )
     }
 
     Box(
@@ -158,19 +153,14 @@ private fun SubbeatCell(
             .height(52.dp)
             .clip(RoundedCornerShape(6.dp))
             .background(bg)
-            .border(if (isBase || isActive) 1.dp else 0.5.dp, borderColor, RoundedCornerShape(6.dp))
-            .then(if (!isBase) Modifier.clickable(onClick = onClick) else Modifier),
+            .border(if (state != SubbeatState.OFF) 1.dp else 0.5.dp, borderColor, RoundedCornerShape(6.dp))
+            .clickable(onClick = onClick),
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("${index + 1}",
-                style = RhythmType.beatValue.copy(fontSize = 16.sp, color = textColor))
-            if (isBase) {
-                Text("base", style = RhythmType.label.copy(fontSize = 9.sp,
-                    color = RhythmColors.accentBright.copy(alpha = 0.7f)))
-            }
-        }
+        Text("${index + 1}",
+            style = RhythmType.beatValue.copy(fontSize = 20.sp, color = textColor))
     }
 }
+
 
 @Composable
 private fun SubbeatBtn(
@@ -179,9 +169,9 @@ private fun SubbeatBtn(
     muted:    Boolean = false,
     modifier: Modifier = Modifier,
 ) {
-    val bg     = if (muted) surfaceBg3 else RhythmColors.accentBg
+    val bg = if (muted) surfaceBg3 else RhythmColors.accentBg
     val border = if (muted) RhythmColors.border1 else RhythmColors.accentBorder
-    val color  = if (muted) RhythmColors.textMuted else RhythmColors.accent
+    val color = if (muted) RhythmColors.textMuted else RhythmColors.accent
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier

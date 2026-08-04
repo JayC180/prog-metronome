@@ -98,7 +98,11 @@ object ProjectSerializer {
             active    = if (!item.active) false else null,      // omit true (default)
             soundId   = item.soundId,
             volume    = if (item.volume != 1.0f) item.volume else null,  // omit 1.0
-            subbeats  = item.subbeats?.joinToString("") { if (it) "1" else "0" },
+            subbeats  = item.subbeats?.joinToString("") { when (it) {
+                SubbeatState.BEAT    -> "B"
+                SubbeatState.SUBBEAT -> "S"
+                SubbeatState.OFF     -> "0"
+            } },
         )
         is TrackItem.BracketOpen  -> RhyItem(type = "open")
         is TrackItem.BracketClose -> RhyItem(type = "close")
@@ -141,8 +145,16 @@ object ProjectSerializer {
             val num = item.num ?: return null
             val den = item.den ?: return null
             val decodedSubbeats = when {
-                item.subbeats != null -> item.subbeats.map { it == '1' }
-                item.subdivide == true -> List(num) { true }   // legacy field
+                item.subbeats != null -> item.subbeats.mapIndexed { i, c -> when (c) {
+                    'B'  -> SubbeatState.BEAT
+                    'S'  -> SubbeatState.SUBBEAT
+                    '0'  -> SubbeatState.OFF
+                    '1'  -> if (i == 0) SubbeatState.BEAT else SubbeatState.SUBBEAT  // legacy
+                    else -> SubbeatState.OFF
+                } }
+                item.subdivide == true -> List(num) { i ->
+                    if (i == 0) SubbeatState.BEAT else SubbeatState.SUBBEAT
+                }
                 else -> null
             }
             TrackItem.Beat(

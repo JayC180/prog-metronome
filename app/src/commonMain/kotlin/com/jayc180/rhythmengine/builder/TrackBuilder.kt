@@ -193,7 +193,7 @@ class TrackBuilder(
         val soundId = track.defaultSoundId ?: _defaultSoundId
         val volume  = track.defaultVolume  ?: _defaultVolume
         val subbeats = if (track.defaultSubdiv && numerator > 1)
-            List(numerator) { true } else null
+            List(numerator) { i -> if (i == 0) SubbeatState.BEAT else SubbeatState.SUBBEAT } else null
         insertItem(TrackItem.Beat(
             displayNum   = numerator,
             displayDenom = track.denom,
@@ -216,7 +216,9 @@ class TrackBuilder(
     fun enableBeatSubdiv(beatIndex: Int) {
         updateBeatAt(beatIndex) { beat ->
             if (beat.subbeats != null || beat.displayNum <= 1) beat
-            else beat.copy(subbeats = List(beat.displayNum) { true })
+            else beat.copy(subbeats = List(beat.displayNum) { i ->
+                if (i == 0) SubbeatState.BEAT else SubbeatState.SUBBEAT
+            })
         }
     }
 
@@ -224,19 +226,26 @@ class TrackBuilder(
         updateBeatAt(beatIndex) { it.copy(subbeats = null) }
     }
 
-    fun toggleSubbeat(beatIndex: Int, subbeatIndex: Int) {
-        if (subbeatIndex == 0) return
+    fun cycleSubbeat(beatIndex: Int, subbeatIndex: Int) {
         updateBeatAt(beatIndex) { beat ->
             val cur = beat.subbeats ?: return@updateBeatAt beat
             if (subbeatIndex !in cur.indices) return@updateBeatAt beat
-            beat.copy(subbeats = cur.toMutableList().also { it[subbeatIndex] = !it[subbeatIndex] })
+            val next = if (subbeatIndex == 0) {
+                cur[0].cycle()  // beat -> sub -> off
+            } else {
+                // subbeat on/off
+                if (cur[subbeatIndex] == SubbeatState.OFF) SubbeatState.SUBBEAT else SubbeatState.OFF
+            }
+            beat.copy(subbeats = cur.toMutableList().also { it[subbeatIndex] = next })
         }
     }
 
     fun setSubbeatAll(beatIndex: Int, active: Boolean) {
         updateBeatAt(beatIndex) { beat ->
             val cur = beat.subbeats ?: return@updateBeatAt beat
-            beat.copy(subbeats = cur.mapIndexed { i, v -> if (i == 0) v else active })
+            val target = if (active) SubbeatState.SUBBEAT else SubbeatState.OFF
+            // index 0 (main beat) is not touched by all-on/all-off
+            beat.copy(subbeats = cur.mapIndexed { i, state -> if (i == 0) state else target })
         }
     }
 
@@ -613,11 +622,13 @@ class TrackBuilder(
             id = "track_${index}_${counter++}", label = "Track ${index + 1}")
 
         // resize subbeats when displayNum changes
-        fun resizeSubbeats(subbeats: List<Boolean>?, newSize: Int): List<Boolean>? {
+        fun resizeSubbeats(subbeats: List<SubbeatState>?, newSize: Int): List<SubbeatState>? {
             if (subbeats == null) return null
             if (newSize <= 1) return null
             if (subbeats.size == newSize) return subbeats
-            return List(newSize) { i -> if (i == 0) true else subbeats.getOrElse(i) { false } }
+            return List(newSize) { i ->
+                subbeats.getOrElse(i) { if (i == 0) SubbeatState.BEAT else SubbeatState.SUBBEAT }
+            }
         }
     }
 }

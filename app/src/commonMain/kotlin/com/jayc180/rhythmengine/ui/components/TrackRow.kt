@@ -300,7 +300,7 @@ private fun BeatView(
 }
 
 @Composable
-private fun SubbeatDots(subbeats: List<Boolean>, modifier: Modifier = Modifier) {
+private fun SubbeatDots(subbeats: List<SubbeatState>, modifier: Modifier = Modifier) {
     val count = subbeats.size.coerceAtMost(SUBBEAT_DOT_MAX)
     val rows  = (count + SUBBEAT_DOTS_PER_ROW - 1) / SUBBEAT_DOTS_PER_ROW
     Column(
@@ -313,15 +313,14 @@ private fun SubbeatDots(subbeats: List<Boolean>, modifier: Modifier = Modifier) 
                 val from = row * SUBBEAT_DOTS_PER_ROW
                 val to   = minOf(from + SUBBEAT_DOTS_PER_ROW, count)
                 for (idx in from until to) {
-                    val isBase   = idx == 0
-                    val isActive = subbeats.getOrElse(idx) { false }
+                    val state = subbeats.getOrElse(idx) { SubbeatState.OFF }
                     Box(modifier = Modifier
                         .size(4.dp)
                         .clip(CircleShape)
-                        .background(when {
-                            isBase   -> RhythmColors.accentBright
-                            isActive -> RhythmColors.caution
-                            else     -> RhythmColors.border1
+                        .background(when (state) {
+                            SubbeatState.BEAT    -> RhythmColors.accentBright
+                            SubbeatState.SUBBEAT -> RhythmColors.caution
+                            SubbeatState.OFF     -> RhythmColors.border1
                         }))
                 }
             }

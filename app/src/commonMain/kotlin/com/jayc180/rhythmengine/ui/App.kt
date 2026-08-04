@@ -202,7 +202,7 @@ fun App(vm: AppViewModel) {
         if (beat?.subbeats != null && idx != null) {
             SubbeatEditorDialog(
                 beat            = beat,
-                onToggleSubbeat = { sub -> vm.toggleSubbeat(idx, sub) },
+                onCycleSubbeat  = { sub -> vm.cycleSubbeat(idx, sub) },
                 onSetAll        = { active -> vm.setSubbeatAll(idx, active) },
                 onDismiss       = { showSubbeatEditor = false },
             )

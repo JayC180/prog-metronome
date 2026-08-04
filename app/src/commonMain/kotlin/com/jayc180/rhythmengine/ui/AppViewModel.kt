@@ -88,6 +88,6 @@ class AppViewModel(
 
     fun enableBeatSubdiv(beatIndex: Int)  = builder.enableBeatSubdiv(beatIndex)
     fun disableBeatSubdiv(beatIndex: Int) = builder.disableBeatSubdiv(beatIndex)
-    fun toggleSubbeat(beatIndex: Int, subbeatIndex: Int) = builder.toggleSubbeat(beatIndex, subbeatIndex)
+    fun cycleSubbeat(beatIndex: Int, subbeatIndex: Int) = builder.cycleSubbeat(beatIndex, subbeatIndex)
     fun setSubbeatAll(beatIndex: Int, active: Boolean)   = builder.setSubbeatAll(beatIndex, active)
 }
