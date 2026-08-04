@@ -307,7 +307,7 @@ private fun OverwriteDialog(name: String, onConfirm: () -> Unit, onDismiss: () -
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Text("Override \"$name\"?", style = RhythmType.bpmValue.copy(
+            Text("Overwrite \"$name\"?", style = RhythmType.bpmValue.copy(
                 fontSize = 15.sp, color = RhythmColors.textPrimary))
             Text("This will overwrite the saved file.",
                 style = RhythmType.label.copy(fontSize = 12.sp, color = RhythmColors.textSecondary))
@@ -315,7 +315,7 @@ private fun OverwriteDialog(name: String, onConfirm: () -> Unit, onDismiss: () -
                 IosBtn("Cancel", modifier = Modifier.weight(1f),
                     onClick = onDismiss,
                     bg = RhythmColors.bg3, textColor = RhythmColors.textMuted)
-                IosBtn("Override", modifier = Modifier.weight(1f),
+                IosBtn("Overwrite", modifier = Modifier.weight(1f),
                     onClick = onConfirm,
                     bg = RhythmColors.accentBg, textColor = RhythmColors.accent)
             }

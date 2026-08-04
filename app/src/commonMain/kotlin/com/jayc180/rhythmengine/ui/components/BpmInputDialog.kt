@@ -38,12 +38,12 @@ fun BpmInputDialog(
 ) {
     val calculator = remember { TapTempoCalculator() }
 
-    var textBpm   by remember { mutableStateOf("${currentBpm.toInt()}") }
+    var textBpm   by remember { mutableStateOf(formatBpm(currentBpm)) }
     var tapBpm    by remember { mutableStateOf<Double?>(null) }
     var tapCount  by remember { mutableStateOf(0) }
 
     // effective bpm: tap result takes precedence while tapping, text field otherwise
-    val effectiveBpm: Double? = tapBpm ?: textBpm.toDoubleOrNull()?.takeIf { it in 1.0..999.0 }
+    val effectiveBpm: Double? = tapBpm ?: textBpm.toDoubleOrNull()?.takeIf { it in 1.0..999.99 }
     val isValid = effectiveBpm != null
 
     Dialog(onDismissRequest = onDismiss) {
@@ -62,14 +62,13 @@ fun BpmInputDialog(
             OutlinedTextField(
                 value         = textBpm,
                 onValueChange = { new ->
-                    // typing clears tap sequence
                     if (new != textBpm) { tapBpm = null; calculator.reset(); tapCount = 0 }
-                    if (new.length <= 3) textBpm = new
+                    if (isValidBpmInput(new)) textBpm = new
                 },
                 label         = { Text("BPM", style = RhythmType.label.copy(
                     color = RhythmColors.textMuted)) },
                 singleLine    = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor   = RhythmColors.accent,
                     unfocusedBorderColor = RhythmColors.border2,
@@ -90,8 +89,8 @@ fun BpmInputDialog(
                     tapBpm = null; calculator.reset(); tapCount = 0
                     val next = delta.let {
                         if (it == 2.0 || it == 0.5) (base * it) else (base + it)
-                    }.coerceIn(1.0, 999.0)
-                    textBpm = "${next.toInt()}"
+                    }.coerceIn(1.0, 999.99)
+                    textBpm = formatBpm(next)
                 }
                 for ((label, delta) in listOf("÷2" to 0.5, "-5" to -5.0, "-1" to -1.0,
                                                "+1" to 1.0, "+5" to 5.0, "×2" to 2.0)) {
@@ -129,9 +128,9 @@ fun BpmInputDialog(
                                 val result = calculator.tap()
                                 tapCount = calculator.tapCount
                                 if (result != null) {
-                                    val clamped = result.coerceIn(1.0, 999.0)
+                                    val clamped = result.coerceIn(1.0, 999.99)
                                     tapBpm  = clamped
-                                    textBpm = "${clamped.toInt()}"
+                                    textBpm = "${clamped.toLong()}"
                                 }
                             },
                     ) {
@@ -151,7 +150,7 @@ fun BpmInputDialog(
                         modifier            = Modifier.width(84.dp),
                     ) {
                         Text(
-                            effectiveBpm?.toInt()?.toString() ?: "—",
+                            effectiveBpm?.let { formatBpm(it) } ?: "—",
                             style = RhythmType.bpmValue.copy(
                                 fontSize = 28.sp,
                                 color    = if (tapBpm != null) RhythmColors.accent

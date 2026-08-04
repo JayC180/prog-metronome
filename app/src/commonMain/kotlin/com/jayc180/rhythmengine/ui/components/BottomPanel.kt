@@ -264,7 +264,7 @@ private fun itemTypeLabel(item: TrackItem): String = when (item) {
     is TrackItem.BracketClose -> "bracket ]"
     is TrackItem.Repeat       -> if (item.isInfinite) "repeat ×∞" else "repeat ×${item.count}"
     is TrackItem.Modulation   -> "modulation ×${item.p}/${item.q}"
-    is TrackItem.SetBpm       -> "set bpm =${item.bpm.toInt()}"
+    is TrackItem.SetBpm       -> "set bpm =${formatBpm(item.bpm)}"
     else -> "—"
 }
 
@@ -422,9 +422,9 @@ fun SetBpmDialog(
     onConfirm:  (bpm: Double) -> Unit,
     onDismiss:  () -> Unit,
 ) {
-    var bpmText by remember { mutableStateOf(initialBpm?.toInt()?.toString() ?: "${currentBpm.toInt()}") }
+    var bpmText by remember { mutableStateOf(initialBpm?.let { formatBpm(it) } ?: formatBpm(currentBpm)) }
     val bpmVal  = bpmText.toDoubleOrNull()
-    val isValid = bpmVal != null && bpmVal in 1.0..999.0
+    val isValid = bpmVal != null && bpmVal in 1.0..999.99
 
     Dialog(onDismissRequest = onDismiss) {
         Column(modifier = Modifier
@@ -439,8 +439,13 @@ fun SetBpmDialog(
             Text("Jump to this BPM when reached during playback",
                 style = RhythmType.label.copy(fontSize = 11.sp, color = RhythmColors.textSecondary))
 
-            TempoTextField(value = bpmText, onValueChange = { bpmText = it },
-                label = "bpm", modifier = Modifier.fillMaxWidth())
+            TempoTextField(
+                value         = bpmText,
+                onValueChange = { if (isValidBpmInput(it)) bpmText = it },
+                label         = "bpm",
+                keyboardType  = KeyboardType.Decimal,
+                modifier      = Modifier.fillMaxWidth(),
+            )
 
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 DialogBtn("Cancel", onClick = onDismiss,
@@ -559,13 +564,14 @@ fun CustomNumberDialog(
 private fun TempoTextField(
     value: String, onValueChange: (String) -> Unit,
     label: String, modifier: Modifier = Modifier,
+    keyboardType: KeyboardType = KeyboardType.Number,
 ) {
     OutlinedTextField(
         value         = value,
         onValueChange = { if (it.length <= 6) onValueChange(it) },
         label         = { Text(label, style = RhythmType.label.copy(color = RhythmColors.textMuted)) },
         singleLine    = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor   = RhythmColors.accent,
             unfocusedBorderColor = RhythmColors.border2,

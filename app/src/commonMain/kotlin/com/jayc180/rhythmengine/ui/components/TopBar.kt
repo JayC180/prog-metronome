@@ -67,7 +67,7 @@ fun TopBar(
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("bpm", style = RhythmType.bpmLabel.copy(color = RhythmColors.textMuted))
-                Text("${bpm.toInt()}",
+                Text(formatBpm(bpm),
                     style = RhythmType.bpmValue.copy(
                         color = if (isPlaying) RhythmColors.caution else RhythmColors.textPrimary))
             }

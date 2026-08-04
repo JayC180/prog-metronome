@@ -387,7 +387,7 @@ private fun SetBpmView(item: TrackItem.SetBpm, selected: Boolean, onClick: () ->
                 if (selected) RhythmColors.setBpmText.copy(alpha = 0.5f) else RhythmColors.border1,
                 RoundedCornerShape(3.dp))
             .clickable(onClick = onClick).padding(horizontal = 10.dp)) {
-        Text("=${item.bpm.toInt()}", style = RhythmType.beatValue.copy(
+        Text("=${formatBpm(item.bpm)}", style = RhythmType.beatValue.copy(
             fontSize = 11.sp,
             color = if (selected) RhythmColors.setBpmText else RhythmColors.setBpmText.copy(alpha = 0.75f)))
     }

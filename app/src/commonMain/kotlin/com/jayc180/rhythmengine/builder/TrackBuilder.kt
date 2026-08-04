@@ -137,7 +137,7 @@ class TrackBuilder(
 
     fun setBpm(bpm: Double) {
         if (bpm <= 0) return
-        emit(current.copy(bpm = bpm.coerceIn(1.0, 999.0)))
+        emit(current.copy(bpm = bpm.coerceIn(1.0, 999.99)))
     }
 
     fun toggleDenomMode() {
@@ -385,7 +385,7 @@ class TrackBuilder(
 
     fun commitSetBpm(bpm: Double) {
         if (!current.canInsertTempo || bpm <= 0) return
-        insertItem(TrackItem.SetBpm(bpm.coerceIn(1.0, 999.0)))
+        insertItem(TrackItem.SetBpm(bpm.coerceIn(1.0, 999.99)))
     }
 
     // edit mode
@@ -457,7 +457,7 @@ class TrackBuilder(
             }
             is TrackItem.SetBpm -> {
                 val newBpm = if (mode.firstDigit) n.toDouble()
-                else (item.bpm.toInt() * 10 + n).toDouble().coerceAtMost(999.0)
+                else (item.bpm.toInt() * 10 + n).toDouble().coerceAtMost(999.99)
                 newItems[idx] = item.copy(bpm = newBpm)
                 updateActiveTrack { it.copy(items = newItems) }
                 emit(current.copy(inputMode = InputMode.Edit(firstDigit = false)))
@@ -485,7 +485,7 @@ class TrackBuilder(
         val track = current.activeTrack ?: return
         if (track.items.getOrNull(index) !is TrackItem.SetBpm) return
         val newItems = track.items.toMutableList()
-        newItems[index] = TrackItem.SetBpm(bpm.coerceIn(1.0, 999.0))
+        newItems[index] = TrackItem.SetBpm(bpm.coerceIn(1.0, 999.99))
         updateActiveTrack { it.copy(items = newItems) }
         emit(current.copy(inputMode = InputMode.Normal))
     }

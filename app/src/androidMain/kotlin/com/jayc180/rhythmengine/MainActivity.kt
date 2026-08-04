@@ -587,13 +587,13 @@ private fun SettingsOverlay(
             .border(0.5.dp, RhythmColors.border2, RoundedCornerShape(12.dp))
             .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text("Override \"$name\"?", style = RhythmType.bpmValue.copy(
+            Text("Overwrite \"$name\"?", style = RhythmType.bpmValue.copy(
                 fontSize = 15.sp, color = RhythmColors.textPrimary))
             Text("This will overwrite the saved file.",
                 style = RhythmType.label.copy(fontSize = 12.sp, color = RhythmColors.textSecondary))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 SBtn("Cancel", onClick = onCancel, bg = RhythmColors.bg3, textColor = RhythmColors.textMuted)
-                SBtn("Override", onClick = onConfirm,
+                SBtn("Overwrite", onClick = onConfirm,
                     bg = RhythmColors.accentBg, textColor = RhythmColors.accent, border = RhythmColors.accentBorder)
             }
         }

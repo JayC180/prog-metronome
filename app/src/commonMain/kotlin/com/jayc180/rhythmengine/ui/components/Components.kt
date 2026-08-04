@@ -20,6 +20,30 @@ import com.jayc180.rhythmengine.ui.theme.RhythmType
 import com.jayc180.rhythmengine.ui.theme.surfaceBg2
 import com.jayc180.rhythmengine.ui.theme.surfaceBg3
 
+internal fun formatBpm(bpm: Double): String {
+    val cents = (bpm * 100).toLong()
+    return when {
+        cents % 100 == 0L -> "${cents / 100}"
+        cents % 10  == 0L -> "${cents / 100}.${(cents % 100) / 10}"
+        else              -> "${cents / 100}.${(cents % 100).toString().padStart(2, '0')}"
+    }
+}
+
+internal fun isValidBpmInput(s: String): Boolean {
+    if (s.isEmpty()) return true
+    val dots = s.count { it == '.' }
+    if (dots > 1) return false
+    val dotIdx = s.indexOf('.')
+    return if (dotIdx >= 0) {
+        val intPart = s.take(dotIdx)
+        val decPart = s.drop(dotIdx + 1)
+        intPart.length <= 3 && decPart.length <= 2 &&
+                intPart.all { it.isDigit() } && decPart.all { it.isDigit() }
+    } else {
+        s.length <= 3 && s.all { it.isDigit() }
+    }
+}
+
 enum class ToolButtonState { Normal, On, Editing, Dim }
 
 @Composable
