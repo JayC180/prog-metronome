@@ -3,6 +3,7 @@
 #include "../UiHelpers.h"
 #include "../../audio/SoundInfo.h"
 #include "../../builder/TapTempoCalculator.h"
+#include "../../builder/TrackItem.h"
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <array>
 #include <functional>
@@ -12,8 +13,6 @@
 namespace rhythm
 {
 
-// Shared dialog chrome - a rounded panel with a title, hint, content area,
-// and a horizontal row of DialogButtons.
 class DialogPanel : public juce::Component
 {
 public:
@@ -145,7 +144,8 @@ public:
                        std::optional<float> currentVolume = std::nullopt,
                        std::function<void (float)> onVolumeChange = nullptr,
                        std::optional<bool> subdivideAll = std::nullopt,
-                       std::function<void (bool)> onSubdivideAllToggle = nullptr);
+                       std::function<void (bool)> onSubdivideAllToggle = nullptr,
+                       std::function<void ()> onApplyToAll = nullptr);
     ~SoundPickerDialog() override;
     void layoutContent (juce::Rectangle<int>) override;
 
@@ -170,17 +170,17 @@ private:
 class SubbeatEditorDialog : public DialogPanel
 {
 public:
-    SubbeatEditorDialog (std::vector<bool> subbeats,
+    SubbeatEditorDialog (std::vector<SubbeatState> subbeats,
                          juce::String beatLabel,
-                         std::function<void (int)> onToggle,
+                         std::function<void (int)> onCycle,
                          std::function<void (bool)> onSetAll);
     ~SubbeatEditorDialog() override;
     void layoutContent (juce::Rectangle<int>) override;
 
 private:
     class Cell;
-    std::vector<bool>                       subbeats_;
-    std::function<void (int)>               onToggle_;
+    std::vector<SubbeatState>               subbeats_;
+    std::function<void (int)>               onCycle_;
     std::vector<std::unique_ptr<Cell>>      cells_;
 };
 

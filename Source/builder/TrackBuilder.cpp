@@ -5,6 +5,16 @@
 
 namespace rhythm {
 
+namespace {
+// Fresh subbeat vector: index 0 is the main Beat, the rest are Subbeats.
+std::vector<SubbeatState> makeDefaultSubbeats(int numerator) {
+    std::vector<SubbeatState> out((size_t)numerator, SubbeatState::Subbeat);
+    if (!out.empty())
+        out[0] = SubbeatState::Beat;
+    return out;
+}
+} // namespace
+
 int TrackBuilder::nextCounter_ = 0;
 
 TrackDraft TrackBuilder::newTrackDraft(int index) {
@@ -239,12 +249,32 @@ void TrackBuilder::setTrackDefaultSubdiv(int index, bool enabled) {
         return c;
     });
 }
+void TrackBuilder::applyTrackDefaultSoundToAllBeats(int index) {
+    if (index < 0 || index >= (int)state_.tracks.size())
+        return;
+    const auto &track = state_.tracks[(size_t)index];
+    const auto soundId = track.defaultSoundId; // optional<string>
+    const auto volume = track.defaultVolume;   // optional<float>
+    updateTrack(index, [&soundId, &volume](const TrackDraft &d) {
+        auto c = d;
+        for (auto &item : c.items) {
+            if (auto *b = item.getIf<TrackItem::Beat>()) {
+                auto copy = *b;
+                copy.soundId = soundId;
+                if (volume.has_value())
+                    copy.volume = *volume;
+                item = TrackItem(copy);
+            }
+        }
+        return c;
+    });
+}
 
 void TrackBuilder::setBpm(double bpm) {
     if (bpm <= 0)
         return;
     auto next = state_;
-    next.bpm = std::clamp(bpm, 1.0, 999.0);
+    next.bpm = std::clamp(bpm, 1.0, 999.99);
     emit(std::move(next));
 }
 
@@ -290,7 +320,7 @@ void TrackBuilder::enterBeat(int numerator) {
     b.soundId = soundId;
     b.volume = volume;
     if (t->defaultSubdiv && numerator > 1)
-        b.subbeats = std::vector<bool>((size_t)numerator, true);
+        b.subbeats = makeDefaultSubbeats(numerator);
     insertItem(TrackItem(std::move(b)));
 }
 
@@ -369,7 +399,7 @@ void TrackBuilder::enableBeatSubdiv(int beatIndex) {
         if (b.subbeats.has_value() || b.displayNum <= 1)
             return b;
         auto c = b;
-        c.subbeats = std::vector<bool>((size_t)b.displayNum, true);
+        c.subbeats = makeDefaultSubbeats(b.displayNum);
         return c;
     });
 }
@@ -382,16 +412,21 @@ void TrackBuilder::disableBeatSubdiv(int beatIndex) {
     });
 }
 
-void TrackBuilder::toggleSubbeat(int beatIndex, int subbeatIndex) {
-    if (subbeatIndex == 0)
-        return;
+void TrackBuilder::cycleSubbeat(int beatIndex, int subbeatIndex) {
     updateBeatAt(beatIndex, [subbeatIndex](const TrackItem::Beat &b) {
         if (!b.subbeats.has_value() || subbeatIndex < 0 ||
             subbeatIndex >= (int)b.subbeats->size())
             return b;
         auto c = b;
-        (*c.subbeats)[(size_t)subbeatIndex] =
-            !(*c.subbeats)[(size_t)subbeatIndex];
+        auto &cell = (*c.subbeats)[(size_t)subbeatIndex];
+        if (subbeatIndex == 0) {
+            // main beat cycles: Beat -> Subbeat -> Off -> Beat
+            cell = cycleSubbeatState(cell);
+        } else {
+            // syncopation subbeats toggle Subbeat <-> Off
+            cell = (cell == SubbeatState::Off) ? SubbeatState::Subbeat
+                                               : SubbeatState::Off;
+        }
         return c;
     });
 }
@@ -401,26 +436,31 @@ void TrackBuilder::setSubbeatAll(int beatIndex, bool active) {
         if (!b.subbeats.has_value())
             return b;
         auto c = b;
+        const SubbeatState target =
+            active ? SubbeatState::Subbeat : SubbeatState::Off;
+        // index 0 (main beat) is not touched by all-on/all-off
         for (int i = 1; i < (int)c.subbeats->size(); ++i)
-            (*c.subbeats)[(size_t)i] = active;
+            (*c.subbeats)[(size_t)i] = target;
         return c;
     });
 }
 
-std::optional<std::vector<bool>>
-TrackBuilder::resizeSubbeats(const std::optional<std::vector<bool>> &subbeats,
-                             int newSize) {
+std::optional<std::vector<SubbeatState>> TrackBuilder::resizeSubbeats(
+    const std::optional<std::vector<SubbeatState>> &subbeats, int newSize) {
     if (!subbeats.has_value())
         return std::nullopt;
     if (newSize <= 1)
         return std::nullopt;
     if ((int)subbeats->size() == newSize)
         return subbeats;
-    std::vector<bool> out((size_t)newSize, false);
-    for (int i = 0; i < newSize; ++i)
-        out[(size_t)i] = (i == 0) ? true
-                         : (i < (int)subbeats->size()) ? (*subbeats)[(size_t)i]
-                                                       : false;
+    std::vector<SubbeatState> out((size_t)newSize, SubbeatState::Subbeat);
+    for (int i = 0; i < newSize; ++i) {
+        if (i < (int)subbeats->size())
+            out[(size_t)i] = (*subbeats)[(size_t)i];
+        else
+            out[(size_t)i] =
+                (i == 0) ? SubbeatState::Beat : SubbeatState::Subbeat;
+    }
     return out;
 }
 
@@ -596,7 +636,7 @@ void TrackBuilder::commitModulation(int p, int q) {
 void TrackBuilder::commitSetBpm(double bpm) {
     if (!state_.canInsertTempo() || bpm <= 0)
         return;
-    insertItem(TrackItem(TrackItem::SetBpm{std::clamp(bpm, 1.0, 999.0)}));
+    insertItem(TrackItem(TrackItem::SetBpm{std::clamp(bpm, 1.0, 999.99)}));
 }
 
 void TrackBuilder::replaceModulation(int index, int p, int q) {
@@ -633,7 +673,7 @@ void TrackBuilder::replaceSetBpm(int index, double bpm) {
         return;
     auto newItems = t->items;
     newItems[(size_t)index] =
-        TrackItem(TrackItem::SetBpm{std::clamp(bpm, 1.0, 999.0)});
+        TrackItem(TrackItem::SetBpm{std::clamp(bpm, 1.0, 999.99)});
     updateActiveTrack([&newItems](const TrackDraft &d) {
         auto c = d;
         c.items = newItems;
@@ -845,8 +885,8 @@ void TrackBuilder::play() {
     std::vector<InterpretResult> results;
     results.reserve(state_.tracks.size());
     for (const auto &d : state_.tracks) {
-        auto r = interpretTrackDraft(d, state_.bpm, defaultSoundId_, subdivSound,
-                                     subdivisionVolume_);
+        auto r = interpretTrackDraft(d, state_.bpm, defaultSoundId_,
+                                     subdivSound, subdivisionVolume_);
         r.muted = d.muted;
         r.soloed = d.soloed;
         results.push_back(std::move(r));

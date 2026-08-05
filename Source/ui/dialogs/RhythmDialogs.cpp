@@ -94,29 +94,44 @@ BpmInputDialog::BpmInputDialog(double currentBpm,
     preferredHeight = 290;
 
     styleNumericField(field_);
-    field_.setText(juce::String((int)currentBpm), juce::dontSendNotification);
+    field_.setText(formatBpm(currentBpm), juce::dontSendNotification);
     field_.selectAll();
+    auto lastValid = std::make_shared<juce::String>(field_.getText());
+    field_.onTextChange = [this, lastValid] {
+        const auto t = field_.getText();
+        if (isValidBpmInput(t))
+            *lastValid = t;
+        else
+            field_.setText(*lastValid, juce::dontSendNotification);
+    };
     content().addAndMakeVisible(field_);
 
-    struct NudgeSpec { const char* label; double delta; bool multiply; };
-    static const NudgeSpec specs[6] = {
-        {"/ 2", 0.5, true}, {"-5", -5.0, false}, {"-1", -1.0, false},
-        {"+1", 1.0, false}, {"+5", 5.0, false},  {"x 2", 2.0, true}
+    struct NudgeSpec {
+        const char *label;
+        double delta;
+        bool multiply;
     };
+    static const NudgeSpec specs[6] = {{"/ 2", 0.5, true},  {"-5", -5.0, false},
+                                       {"-1", -1.0, false}, {"+1", 1.0, false},
+                                       {"+5", 5.0, false},  {"x 2", 2.0, true}};
     for (int i = 0; i < 6; ++i) {
-        nudgeButtons_[i] = std::make_unique<ChipButton>(juce::String(specs[i].label));
+        nudgeButtons_[i] =
+            std::make_unique<ChipButton>(juce::String(specs[i].label));
         nudgeButtons_[i]->setFontSize(11.0f);
         nudgeButtons_[i]->setStateColor(ChipButton::StateColor::Custom);
-        nudgeButtons_[i]->setColours(RhythmColors::bg3(), RhythmColors::border1(),
+        nudgeButtons_[i]->setColours(RhythmColors::bg3(),
+                                     RhythmColors::border1(),
                                      RhythmColors::textSecondary());
         const double delta = specs[i].delta;
         const bool multiply = specs[i].multiply;
-        nudgeButtons_[i]->setOnClick([this, delta, multiply] {
+        nudgeButtons_[i]->setOnClick([this, delta, multiply, lastValid] {
             const double v = field_.getText().getDoubleValue();
-            if (v <= 0.0) return;
+            if (v <= 0.0)
+                return;
             double next = multiply ? v * delta : v + delta;
-            next = std::max(1.0, std::min(999.0, next));
-            field_.setText(juce::String((int)std::round(next)), juce::dontSendNotification);
+            next = std::max(1.0, std::min(999.99, next));
+            *lastValid = formatBpm(next);
+            field_.setText(*lastValid, juce::dontSendNotification);
         });
         content().addAndMakeVisible(nudgeButtons_[i].get());
     }
@@ -126,9 +141,11 @@ BpmInputDialog::BpmInputDialog(double currentBpm,
     tapButton_.setStateColor(ChipButton::StateColor::Custom);
     tapButton_.setColours(RhythmColors::bg3(), RhythmColors::border1(),
                           RhythmColors::textSecondary());
-    tapButton_.setOnClick([this] {
+    tapButton_.setOnClick([this, lastValid] {
         if (auto bpm = tapCalc_.tap()) {
-            field_.setText(juce::String((int)std::round(*bpm)), juce::dontSendNotification);
+            const double clamped = std::max(1.0, std::min(999.99, *bpm));
+            *lastValid = formatBpm(clamped);
+            field_.setText(*lastValid, juce::dontSendNotification);
         }
         tapHintLabel_.setText(juce::String(tapCalc_.tapCount()) + "x",
                               juce::dontSendNotification);
@@ -136,7 +153,8 @@ BpmInputDialog::BpmInputDialog(double currentBpm,
     content().addAndMakeVisible(tapButton_);
 
     tapHintLabel_.setFont(juce::Font(juce::FontOptions(11.0f)));
-    tapHintLabel_.setColour(juce::Label::textColourId, RhythmColors::textMuted());
+    tapHintLabel_.setColour(juce::Label::textColourId,
+                            RhythmColors::textMuted());
     tapHintLabel_.setJustificationType(juce::Justification::centredLeft);
     content().addAndMakeVisible(tapHintLabel_);
 
@@ -233,9 +251,17 @@ SetBpmDialog::SetBpmDialog(double currentBpm, std::optional<double> initialBpm,
     : DialogPanel("Set BPM (in track)",
                   "Jump to this BPM when reached during playback") {
     styleNumericField(field_);
-    field_.setText(juce::String((int)initialBpm.value_or(currentBpm)),
+    field_.setText(formatBpm(initialBpm.value_or(currentBpm)),
                    juce::dontSendNotification);
     field_.selectAll();
+    auto lastValid = std::make_shared<juce::String>(field_.getText());
+    field_.onTextChange = [this, lastValid] {
+        const auto t = field_.getText();
+        if (isValidBpmInput(t))
+            *lastValid = t;
+        else
+            field_.setText(*lastValid, juce::dontSendNotification);
+    };
     content().addAndMakeVisible(field_);
 
     addAction("Cancel", RhythmColors::bg3(), RhythmColors::border1(),
@@ -509,9 +535,9 @@ SoundPickerDialog::SoundPickerDialog(
     std::vector<SoundInfo> sounds, std::optional<std::string> currentSoundId,
     std::function<void(const std::string &)> onSelect,
     std::optional<float> currentVolume,
-    std::function<void(float)> onVolumeChange,
-    std::optional<bool> subdivideAll,
-    std::function<void(bool)> onSubdivideAllToggle)
+    std::function<void(float)> onVolumeChange, std::optional<bool> subdivideAll,
+    std::function<void(bool)> onSubdivideAllToggle,
+    std::function<void()> onApplyToAll)
     : DialogPanel("Choose sound", {}) {
     preferredWidth = 400;
     preferredHeight = juce::jmin(116 + (int)sounds.size() * 40, 520);
@@ -557,12 +583,14 @@ SoundPickerDialog::SoundPickerDialog(
 
         volumeLabel_.setText("Default volume", juce::dontSendNotification);
         volumeLabel_.setFont(juce::Font(juce::FontOptions(11.0f)));
-        volumeLabel_.setColour(juce::Label::textColourId, RhythmColors::textSecondary());
+        volumeLabel_.setColour(juce::Label::textColourId,
+                               RhythmColors::textSecondary());
 
         volumeSlider_.setRange(0.0, 1.0);
         volumeSlider_.setSliderStyle(juce::Slider::LinearHorizontal);
         volumeSlider_.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
-        volumeSlider_.setValue((double)*currentVolume, juce::dontSendNotification);
+        volumeSlider_.setValue((double)*currentVolume,
+                               juce::dontSendNotification);
         volumeSlider_.onValueChange = [this] {
             const auto v = (float)volumeSlider_.getValue();
             volumePercent_.setText(juce::String((int)(v * 100.0f)) + "%",
@@ -571,11 +599,12 @@ SoundPickerDialog::SoundPickerDialog(
                 onVolumeChange_(v);
         };
 
-        volumePercent_.setText(
-            juce::String((int)(*currentVolume * 100.0f)) + "%",
-            juce::dontSendNotification);
+        volumePercent_.setText(juce::String((int)(*currentVolume * 100.0f)) +
+                                   "%",
+                               juce::dontSendNotification);
         volumePercent_.setFont(juce::Font(juce::FontOptions(11.0f)));
-        volumePercent_.setColour(juce::Label::textColourId, RhythmColors::textSecondary());
+        volumePercent_.setColour(juce::Label::textColourId,
+                                 RhythmColors::textSecondary());
         volumePercent_.setJustificationType(juce::Justification::centredRight);
 
         content().addAndMakeVisible(volumeLabel_);
@@ -608,6 +637,17 @@ SoundPickerDialog::SoundPickerDialog(
                           findParentComponentOfClass<juce::DialogWindow>())
                       w->exitModalState(0);
               });
+
+    if (onApplyToAll) {
+        addAction("Apply to all beats", RhythmColors::dangerBg(),
+                  RhythmColors::dangerBorder(), RhythmColors::danger(),
+                  [this, onApplyToAll] {
+                      onApplyToAll();
+                      if (auto *w =
+                              findParentComponentOfClass<juce::DialogWindow>())
+                          w->exitModalState(1);
+                  });
+    }
 }
 
 SoundPickerDialog::~SoundPickerDialog() = default;
@@ -643,33 +683,38 @@ void SoundPickerDialog::layoutContent(juce::Rectangle<int> b) {
 
 class SubbeatEditorDialog::Cell : public juce::Component {
   public:
-    Cell(int index, bool base, bool active, std::function<void()> onClick)
-        : index_(index), base_(base), active_(active),
+    Cell(int index, bool base, SubbeatState state,
+         std::function<void()> onClick)
+        : index_(index), base_(base), state_(state),
           onClick_(std::move(onClick)) {
-        if (!base_)
-            setMouseCursor(juce::MouseCursor::PointingHandCursor);
+        setMouseCursor(juce::MouseCursor::PointingHandCursor);
     }
 
-    void setActive(bool a) {
-        active_ = a;
+    void setState(SubbeatState s) {
+        state_ = s;
         repaint();
     }
 
     void paint(juce::Graphics &g) override {
         const auto r = getLocalBounds().toFloat().reduced(1.0f);
         juce::Colour bg, border, text;
-        if (base_) {
+        switch (state_) {
+        case SubbeatState::Beat:
             bg = RhythmColors::accentBg();
             border = RhythmColors::accentBright();
             text = RhythmColors::accentBright();
-        } else if (active_) {
+            break;
+        case SubbeatState::Subbeat:
             bg = RhythmColors::cautionBg();
             border = RhythmColors::cautionBorder();
             text = RhythmColors::caution();
-        } else {
+            break;
+        case SubbeatState::Off:
+        default:
             bg = RhythmColors::bg3();
             border = RhythmColors::border1();
             text = RhythmColors::textDim();
+            break;
         }
         g.setColour(bg);
         g.fillRoundedRectangle(r, 6.0f);
@@ -677,29 +722,28 @@ class SubbeatEditorDialog::Cell : public juce::Component {
         g.drawRoundedRectangle(r, 6.0f, 1.0f);
         g.setColour(text);
         g.setFont(juce::Font(juce::FontOptions(base_ ? 10.0f : 13.0f)));
-        g.drawText(base_ ? "base" : juce::String(index_ + 1), getLocalBounds(),
+        g.drawText(base_ ? "beat" : juce::String(index_ + 1), getLocalBounds(),
                    juce::Justification::centred, false);
     }
 
     void mouseDown(const juce::MouseEvent &) override {
-        if (!base_ && onClick_)
+        if (onClick_)
             onClick_();
     }
 
   private:
     int index_;
     bool base_;
-    bool active_;
+    SubbeatState state_;
     std::function<void()> onClick_;
 };
 
-SubbeatEditorDialog::SubbeatEditorDialog(std::vector<bool> subbeats,
+SubbeatEditorDialog::SubbeatEditorDialog(std::vector<SubbeatState> subbeats,
                                          juce::String beatLabel,
-                                         std::function<void(int)> onToggle,
+                                         std::function<void(int)> onCycle,
                                          std::function<void(bool)> onSetAll)
-    : DialogPanel("Subbeats " + beatLabel,
-                  "Tap a subbeat to toggle it for syncopation"),
-      subbeats_(std::move(subbeats)), onToggle_(std::move(onToggle)) {
+    : DialogPanel("Subbeats "), subbeats_(std::move(subbeats)),
+      onCycle_(std::move(onCycle)) {
     const int n = (int)subbeats_.size();
     const int perRow = 4;
     const int rows = juce::jmax(1, (n + perRow - 1) / perRow);
@@ -708,14 +752,19 @@ SubbeatEditorDialog::SubbeatEditorDialog(std::vector<bool> subbeats,
 
     for (int i = 0; i < n; ++i) {
         const bool base = (i == 0);
-        auto cell = std::make_unique<Cell>(
-            i, base, subbeats_[(size_t)i], [this, i] {
-                if (i <= 0 || i >= (int)subbeats_.size())
+        auto cell =
+            std::make_unique<Cell>(i, base, subbeats_[(size_t)i], [this, i] {
+                if (i < 0 || i >= (int)subbeats_.size())
                     return;
-                subbeats_[(size_t)i] = !subbeats_[(size_t)i];
-                cells_[(size_t)i]->setActive(subbeats_[(size_t)i]);
-                if (onToggle_)
-                    onToggle_(i);
+                auto &cell = subbeats_[(size_t)i];
+                if (i == 0)
+                    cell = cycleSubbeatState(cell);
+                else
+                    cell = (cell == SubbeatState::Off) ? SubbeatState::Subbeat
+                                                       : SubbeatState::Off;
+                cells_[(size_t)i]->setState(cell);
+                if (onCycle_)
+                    onCycle_(i);
             });
         content().addAndMakeVisible(cell.get());
         cells_.push_back(std::move(cell));
@@ -724,8 +773,8 @@ SubbeatEditorDialog::SubbeatEditorDialog(std::vector<bool> subbeats,
     addAction("All on", RhythmColors::bg3(), RhythmColors::border1(),
               RhythmColors::textSecondary(), [this, onSetAll] {
                   for (int i = 1; i < (int)subbeats_.size(); ++i) {
-                      subbeats_[(size_t)i] = true;
-                      cells_[(size_t)i]->setActive(true);
+                      subbeats_[(size_t)i] = SubbeatState::Subbeat;
+                      cells_[(size_t)i]->setState(SubbeatState::Subbeat);
                   }
                   if (onSetAll)
                       onSetAll(true);
@@ -733,15 +782,16 @@ SubbeatEditorDialog::SubbeatEditorDialog(std::vector<bool> subbeats,
     addAction("All off", RhythmColors::bg3(), RhythmColors::border1(),
               RhythmColors::textSecondary(), [this, onSetAll] {
                   for (int i = 1; i < (int)subbeats_.size(); ++i) {
-                      subbeats_[(size_t)i] = false;
-                      cells_[(size_t)i]->setActive(false);
+                      subbeats_[(size_t)i] = SubbeatState::Off;
+                      cells_[(size_t)i]->setState(SubbeatState::Off);
                   }
                   if (onSetAll)
                       onSetAll(false);
               });
     addAction("Close", RhythmColors::accentBg(), RhythmColors::accentBorder(),
               RhythmColors::accent(), [this] {
-                  if (auto *w = findParentComponentOfClass<juce::DialogWindow>())
+                  if (auto *w =
+                          findParentComponentOfClass<juce::DialogWindow>())
                       w->exitModalState(1);
               });
 }
@@ -767,67 +817,90 @@ void SubbeatEditorDialog::layoutContent(juce::Rectangle<int> b) {
 }
 
 // help
-std::vector<HelpDialog::HelpEntry> HelpDialog::makeEntries()
-{
+std::vector<HelpDialog::HelpEntry> HelpDialog::makeEntries() {
     return {
-        { "Beat",
-          "The numpad enters beat values. The /4 button shows the current subdivision for "
-          "the next input. For example, /4 matches \"16th notes\" in classical western theory, "
-          "then entering 1 on the numpad gives an item with duration of 1/16th note relative to "
-          "the bpm. Entering 3 is equivalent to a dotted 8th note. For values above 9 press the "
-          "\"custom\" button. A beat can be turned on/off, its volume and sound adjusted in the "
-          "edit panel above the numpad." },
-        { "Subdivision",
-          "The default subdivision is /4. To change it, click the /N button then press "
-          "the numpad or \"custom\" for any value larger than 9. This gives easy access to all "
-          "tuplets. For nested tuplets you need to do the calculation. Example: a triplet out of "
-          "two notes from triplet-eighth-notes is 2/9 of the pulse, so set subdivision to 9 "
-          "then press 2." },
-        { "Brackets and Repeats",
-          "[ and ] wrap a section. Press xN after the closing bracket then click the numpad "
-          "to repeat that many times, or \"custom\" for more than 9. Infinite repeat is also an "
-          "option. Useful for simulating meters, hypermeters, or any repeating pattern. Brackets "
-          "can be nested. Example: [ 3 3 2 ]x4 [ 5 ]xinf plays a 3+3+2 group four "
-          "times, then loops 5 indefinitely." },
-        { "Editing",
-          "The E button in the numpad is used for editing. When an item is selected, click E "
-          "to enter edit mode -- number inputs will change the selected item instead of appending. "
-          "Del deletes the selected item, or the last item if nothing is selected. "
-          "Paired bracket delete (in settings) removes both brackets together when you delete either one." },
-        { "Keyboard Shortcuts",
-          "Space: play/stop. Left/Right arrows: move cursor. Up/Down arrows: switch tracks. "
-          "1-9: enter beat. Backspace/Delete: delete. M: mute active track. S: solo active track." },
-        { "Tempo Changes",
-          "mm inserts a metric modulation. After clicking it a popup prompts for two numbers. "
-          "For example at 120 bpm, mm of x3/2 gives 180. =bpm sets an absolute tempo at that "
-          "point. Both take effect at that position during playback and won't affect the global "
-          "bpm. You cannot put mm inside an infinitely-repeated group." },
-        { "Tracks",
-          "Each track is a row. Multiple tracks play simultaneously, useful for polyrhythm and "
-          "polymeters. Tap a track to select it and edit. Each track repeats from the start when "
-          "the end is reached (except when there is an infinite repeat)." },
-        { "Mute, Solo, Default Sound",
-          "Each track row has M (mute), S (solo), and snd (default sound/volume) chips. "
-          "The snd chip opens a picker to set the default sound and volume for new beats on that "
-          "track; the chip highlights when a custom sound is configured. "
-          "Item-level sound/volume overrides the track default, which overrides the global default "
-          "(set via Default sound... in the settings menu)." },
-        { "Projects",
-          "Projects auto-save every 30 seconds. Use Save As in the settings menu for named "
-          ".rhy project files that can be shared across devices. Open Project loads a .rhy file." },
-        { "About Prog Metronome",
-          "Prog Metronome is a free and open source project. Source code is available at\n"
-          "https://github.com/JayC180/prog-metronome\n\n"
-          "If you have the ability, consider supporting the developer at\n"
-          "https://ko-fi.com/prog_metronome" },
+        {"Beat", "The numpad enters beat values. The /4 button shows the "
+                 "current subdivision for "
+                 "the next input. For example, /4 matches \"16th notes\" in "
+                 "classical western theory, "
+                 "then entering 1 on the numpad gives an item with duration of "
+                 "1/16th note relative to "
+                 "the bpm. Entering 3 is equivalent to a dotted 8th note. For "
+                 "values above 9 press the "
+                 "\"custom\" button. A beat can be turned on/off, its volume "
+                 "and sound adjusted in the "
+                 "edit panel above the numpad."},
+        {"Subdivision", "The default subdivision is /4. To change it, click "
+                        "the /N button then press "
+                        "the numpad or \"custom\" for any value larger than 9. "
+                        "This gives easy access to all "
+                        "tuplets. For nested tuplets you need to do the "
+                        "calculation. Example: a triplet out of "
+                        "two notes from triplet-eighth-notes is 2/9 of the "
+                        "pulse, so set subdivision to 9 "
+                        "then press 2."},
+        {"Brackets and Repeats",
+         "[ and ] wrap a section. Press xN after the closing bracket then "
+         "click the numpad "
+         "to repeat that many times, or \"custom\" for more than 9. Infinite "
+         "repeat is also an "
+         "option. Useful for simulating meters, hypermeters, or any repeating "
+         "pattern. Brackets "
+         "can be nested. Example: [ 3 3 2 ]x4 [ 5 ]xinf plays a 3+3+2 group "
+         "four "
+         "times, then loops 5 indefinitely."},
+        {"Editing", "The E button in the numpad is used for editing. When an "
+                    "item is selected, click E "
+                    "to enter edit mode -- number inputs will change the "
+                    "selected item instead of appending. "
+                    "Del deletes the selected item, or the last item if "
+                    "nothing is selected. "
+                    "Paired bracket delete (in settings) removes both brackets "
+                    "together when you delete either one."},
+        {"Keyboard Shortcuts", "Space: play/stop. Left/Right arrows: move "
+                               "cursor. Up/Down arrows: switch tracks. "
+                               "1-9: enter beat. Backspace/Delete: delete. M: "
+                               "mute active track. S: solo active track."},
+        {"Tempo Changes",
+         "mm inserts a metric modulation. After clicking it a popup prompts "
+         "for two numbers. "
+         "For example at 120 bpm, mm of x3/2 gives 180. =bpm sets an absolute "
+         "tempo at that "
+         "point. Both take effect at that position during playback and won't "
+         "affect the global "
+         "bpm. You cannot put mm inside an infinitely-repeated group."},
+        {"Tracks",
+         "Each track is a row. Multiple tracks play simultaneously, useful for "
+         "polyrhythm and "
+         "polymeters. Tap a track to select it and edit. Each track repeats "
+         "from the start when "
+         "the end is reached (except when there is an infinite repeat)."},
+        {"Mute, Solo, Default Sound",
+         "Each track row has M (mute), S (solo), and snd (default "
+         "sound/volume) chips. "
+         "The snd chip opens a picker to set the default sound and volume for "
+         "new beats on that "
+         "track; the chip highlights when a custom sound is configured. "
+         "Item-level sound/volume overrides the track default, which overrides "
+         "the global default "
+         "(set via Default sound... in the settings menu)."},
+        {"Projects", "Projects auto-save every 30 seconds. Use Save As in the "
+                     "settings menu for named "
+                     ".rhy project files that can be shared across devices. "
+                     "Open Project loads a .rhy file."},
+        {"About Prog Metronome",
+         "Prog Metronome is a free and open source project. Source code is "
+         "available at\n"
+         "https://github.com/JayC180/prog-metronome\n\n"
+         "If you have the ability, consider supporting the developer at\n"
+         "https://ko-fi.com/prog_metronome"},
     };
 }
 
 HelpDialog::ContentComp::ContentComp(std::vector<HelpEntry> entries)
     : entries_(std::move(entries)) {}
 
-void HelpDialog::ContentComp::relayout(int width)
-{
+void HelpDialog::ContentComp::relayout(int width) {
     if (width == cachedWidth_ || width <= 0)
         return;
     cachedWidth_ = width;
@@ -855,8 +928,7 @@ void HelpDialog::ContentComp::relayout(int width)
     setSize(width, totalH_);
 }
 
-void HelpDialog::ContentComp::paint(juce::Graphics &g)
-{
+void HelpDialog::ContentComp::paint(juce::Graphics &g) {
     if (cachedWidth_ <= 0 || sectionY_.size() != entries_.size())
         return;
 
@@ -870,7 +942,8 @@ void HelpDialog::ContentComp::paint(juce::Graphics &g)
 
         g.setFont(titleFont);
         g.setColour(RhythmColors::accent());
-        g.drawText(e.title, 0, y, getWidth(), 24, juce::Justification::left, false);
+        g.drawText(e.title, 0, y, getWidth(), 24, juce::Justification::left,
+                   false);
 
         juce::AttributedString as;
         as.setText(e.body);
@@ -879,14 +952,13 @@ void HelpDialog::ContentComp::paint(juce::Graphics &g)
         as.setWordWrap(juce::AttributedString::byWord);
         juce::TextLayout tl;
         tl.createLayout(as, fw);
-        tl.draw(g, juce::Rectangle<float>(0.0f, (float)(y + 25), fw, (float)totalH_));
+        tl.draw(g, juce::Rectangle<float>(0.0f, (float)(y + 25), fw,
+                                          (float)totalH_));
     }
 }
 
-HelpDialog::HelpDialog()
-    : DialogPanel("Help", {}), content_(makeEntries())
-{
-    preferredWidth  = 420;
+HelpDialog::HelpDialog() : DialogPanel("Help", {}), content_(makeEntries()) {
+    preferredWidth = 420;
     preferredHeight = 500;
     viewport_.setViewedComponent(&content_, false);
     viewport_.setScrollBarsShown(true, false);
@@ -894,15 +966,15 @@ HelpDialog::HelpDialog()
 
     addAction("Close", RhythmColors::bg3(), RhythmColors::border1(),
               RhythmColors::textMuted(), [this] {
-                  if (auto *w = findParentComponentOfClass<juce::DialogWindow>())
+                  if (auto *w =
+                          findParentComponentOfClass<juce::DialogWindow>())
                       w->exitModalState(0);
               });
 }
 
 HelpDialog::~HelpDialog() = default;
 
-void HelpDialog::layoutContent(juce::Rectangle<int> b)
-{
+void HelpDialog::layoutContent(juce::Rectangle<int> b) {
     content_.relayout(b.getWidth() - 4);
     viewport_.setBounds(b);
 }

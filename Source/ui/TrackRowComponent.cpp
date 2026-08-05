@@ -40,12 +40,17 @@ class TrackRowComponent::ItemStrip : public juce::Component {
         layoutItems(); // updates colourise() for every item
 
         // auto scroll to beat
-        if (idx < 0) return;
+        if (idx < 0)
+            return;
         const auto &st = builder_.state();
-        if (!st.isPlaying()) return;
-        const auto *draft = (trackIndex_ >= 0 && trackIndex_ < (int)st.tracks.size())
-            ? &st.tracks[(size_t)trackIndex_] : nullptr;
-        if (draft == nullptr || draft->items.empty()) return;
+        if (!st.isPlaying())
+            return;
+        const auto *draft =
+            (trackIndex_ >= 0 && trackIndex_ < (int)st.tracks.size())
+                ? &st.tracks[(size_t)trackIndex_]
+                : nullptr;
+        if (draft == nullptr || draft->items.empty())
+            return;
         int beatIdx = idx;
         while (beatIdx > 0 && !draft->items[(size_t)beatIdx].isBeat())
             --beatIdx;
@@ -53,13 +58,15 @@ class TrackRowComponent::ItemStrip : public juce::Component {
     }
 
     void setBeatWidthPublic(int w) {
-        if (beatWidth_ == w) return;
+        if (beatWidth_ == w)
+            return;
         beatWidth_ = w;
         layoutItems();
     }
 
     void setStackedFractionsPublic(bool s) {
-        if (stackedFractions_ == s) return;
+        if (stackedFractions_ == s)
+            return;
         stackedFractions_ = s;
         layoutItems();
     }
@@ -70,7 +77,8 @@ class TrackRowComponent::ItemStrip : public juce::Component {
     }
 
     void mouseDown(const juce::MouseEvent &e) override {
-        if (builder_.state().isPlaying()) return;
+        if (builder_.state().isPlaying())
+            return;
         // Activate the track on a click anywhere on the strip background
         builder_.setActiveTrack(trackIndex_);
         const auto local = e.eventComponent == this
@@ -105,7 +113,7 @@ class TrackRowComponent::ItemStrip : public juce::Component {
         int displayNum{1}, displayDenom{1};
         bool stacked{false};
         bool wide{false};
-        std::vector<bool> subbeats;
+        std::vector<SubbeatState> subbeats;
 
         void paint(juce::Graphics &g) override {
             const auto r = getLocalBounds().toFloat().reduced(0.5f);
@@ -122,23 +130,27 @@ class TrackRowComponent::ItemStrip : public juce::Component {
 
             if (stacked && displayDenom != 1) {
                 const float w = (float)getWidth();
-                const float numSz   = juce::jlimit(11.0f, 16.0f, w * 0.33f);
+                const float numSz = juce::jlimit(11.0f, 16.0f, w * 0.33f);
                 const float denomSz = numSz * 0.85f;
-                const float totalH  = numSz + denomSz + 2.0f;
-                const float startY  = ((float)textArea.getHeight() - totalH) * 0.5f;
+                const float totalH = numSz + denomSz + 2.0f;
+                const float startY =
+                    ((float)textArea.getHeight() - totalH) * 0.5f;
                 g.setFont(juce::Font(juce::FontOptions(numSz)).boldened());
-                g.drawText(juce::String(displayNum),
-                           textArea.withTrimmedBottom((int)std::round(denomSz + 2.0f)),
-                           juce::Justification::centredBottom, false);
+                g.drawText(
+                    juce::String(displayNum),
+                    textArea.withTrimmedBottom((int)std::round(denomSz + 2.0f)),
+                    juce::Justification::centredBottom, false);
                 g.setColour(text.withAlpha(0.6f));
                 g.setFont(juce::Font(juce::FontOptions(denomSz)).boldened());
                 g.drawText(juce::String(displayDenom),
-                           textArea.withTrimmedTop((int)std::round(startY + numSz + 2.0f)),
+                           textArea.withTrimmedTop(
+                               (int)std::round(startY + numSz + 2.0f)),
                            juce::Justification::centredTop, false);
                 (void)startY;
             } else {
                 g.setFont(juce::Font(juce::FontOptions(fontSize)));
-                g.drawText(label, textArea, juce::Justification::centred, false);
+                g.drawText(label, textArea, juce::Justification::centred,
+                           false);
             }
 
             if (hasDots)
@@ -157,15 +169,25 @@ class TrackRowComponent::ItemStrip : public juce::Component {
             float startY = (float)getHeight() - 4.0f - totalH;
             for (int row = 0; row < rows; ++row) {
                 const int inRow = juce::jmin(perRow, count - row * perRow);
-                const float rowW = (float)inRow * dia + (float)(inRow - 1) * gap;
+                const float rowW =
+                    (float)inRow * dia + (float)(inRow - 1) * gap;
                 float x = ((float)getWidth() - rowW) * 0.5f;
                 const float y = startY + (float)row * rowH;
                 for (int c = 0; c < inRow; ++c) {
                     const int i = row * perRow + c;
-                    juce::Colour col = (i == 0) ? RhythmColors::accentBright()
-                                       : subbeats[(size_t)i]
-                                           ? RhythmColors::caution()
-                                           : RhythmColors::border1();
+                    juce::Colour col;
+                    switch (subbeats[(size_t)i]) {
+                    case SubbeatState::Beat:
+                        col = RhythmColors::accentBright();
+                        break;
+                    case SubbeatState::Subbeat:
+                        col = RhythmColors::caution();
+                        break;
+                    case SubbeatState::Off:
+                    default:
+                        col = RhythmColors::border1();
+                        break;
+                    }
                     g.setColour(col);
                     g.fillEllipse(x, y, dia, dia);
                     x += dia + gap;
@@ -190,8 +212,8 @@ class TrackRowComponent::ItemStrip : public juce::Component {
         const int contentH = height + pad * 2;
 
         // rebuild only when structure or beat width change
-        bool needsRebuild = items_.size() != draft.items.size() ||
-                            lastBeatWidth_ != beatWidth_;
+        bool needsRebuild =
+            items_.size() != draft.items.size() || lastBeatWidth_ != beatWidth_;
         if (!needsRebuild) {
             for (int i = 0; i < (int)draft.items.size(); ++i) {
                 const auto &it = draft.items[(size_t)i];
@@ -217,12 +239,12 @@ class TrackRowComponent::ItemStrip : public juce::Component {
             for (int i = 0; i < (int)draft.items.size(); ++i) {
                 const auto &item = draft.items[(size_t)i];
                 const auto *beatPtr = item.getIf<TrackItem::Beat>();
-                const bool wide = beatPtr != nullptr && beatPtr->subbeats.has_value();
-                int width = item.isBeat()
-                                ? (wide ? kSubbeatBeatWidth : beatWidth_)
-                            : (item.isBracketOpen() || item.isBracketClose())
-                                ? bracketW
-                                : glyphW;
+                const bool wide =
+                    beatPtr != nullptr && beatPtr->subbeats.has_value();
+                int width =
+                    item.isBeat() ? (wide ? kSubbeatBeatWidth : beatWidth_)
+                    : (item.isBracketOpen() || item.isBracketClose()) ? bracketW
+                                                                      : glyphW;
                 auto hit = std::make_unique<ItemHit>();
                 hit->index = i;
                 hit->kind = item.kind();
@@ -247,8 +269,8 @@ class TrackRowComponent::ItemStrip : public juce::Component {
         for (int i = 0; i < (int)draft.items.size(); ++i) {
             const bool selected = cursorIdx.has_value() && *cursorIdx == i;
             const bool playing = st.isPlaying() && lastPlayingIndex_ == i;
-            colourise(draft.items[(size_t)i], selected, playing, stackedFractions_,
-                      *items_[(size_t)i]);
+            colourise(draft.items[(size_t)i], selected, playing,
+                      stackedFractions_, *items_[(size_t)i]);
             items_[(size_t)i]->repaint();
         }
     }
@@ -258,11 +280,12 @@ class TrackRowComponent::ItemStrip : public juce::Component {
         if (const auto *beat = item.getIf<TrackItem::Beat>()) {
             hit.label = juce::String(beat->label());
             hit.corner = 4.0f;
-            hit.displayNum   = beat->displayNum;
+            hit.displayNum = beat->displayNum;
             hit.displayDenom = beat->displayDenom;
-            hit.stacked      = stacked;
-            hit.subbeats     = beat->subbeats.has_value() ? *beat->subbeats
-                                                          : std::vector<bool>{};
+            hit.stacked = stacked;
+            hit.subbeats = beat->subbeats.has_value()
+                               ? *beat->subbeats
+                               : std::vector<SubbeatState>{};
             const float w = (float)hit.getWidth();
             const float baseSz = juce::jlimit(8.0f, 18.0f, w / 3.0f);
             hit.fontSize = beat->label().length() > 5 ? baseSz * 0.7f : baseSz;
@@ -320,7 +343,7 @@ class TrackRowComponent::ItemStrip : public juce::Component {
                                 : RhythmColors::caution().withAlpha(0.75f);
             hit.borderWidth = selected ? 1.0f : 0.5f;
         } else if (const auto *sb = item.getIf<TrackItem::SetBpm>()) {
-            hit.label = "=" + juce::String((int)sb->bpm);
+            hit.label = "=" + formatBpm(sb->bpm);
             hit.corner = 3.0f;
             hit.fontSize = 11.0f;
             hit.bg = RhythmColors::setBpmBg();
@@ -339,18 +362,17 @@ class TrackRowComponent::ItemStrip : public juce::Component {
         const auto &comp = *items_[(size_t)idx];
         const int viewX = viewport_.getViewPositionX();
         const int viewW = viewport_.getWidth();
-        const int pad   = 8;
+        const int pad = 8;
         if (anchor) {
             const int target = juce::jmax(0, comp.getX() - pad);
             viewport_.setViewPosition(target, 0);
         } else {
-            const int left  = comp.getX();
+            const int left = comp.getX();
             const int right = comp.getRight();
             if (left >= viewX && right <= viewX + viewW)
                 return; // already fully visible
-            const int target = left < viewX
-                ? juce::jmax(0, left - pad)
-                : right - viewW + pad;
+            const int target =
+                left < viewX ? juce::jmax(0, left - pad) : right - viewW + pad;
             viewport_.setViewPosition(juce::jmax(0, target), 0);
         }
     }
@@ -391,12 +413,14 @@ TrackRowComponent::TrackRowComponent(TrackBuilder &builder, int trackIndex)
     addAndMakeVisible(deleteButton_);
 
     muteChip_.setOnClick([this] {
-        if (builder_.state().isPlaying()) return;
+        if (builder_.state().isPlaying())
+            return;
         if (auto *d = draft())
             builder_.setTrackMuted(trackIndex_, !d->muted);
     });
     soloChip_.setOnClick([this] {
-        if (builder_.state().isPlaying()) return;
+        if (builder_.state().isPlaying())
+            return;
         if (auto *d = draft())
             builder_.setTrackSoloed(trackIndex_, !d->soloed);
     });
@@ -466,8 +490,12 @@ void TrackRowComponent::mouseDown(const juce::MouseEvent &) {
 }
 
 void TrackRowComponent::setBeatWidth(int w) { strip_->setBeatWidthPublic(w); }
-void TrackRowComponent::setStackedFractions(bool s) { strip_->setStackedFractionsPublic(s); }
-void TrackRowComponent::setPlayingIndex(int idx) { strip_->setPlayingItemIndex(idx); }
+void TrackRowComponent::setStackedFractions(bool s) {
+    strip_->setStackedFractionsPublic(s);
+}
+void TrackRowComponent::setPlayingIndex(int idx) {
+    strip_->setPlayingItemIndex(idx);
+}
 
 TrackListComponent::TrackListComponent(TrackBuilder &builder)
     : builder_(builder) {
@@ -535,7 +563,8 @@ void TrackListComponent::rebuildRows() {
     }
 }
 
-void TrackListComponent::setTrackPlayingIndex(const std::string &trackId, int itemIdx) {
+void TrackListComponent::setTrackPlayingIndex(const std::string &trackId,
+                                              int itemIdx) {
     const auto &tracks = builder_.state().tracks;
     for (int i = 0; i < (int)rows_.size() && i < (int)tracks.size(); ++i) {
         if (tracks[(size_t)i].id == trackId) {
@@ -547,12 +576,14 @@ void TrackListComponent::setTrackPlayingIndex(const std::string &trackId, int it
 
 void TrackListComponent::setBeatWidth(int w) {
     beatWidth_ = w;
-    for (auto &r : rows_) r->setBeatWidth(w);
+    for (auto &r : rows_)
+        r->setBeatWidth(w);
 }
 
 void TrackListComponent::setStackedFractions(bool s) {
     stackedFractions_ = s;
-    for (auto &r : rows_) r->setStackedFractions(s);
+    for (auto &r : rows_)
+        r->setStackedFractions(s);
 }
 
 void TrackListComponent::paint(juce::Graphics &g) {

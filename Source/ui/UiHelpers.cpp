@@ -1,6 +1,39 @@
 #include "UiHelpers.h"
 
+#include <cmath>
+
 namespace rhythm {
+
+juce::String formatBpm(double bpm) {
+    const long long cents = (long long)std::llround(bpm * 100.0);
+    const long long whole = cents / 100;
+    const long long frac = cents % 100;
+    if (frac == 0)
+        return juce::String(whole);
+    if (frac % 10 == 0)
+        return juce::String(whole) + "." + juce::String(frac / 10);
+    juce::String fracStr(frac);
+    if (fracStr.length() < 2)
+        fracStr = "0" + fracStr;
+    return juce::String(whole) + "." + fracStr;
+}
+
+bool isValidBpmInput(const juce::String &s) {
+    if (s.isEmpty())
+        return true;
+    const int dots = s.length() - s.removeCharacters(".").length();
+    if (dots > 1)
+        return false;
+    const int dotIdx = s.indexOfChar('.');
+    if (dotIdx >= 0) {
+        const juce::String intPart = s.substring(0, dotIdx);
+        const juce::String decPart = s.substring(dotIdx + 1);
+        return intPart.length() <= 3 && decPart.length() <= 2 &&
+               intPart.containsOnly("0123456789") &&
+               (decPart.isEmpty() || decPart.containsOnly("0123456789"));
+    }
+    return s.length() <= 3 && s.containsOnly("0123456789");
+}
 
 ChipButton::ChipButton(juce::String label) : label_(std::move(label)) {
     setMouseCursor(juce::MouseCursor::PointingHandCursor);

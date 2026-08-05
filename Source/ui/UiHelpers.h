@@ -6,6 +6,12 @@
 
 namespace rhythm {
 
+// int if whole; else 2 decimal digits
+juce::String formatBpm(double bpm);
+
+// 3 int, 2 decimal
+bool isValidBpmInput(const juce::String &s);
+
 // A rounded-rectangle button with bg / border / text-colour overrides.
 // Acts like a flat material chip. Used for toolbar buttons, dialog buttons,
 // edit-panel "change ›" badges, etc.

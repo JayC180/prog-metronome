@@ -85,17 +85,19 @@ static void computeNode(const PNode &node, ComputeState &s,
             const auto &subs = *b.subbeats;
             const int64_t subDur = (int64_t)(s.nanosPerPulse / b.displayDenom);
             for (int i = 0; i < (int)subs.size(); ++i) {
-                if (!subs[(size_t)i])
+                const SubbeatState state = subs[(size_t)i];
+                if (state == SubbeatState::Off)
                     continue;
                 PrecomputedEvent e;
                 e.offsetNanos = s.cursor + (int64_t)i * subDur;
                 e.soundId =
-                    (i == 0)
+                    (state == SubbeatState::Beat)
                         ? (b.soundId.has_value() ? *b.soundId : defaultSound)
                         : subdivisionSound;
                 e.trackItemIndex = beat->idx;
                 e.firedCount = s.fired;
-                e.volume = (i == 0) ? b.volume : subdivisionVolume;
+                e.volume = (state == SubbeatState::Beat) ? b.volume
+                                                         : subdivisionVolume;
                 out.push_back(std::move(e));
             }
         } else {
@@ -133,7 +135,7 @@ static void computeNode(const PNode &node, ComputeState &s,
     }
 }
 
-}
+} // namespace
 
 InterpretResult interpretTrackDraft(const TrackDraft &draft, double baseBpm,
                                     const std::string &defaultSound,

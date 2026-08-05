@@ -23,8 +23,19 @@ juce::var itemToVar(const TrackItem &item) {
             obj->setProperty("volume", (double)b->volume);
         if (b->subbeats.has_value()) {
             juce::String s;
-            for (bool on : *b->subbeats)
-                s += on ? "1" : "0";
+            for (SubbeatState st : *b->subbeats) {
+                switch (st) {
+                case SubbeatState::Beat:
+                    s += "B";
+                    break;
+                case SubbeatState::Subbeat:
+                    s += "S";
+                    break;
+                case SubbeatState::Off:
+                    s += "0";
+                    break;
+                }
+            }
             obj->setProperty("subbeats", s);
         }
     } else if (item.isBracketOpen())
@@ -68,16 +79,36 @@ std::optional<TrackItem> varToItem(const juce::var &v) {
         if (obj->hasProperty("subbeats")) {
             const juce::String s = obj->getProperty("subbeats").toString();
             if (s.isNotEmpty()) {
-                std::vector<bool> subs;
+                std::vector<SubbeatState> subs;
                 subs.reserve((size_t)s.length());
-                for (int k = 0; k < s.length(); ++k)
-                    subs.push_back(s[k] == '1');
+                for (int k = 0; k < s.length(); ++k) {
+                    const juce::juce_wchar c = s[k];
+                    switch (c) {
+                    case 'B':
+                        subs.push_back(SubbeatState::Beat);
+                        break;
+                    case 'S':
+                        subs.push_back(SubbeatState::Subbeat);
+                        break;
+                    case '1': // legacy bool encoding
+                        subs.push_back(k == 0 ? SubbeatState::Beat
+                                              : SubbeatState::Subbeat);
+                        break;
+                    case '0':
+                    default:
+                        subs.push_back(SubbeatState::Off);
+                        break;
+                    }
+                }
                 b.subbeats = std::move(subs);
             }
         } else if (obj->hasProperty("subdivide") &&
                    (bool)obj->getProperty("subdivide") && b.displayNum > 1) {
-            // backward compat, all subbeats on
-            b.subbeats = std::vector<bool>((size_t)b.displayNum, true);
+            // backward compat, all subbeats on: index 0 Beat, rest Subbeat
+            std::vector<SubbeatState> subs((size_t)b.displayNum,
+                                           SubbeatState::Subbeat);
+            subs[0] = SubbeatState::Beat;
+            b.subbeats = std::move(subs);
         }
         return TrackItem(b);
     }
@@ -212,7 +243,8 @@ ProjectSerializer::deserialize(const std::string &jsonString) {
                                        .toString()
                                        .toStdString();
             if (tobj->hasProperty("defaultVolume"))
-                d.defaultVolume = (float)(double)tobj->getProperty("defaultVolume");
+                d.defaultVolume =
+                    (float)(double)tobj->getProperty("defaultVolume");
             d.defaultSubdiv = tobj->hasProperty("defaultSubdiv")
                                   ? (bool)tobj->getProperty("defaultSubdiv")
                                   : false;

@@ -31,12 +31,13 @@ MainComponent::MainComponent(RhythmEngineProcessor &processor)
         }
 
         juce::PopupMenu beatSizeMenu;
-        const char* sizeLabels[] = {"Small", "Medium", "Large"};
+        const char *sizeLabels[] = {"Small", "Medium", "Large"};
         for (int i = 0; i < 3; ++i)
-            beatSizeMenu.addItem(300 + i, sizeLabels[i], true, beatBlockSizeIndex_ == i);
+            beatSizeMenu.addItem(300 + i, sizeLabels[i], true,
+                                 beatBlockSizeIndex_ == i);
 
         juce::PopupMenu menu;
-        menu.addSectionHeader("Prog Metronome  v1.03");
+        menu.addSectionHeader("Prog Metronome  v1.04");
         menu.addSeparator();
         menu.addItem(1, "New Project");
         menu.addItem(2, "Open Project...");
@@ -48,7 +49,8 @@ MainComponent::MainComponent(RhythmEngineProcessor &processor)
         menu.addItem(6, "Default sound...");
         menu.addItem(10, "Subdivision sound...");
         menu.addSeparator();
-        menu.addItem(7, "Paired bracket delete", true, builder_.pairedBracketDelete());
+        menu.addItem(7, "Paired bracket delete", true,
+                     builder_.pairedBracketDelete());
         menu.addItem(9, "Stacked fractions", true, stackedFractions_);
         menu.addSubMenu("Beat block size", beatSizeMenu);
         menu.addSeparator();
@@ -74,23 +76,21 @@ MainComponent::MainComponent(RhythmEngineProcessor &processor)
                 else if (result == 10)
                     openSubdivisionSoundPicker();
                 else if (result == 7) {
-                    builder_.setPairedBracketDelete(!builder_.pairedBracketDelete());
+                    builder_.setPairedBracketDelete(
+                        !builder_.pairedBracketDelete());
                     saveSettings();
-                }
-                else if (result == 8)
+                } else if (result == 8)
                     showRhythmDialog(this, std::make_unique<HelpDialog>());
                 else if (result == 9) {
                     stackedFractions_ = !stackedFractions_;
                     trackList_.setStackedFractions(stackedFractions_);
                     saveSettings();
-                }
-                else if (result >= 300 && result < 303) {
+                } else if (result >= 300 && result < 303) {
                     static const int beatWidths[] = {40, 52, 68};
                     beatBlockSizeIndex_ = result - 300;
                     trackList_.setBeatWidth(beatWidths[beatBlockSizeIndex_]);
                     saveSettings();
-                }
-                else if (result >= 200) {
+                } else if (result >= 200) {
                     const int idx = result - 200;
                     const auto &themes = BuiltInThemes::all();
                     if (idx >= 0 && idx < (int)themes.size()) {
@@ -204,7 +204,7 @@ MainComponent::MainComponent(RhythmEngineProcessor &processor)
         [safeThis = juce::Component::SafePointer<MainComponent>(this)](
             const rhythm::ScheduledEvent &e) {
             const std::string trackId = e.trackId;
-            const int itemIdx        = e.trackItemIndex;
+            const int itemIdx = e.trackItemIndex;
             juce::MessageManager::callAsync([safeThis, trackId, itemIdx] {
                 if (auto *self = safeThis.getComponent())
                     self->trackList_.setTrackPlayingIndex(trackId, itemIdx);
@@ -242,18 +242,15 @@ void MainComponent::openBeatSoundPicker() {
 }
 
 void MainComponent::openGlobalSoundPicker() {
-    showRhythmDialog(
-        this,
-        std::make_unique<SoundPickerDialog>(
-            availableSounds_,
-            std::optional<std::string>{builder_.defaultSoundId()},
-            [this](const std::string &soundId) {
-                builder_.setDefaultSoundId(soundId);
-            },
-            builder_.defaultVolume(),
-            [this](float v) {
-                builder_.setDefaultVolume(v);
-            }));
+    showRhythmDialog(this,
+                     std::make_unique<SoundPickerDialog>(
+                         availableSounds_,
+                         std::optional<std::string>{builder_.defaultSoundId()},
+                         [this](const std::string &soundId) {
+                             builder_.setDefaultSoundId(soundId);
+                         },
+                         builder_.defaultVolume(),
+                         [this](float v) { builder_.setDefaultVolume(v); }));
 }
 
 void MainComponent::openTrackSoundPicker(int trackIdx) {
@@ -267,37 +264,38 @@ void MainComponent::openTrackSoundPicker(int trackIdx) {
                                  : builder_.defaultVolume();
 
     showRhythmDialog(
-        this,
-        std::make_unique<SoundPickerDialog>(
-            availableSounds_, track.defaultSoundId,
-            [this, trackIdx](const std::string &soundId) {
-                builder_.setTrackDefaultSound(trackIdx, soundId);
-            },
-            currentVol,
-            [this, trackIdx](float v) {
-                builder_.setTrackDefaultVolume(trackIdx, v);
-            },
-            std::optional<bool>{track.defaultSubdiv},
-            [this, trackIdx](bool enabled) {
-                builder_.setTrackDefaultSubdiv(trackIdx, enabled);
-            }));
+        this, std::make_unique<SoundPickerDialog>(
+                  availableSounds_, track.defaultSoundId,
+                  [this, trackIdx](const std::string &soundId) {
+                      builder_.setTrackDefaultSound(trackIdx, soundId);
+                  },
+                  currentVol,
+                  [this, trackIdx](float v) {
+                      builder_.setTrackDefaultVolume(trackIdx, v);
+                  },
+                  std::optional<bool>{track.defaultSubdiv},
+                  [this, trackIdx](bool enabled) {
+                      builder_.setTrackDefaultSubdiv(trackIdx, enabled);
+                  },
+                  [this, trackIdx] {
+                      builder_.applyTrackDefaultSoundToAllBeats(trackIdx);
+                  }));
 }
 
 void MainComponent::openSubdivisionSoundPicker() {
     showRhythmDialog(
-        this,
-        std::make_unique<SoundPickerDialog>(
-            availableSounds_,
-            std::optional<std::string>{builder_.subdivisionSoundId()},
-            [this](const std::string &soundId) {
-                builder_.setSubdivisionSoundId(soundId);
-                saveSettings();
-            },
-            builder_.subdivisionVolume(),
-            [this](float v) {
-                builder_.setSubdivisionVolume(v);
-                saveSettings();
-            }));
+        this, std::make_unique<SoundPickerDialog>(
+                  availableSounds_,
+                  std::optional<std::string>{builder_.subdivisionSoundId()},
+                  [this](const std::string &soundId) {
+                      builder_.setSubdivisionSoundId(soundId);
+                      saveSettings();
+                  },
+                  builder_.subdivisionVolume(),
+                  [this](float v) {
+                      builder_.setSubdivisionVolume(v);
+                      saveSettings();
+                  }));
 }
 
 void MainComponent::openSubbeatEditor() {
@@ -315,14 +313,11 @@ void MainComponent::openSubbeatEditor() {
         return;
 
     showRhythmDialog(
-        this, std::make_unique<SubbeatEditorDialog>(
-                  *beat->subbeats, juce::String(beat->label()),
-                  [this, idx](int subIdx) {
-                      builder_.toggleSubbeat(idx, subIdx);
-                  },
-                  [this, idx](bool active) {
-                      builder_.setSubbeatAll(idx, active);
-                  }));
+        this,
+        std::make_unique<SubbeatEditorDialog>(
+            *beat->subbeats, juce::String(beat->label()),
+            [this, idx](int subIdx) { builder_.cycleSubbeat(idx, subIdx); },
+            [this, idx](bool active) { builder_.setSubbeatAll(idx, active); }));
 }
 
 void MainComponent::newProject() {
@@ -549,7 +544,8 @@ void MainComponent::importSound() {
 }
 
 static juce::File settingsFilePath() {
-    return juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
+    return juce::File::getSpecialLocation(
+               juce::File::userApplicationDataDirectory)
         .getChildFile("RhythmEngine")
         .getChildFile("settings.json");
 }
@@ -563,10 +559,12 @@ void MainComponent::loadSettings() {
         return;
     if (auto *obj = v.getDynamicObject()) {
         if (obj->hasProperty("pairedBracketDelete"))
-            builder_.setPairedBracketDelete((bool)obj->getProperty("pairedBracketDelete"));
+            builder_.setPairedBracketDelete(
+                (bool)obj->getProperty("pairedBracketDelete"));
         if (obj->hasProperty("beatBlockSizeIndex")) {
             static const int beatWidths[] = {40, 52, 68};
-            beatBlockSizeIndex_ = juce::jlimit(0, 2, (int)obj->getProperty("beatBlockSizeIndex"));
+            beatBlockSizeIndex_ =
+                juce::jlimit(0, 2, (int)obj->getProperty("beatBlockSizeIndex"));
             trackList_.setBeatWidth(beatWidths[beatBlockSizeIndex_]);
         }
         if (obj->hasProperty("stackedFractions")) {
@@ -583,7 +581,9 @@ void MainComponent::loadSettings() {
         }
         if (obj->hasProperty("subdivisionSoundId"))
             builder_.setSubdivisionSoundId(
-                obj->getProperty("subdivisionSoundId").toString().toStdString());
+                obj->getProperty("subdivisionSoundId")
+                    .toString()
+                    .toStdString());
         if (obj->hasProperty("subdivisionVolume"))
             builder_.setSubdivisionVolume(
                 (float)(double)obj->getProperty("subdivisionVolume"));

@@ -8,6 +8,25 @@
 
 namespace rhythm {
 
+// Per-subbeat state within a subdivided beat.
+//   Beat    - plays the beat's own sound/volume
+//   Subbeat - plays the configurable subdivision sound/volume
+//   Off     - silent
+enum class SubbeatState { Beat, Subbeat, Off };
+
+// Cycle order used by the subbeat editor: Beat -> Subbeat -> Off -> Beat.
+inline SubbeatState cycleSubbeatState(SubbeatState s) {
+    switch (s) {
+    case SubbeatState::Beat:
+        return SubbeatState::Subbeat;
+    case SubbeatState::Subbeat:
+        return SubbeatState::Off;
+    case SubbeatState::Off:
+        return SubbeatState::Beat;
+    }
+    return SubbeatState::Beat;
+}
+
 // Sealed-equivalent: one of Beat / BracketOpen / BracketClose / Repeat /
 // Modulation / SetBpm. Modelled with a tagged variant. The fields directly
 // mirror the Kotlin sealed class.
@@ -28,8 +47,8 @@ class TrackItem {
         bool active{true};
         std::optional<std::string> soundId{};
         float volume{1.0f};
-        // nullopt = off; [0] always true; [1...N-1] user-toggled for syncopation
-        std::optional<std::vector<bool>> subbeats{};
+        // nullopt = subdivision off; otherwise each entry is Beat/Subbeat/Off
+        std::optional<std::vector<SubbeatState>> subbeats{};
 
         Rational duration() const {
             return Rational((int64_t)displayNum, (int64_t)displayDenom);

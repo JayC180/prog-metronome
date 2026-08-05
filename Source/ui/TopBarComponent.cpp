@@ -65,7 +65,7 @@ void TopBarComponent::paintBpmCard(juce::Graphics &g) {
 
     g.setColour(bpmCol);
     g.setFont(juce::Font(juce::FontOptions(20.0f, juce::Font::bold)));
-    g.drawText(juce::String((int)builder_.state().displayBpm()), cardArea,
+    g.drawText(formatBpm(builder_.state().displayBpm()), cardArea,
                juce::Justification::centred, false);
 }
 

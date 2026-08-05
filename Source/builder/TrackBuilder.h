@@ -85,6 +85,7 @@ class TrackBuilder {
     void clearTrackDefaultSound(int index);
     void setTrackDefaultVolume(int index, float volume);
     void setTrackDefaultSubdiv(int index, bool enabled);
+    void applyTrackDefaultSoundToAllBeats(int index);
 
     // bpm
     void setBpm(double bpm);
@@ -104,7 +105,7 @@ class TrackBuilder {
     // sub-beats / subdivision
     void enableBeatSubdiv(int beatIndex);
     void disableBeatSubdiv(int beatIndex);
-    void toggleSubbeat(int beatIndex, int subbeatIndex);
+    void cycleSubbeat(int beatIndex, int subbeatIndex);
     void setSubbeatAll(int beatIndex, bool active);
 
     // brackets
@@ -149,8 +150,8 @@ class TrackBuilder {
     static TrackDraft newTrackDraft(int index);
 
     // resize subbeats when displayNum changes; nullopt stays nullopt
-    static std::optional<std::vector<bool>>
-    resizeSubbeats(const std::optional<std::vector<bool>> &subbeats,
+    static std::optional<std::vector<SubbeatState>>
+    resizeSubbeats(const std::optional<std::vector<SubbeatState>> &subbeats,
                    int newSize);
 
   private:
