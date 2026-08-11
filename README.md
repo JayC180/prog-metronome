@@ -14,6 +14,8 @@ Its usage is rather unconventional. See [usage](#usage) for more details .
 
 The logo stands for a 5:4 polyrhythm/polymeter because I really like 5:4.
 
+The desktop version's code is in [desktop-juce branch](https://github.com/JayC180/prog-metronome/tree/desktop-juce)
+
 ## Features
 - Polyrhythm and polymeter
 - Metric modulations and BPM changes
