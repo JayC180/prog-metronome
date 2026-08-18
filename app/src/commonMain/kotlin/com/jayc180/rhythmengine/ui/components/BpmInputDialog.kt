@@ -42,9 +42,10 @@ fun BpmInputDialog(
     var tapBpm    by remember { mutableStateOf<Double?>(null) }
     var tapCount  by remember { mutableStateOf(0) }
 
-    // effective bpm: tap result takes precedence while tapping, text field otherwise
-    val effectiveBpm: Double? = tapBpm ?: textBpm.toDoubleOrNull()?.takeIf { it in 1.0..999.99 }
-    val isValid = effectiveBpm != null
+    val textParsed: Double? = textBpm.toDoubleOrNull()?.takeIf { it in 1.0..999.99 }
+    // take textbox val
+    val effectiveBpm: Double? = tapBpm ?: textParsed
+    val isValid = textParsed != null
 
     Dialog(onDismissRequest = onDismiss) {
         Column(
@@ -128,9 +129,7 @@ fun BpmInputDialog(
                                 val result = calculator.tap()
                                 tapCount = calculator.tapCount
                                 if (result != null) {
-                                    val clamped = result.coerceIn(1.0, 999.99)
-                                    tapBpm  = clamped
-                                    textBpm = "${clamped.toLong()}"
+                                    tapBpm = result.coerceIn(1.0, 999.99)
                                 }
                             },
                     ) {
@@ -186,7 +185,7 @@ fun BpmInputDialog(
                 }
                 BpmBtn(
                     label     = "Set",
-                    onClick   = { effectiveBpm?.let { onConfirm(it) } },
+                    onClick   = { textParsed?.let { onConfirm(it) } },
                     enabled   = isValid,
                     bg        = if (isValid) RhythmColors.accentBg else RhythmColors.bg3,
                     textColor = if (isValid) RhythmColors.border1 else RhythmColors.textDim,

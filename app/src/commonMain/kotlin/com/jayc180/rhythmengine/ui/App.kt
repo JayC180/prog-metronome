@@ -176,7 +176,7 @@ fun App(vm: AppViewModel) {
     if (showCustomDenomDialog) {
         CustomNumberDialog(
             title     = "Subdivision",
-            hint      = "denominator — e.g. 4 = quarter note, 8 = eighth note",
+            hint      = "denominator",
             onConfirm = { n ->
                 vm.builder.setDenom(n)
                 showCustomDenomDialog = false
