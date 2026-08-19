@@ -126,10 +126,10 @@ fun interpretTrackDraft(
                             )
                             SubbeatState.SUBBEAT -> out += PrecomputedEvent(
                                 offsetNanos    = s.cursor + i * subDur,
-                                soundId        = subdivisionSoundId,
+                                soundId        = beat.subdivisionSoundId ?: subdivisionSoundId,
                                 trackItemIndex = node.idx,
                                 firedCount     = s.fired,
-                                volume         = subdivisionVolume,
+                                volume         = beat.subdivisionVolume  ?: subdivisionVolume,
                             )
                             SubbeatState.OFF -> Unit
                         }

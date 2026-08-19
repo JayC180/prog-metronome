@@ -36,6 +36,7 @@ fun SoundPickerDialog(
     subdivideAll:          Boolean?             = null,   // null = no subdivide section
     onSubdivideAllToggle:  ((Boolean) -> Unit)? = null,
     onApplyToAll:          (() -> Unit)?        = null,   // null = not shown
+    onClearSound:          (() -> Unit)?        = null,   // null = not shown; clears override → use global
     bg:        Color = Color.Unspecified,
     textColor: Color = Color.Unspecified,
     border:    Color = Color.Unspecified,
@@ -235,6 +236,36 @@ fun SoundPickerDialog(
                     ) {
                         Text("Apply", style = RhythmType.label.copy(
                             fontSize = 11.sp, color = RhythmColors.danger))
+                    }
+                }
+                HorizontalDivider()
+            }
+
+            // reset to global subbeat sound
+            if (onClearSound != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Column {
+                        Text("Use default sound",
+                            style = RhythmType.label.copy(fontSize = 11.sp, color = RhythmColors.textSecondary))
+                        Text("clear override - revert to default subdivision sound",
+                            style = RhythmType.label.copy(fontSize = 9.sp, color = RhythmColors.textDim))
+                    }
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(RhythmColors.bg3)
+                            .border(0.5.dp, RhythmColors.border1, RoundedCornerShape(6.dp))
+                            .clickable { onClearSound(); onDismiss() }
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                    ) {
+                        Text("Clear", style = RhythmType.label.copy(
+                            fontSize = 11.sp, color = RhythmColors.textMuted))
                     }
                 }
                 HorizontalDivider()

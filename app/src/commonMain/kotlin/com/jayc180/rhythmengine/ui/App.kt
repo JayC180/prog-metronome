@@ -36,8 +36,10 @@ sealed class SoundPickerTarget {
     data class TrackDefault(val trackIndex: Int) : SoundPickerTarget()
     // global default
     object GlobalDefault : SoundPickerTarget()
-    // subdivision sound
+    // subdivision sound (global)
     object SubdivisionDefault : SoundPickerTarget()
+    // per-beat subbeat sound override
+    data class BeatSubdivision(val trackIndex: Int, val itemIndex: Int) : SoundPickerTarget()
 }
 
 @Suppress("UnusedBoxWithConstraintsScope")
@@ -201,10 +203,13 @@ fun App(vm: AppViewModel) {
         val idx  = state.cursorIndex
         if (beat?.subbeats != null && idx != null) {
             SubbeatEditorDialog(
-                beat            = beat,
-                onCycleSubbeat  = { sub -> vm.cycleSubbeat(idx, sub) },
-                onSetAll        = { active -> vm.setSubbeatAll(idx, active) },
-                onDismiss       = { showSubbeatEditor = false },
+                beat              = beat,
+                onCycleSubbeat    = { sub -> vm.cycleSubbeat(idx, sub) },
+                onSetAll          = { active -> vm.setSubbeatAll(idx, active) },
+                onOpenSubdivSound = {
+                    soundPickerTarget = SoundPickerTarget.BeatSubdivision(state.activeTrackIndex, idx)
+                },
+                onDismiss         = { showSubbeatEditor = false },
             )
         } else {
             showSubbeatEditor = false
@@ -228,6 +233,10 @@ fun App(vm: AppViewModel) {
 
             is SoundPickerTarget.SubdivisionDefault ->
                 vm.subdivisionSoundId.value
+
+            is SoundPickerTarget.BeatSubdivision ->
+                (state.tracks.getOrNull(target.trackIndex)
+                    ?.items?.getOrNull(target.itemIndex) as? TrackItem.Beat)?.subdivisionSoundId
         }
 
         val currentVolume: Float? = when (target) {
@@ -236,6 +245,10 @@ fun App(vm: AppViewModel) {
                 state.tracks.getOrNull(target.trackIndex)?.defaultVolume ?: globalDefaultVolume
             is SoundPickerTarget.GlobalDefault     -> globalDefaultVolume
             is SoundPickerTarget.SubdivisionDefault -> subdivisionVolume
+            is SoundPickerTarget.BeatSubdivision   ->
+                (state.tracks.getOrNull(target.trackIndex)
+                    ?.items?.getOrNull(target.itemIndex) as? TrackItem.Beat)
+                    ?.subdivisionVolume ?: subdivisionVolume
         }
 
         val subdivideAll = if (target is SoundPickerTarget.TrackDefault)
@@ -254,6 +267,8 @@ fun App(vm: AppViewModel) {
                     { v -> vm.setGlobalDefaultVolume(v) }
                 is SoundPickerTarget.SubdivisionDefault ->
                     { v -> vm.setSubdivisionVolume(v) }
+                is SoundPickerTarget.BeatSubdivision   ->
+                    { v -> vm.setBeatSubdivisionVolume(target.itemIndex, v) }
             },
             subdivideAll         = subdivideAll,
             onSubdivideAllToggle = if (target is SoundPickerTarget.TrackDefault)
@@ -275,8 +290,18 @@ fun App(vm: AppViewModel) {
 
                     is SoundPickerTarget.SubdivisionDefault ->
                         vm.setSubdivisionSound(entry.id)
+
+                    is SoundPickerTarget.BeatSubdivision ->
+                        vm.setBeatSubdivisionSound(target.itemIndex, entry.id)
                 }
                 soundPickerTarget = null
+            },
+            onClearSound = when (target) {
+                is SoundPickerTarget.TrackDefault ->
+                    { -> vm.builder.clearTrackDefaultSound(target.trackIndex); soundPickerTarget = null }
+                is SoundPickerTarget.BeatSubdivision ->
+                    { -> vm.clearBeatSubdivisionSound(target.itemIndex); soundPickerTarget = null }
+                else -> null
             },
             onDismiss = { soundPickerTarget = null },
         )

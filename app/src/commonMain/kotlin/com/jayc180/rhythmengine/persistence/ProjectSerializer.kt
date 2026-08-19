@@ -98,11 +98,13 @@ object ProjectSerializer {
             active    = if (!item.active) false else null,      // omit true (default)
             soundId   = item.soundId,
             volume    = if (item.volume != 1.0f) item.volume else null,  // omit 1.0
-            subbeats  = item.subbeats?.joinToString("") { when (it) {
+            subbeats      = item.subbeats?.joinToString("") { when (it) {
                 SubbeatState.BEAT    -> "B"
                 SubbeatState.SUBBEAT -> "S"
                 SubbeatState.OFF     -> "0"
             } },
+            subdivSoundId = item.subdivisionSoundId,
+            subdivVolume  = item.subdivisionVolume,
         )
         is TrackItem.BracketOpen  -> RhyItem(type = "open")
         is TrackItem.BracketClose -> RhyItem(type = "close")
@@ -158,12 +160,14 @@ object ProjectSerializer {
                 else -> null
             }
             TrackItem.Beat(
-                displayNum   = num,
-                displayDenom = den,
-                active       = item.active ?: true,
-                soundId      = item.soundId,
-                volume       = item.volume ?: 1.0f,
-                subbeats     = decodedSubbeats,
+                displayNum          = num,
+                displayDenom        = den,
+                active              = item.active ?: true,
+                soundId             = item.soundId,
+                volume              = item.volume ?: 1.0f,
+                subbeats            = decodedSubbeats,
+                subdivisionSoundId  = item.subdivSoundId,
+                subdivisionVolume   = item.subdivVolume,
             )
         }
         "open"   -> TrackItem.BracketOpen
@@ -224,8 +228,10 @@ private data class RhyItem(
     val active:   Boolean? = null,
     val soundId:  String?  = null,
     val volume:   Float?   = null,
-    val subbeats: String?  = null,   // compact "1101" encoding; [0] always '1'
-    val subdivide: Boolean? = null,  // legacy; read-only for backward compat
+    val subbeats:     String?  = null, // compact encoding; 'B'=BEAT,'S'=SUBBEAT,'0'=OFF
+    val subdivide:    Boolean? = null, // legacy; read-only for backward compat
+    val subdivSoundId: String? = null,
+    val subdivVolume:  Float?  = null,
     // repeat field
     val count:   Int?    = null,
     // modulation fields

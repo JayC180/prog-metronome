@@ -129,7 +129,9 @@ fun BpmInputDialog(
                                 val result = calculator.tap()
                                 tapCount = calculator.tapCount
                                 if (result != null) {
-                                    tapBpm = result.coerceIn(1.0, 999.99)
+                                    val clamped = result.coerceIn(1.0, 999.99)
+                                    tapBpm  = clamped
+                                    textBpm = "${clamped.toLong()}"
                                 }
                             },
                     ) {

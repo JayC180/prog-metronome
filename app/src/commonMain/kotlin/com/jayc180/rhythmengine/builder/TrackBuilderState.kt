@@ -12,12 +12,14 @@ fun SubbeatState.cycle(): SubbeatState = when (this) {
 sealed class TrackItem {
 
     data class Beat(
-        val displayNum:   Int,
-        val displayDenom: Int,
-        val active:       Boolean              = true,
-        val soundId:      String?              = null,
-        val volume:       Float                = 1.0f,
-        val subbeats:     List<SubbeatState>?  = null,  // null=subdivision off; [i] is BEAT/SUBBEAT/OFF
+        val displayNum:         Int,
+        val displayDenom:       Int,
+        val active:             Boolean             = true,
+        val soundId:            String?             = null,
+        val volume:             Float               = 1.0f,
+        val subbeats:           List<SubbeatState>? = null,  // null=subdivision off; [i] is BEAT/SUBBEAT/OFF
+        val subdivisionSoundId: String?             = null,  // null if use global sound/volume
+        val subdivisionVolume:  Float?              = null,
     ) : TrackItem() {
         val duration: Rational get() = Rational(displayNum.toLong(), displayDenom.toLong())
         val label: String get() = if (displayDenom == 1) "$displayNum" else "$displayNum/$displayDenom"

@@ -165,7 +165,7 @@ class TrackBuilder(
     }
 
     fun clearTrackDefaultSound(trackIndex: Int) {
-        updateTrack(trackIndex) { it.copy(defaultSoundId = null) }
+        updateTrack(trackIndex) { it.copy(defaultSoundId = null, defaultVolume = null) }
     }
 
     fun applyTrackDefaultSoundToAllBeats(trackIndex: Int) {
@@ -211,6 +211,18 @@ class TrackBuilder(
             it[beatIndex] = item.copy(soundId = soundId)
         }
         updateActiveTrack { it.copy(items = newItems) }
+    }
+
+    fun setBeatSubdivisionSound(beatIndex: Int, soundId: String?) {
+        updateBeatAt(beatIndex) { it.copy(subdivisionSoundId = soundId) }
+    }
+
+    fun setBeatSubdivisionVolume(beatIndex: Int, volume: Float) {
+        updateBeatAt(beatIndex) { it.copy(subdivisionVolume = volume) }
+    }
+
+    fun clearBeatSubdivisionSound(beatIndex: Int) {
+        updateBeatAt(beatIndex) { it.copy(subdivisionSoundId = null, subdivisionVolume = null) }
     }
 
     fun enableBeatSubdiv(beatIndex: Int) {

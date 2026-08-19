@@ -27,10 +27,11 @@ private const val SUBBEAT_CELLS_PER_ROW = 4
 
 @Composable
 fun SubbeatEditorDialog(
-    beat:           TrackItem.Beat,
-    onCycleSubbeat: (Int) -> Unit,
-    onSetAll:       (Boolean) -> Unit,
-    onDismiss:      () -> Unit,
+    beat:              TrackItem.Beat,
+    onCycleSubbeat:    (Int) -> Unit,
+    onSetAll:          (Boolean) -> Unit,
+    onOpenSubdivSound: (() -> Unit)? = null,
+    onDismiss:         () -> Unit,
 ) {
     val subbeats = beat.subbeats ?: return
     val n        = subbeats.size
@@ -85,6 +86,28 @@ fun SubbeatEditorDialog(
                 Spacer(Modifier.width(2.dp))
                 LegendCircle(RhythmColors.border1)
                 Text("off", style = RhythmType.label.copy(fontSize = 10.sp, color = RhythmColors.textSecondary))
+                Spacer(Modifier.weight(1f))
+                if (onOpenSubdivSound != null) {
+                    val hasOverride = beat.subdivisionSoundId != null
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(if (hasOverride) RhythmColors.cautionBg else RhythmColors.bg3)
+                            .border(
+                                0.5.dp,
+                                if (hasOverride) RhythmColors.cautionBorder else RhythmColors.border1,
+                                RoundedCornerShape(4.dp),
+                            )
+                            .clickable(onClick = onOpenSubdivSound)
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                    ) {
+                        Text("sound", style = RhythmType.label.copy(
+                            fontSize = 9.sp,
+                            color = if (hasOverride) RhythmColors.caution else RhythmColors.textMuted,
+                        ))
+                    }
+                }
             }
 
             HorizontalDivider()

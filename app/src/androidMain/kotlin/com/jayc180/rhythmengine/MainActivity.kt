@@ -263,6 +263,11 @@ class MainActivity : ComponentActivity() {
                         vm.globalDefaultSoundId
                     is SoundPickerTarget.SubdivisionDefault ->
                         vm.subdivisionSoundId
+                    is SoundPickerTarget.BeatSubdivision ->
+                        (vm.builder.state.value.tracks
+                            .getOrNull(target.trackIndex)
+                            ?.items?.getOrNull(target.itemIndex)
+                                as? com.jayc180.rhythmengine.builder.TrackItem.Beat)?.subdivisionSoundId
                 }
                 SoundPickerDialog(
                     sounds         = sounds,
@@ -277,6 +282,8 @@ class MainActivity : ComponentActivity() {
                                 vm.setGlobalDefaultSound(info.id)
                             is SoundPickerTarget.SubdivisionDefault ->
                                 appVm.setSubdivisionSound(info.id)
+                            is SoundPickerTarget.BeatSubdivision ->
+                                vm.builder.setBeatSubdivisionSound(target.itemIndex, info.id)
                         }
                         soundPickerTarget = null
                     },

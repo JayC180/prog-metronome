@@ -90,4 +90,8 @@ class AppViewModel(
     fun disableBeatSubdiv(beatIndex: Int) = builder.disableBeatSubdiv(beatIndex)
     fun cycleSubbeat(beatIndex: Int, subbeatIndex: Int) = builder.cycleSubbeat(beatIndex, subbeatIndex)
     fun setSubbeatAll(beatIndex: Int, active: Boolean)   = builder.setSubbeatAll(beatIndex, active)
+
+    fun setBeatSubdivisionSound(beatIndex: Int, soundId: String?) = builder.setBeatSubdivisionSound(beatIndex, soundId)
+    fun setBeatSubdivisionVolume(beatIndex: Int, volume: Float)   = builder.setBeatSubdivisionVolume(beatIndex, volume)
+    fun clearBeatSubdivisionSound(beatIndex: Int)                 = builder.clearBeatSubdivisionSound(beatIndex)
 }
