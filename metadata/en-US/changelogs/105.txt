@@ -1,0 +1,4 @@
+- custom sub-beat sound per beat
+- option to reset to default (global) sound setting 
+- tap bpm results integers
+- minor ui fix
