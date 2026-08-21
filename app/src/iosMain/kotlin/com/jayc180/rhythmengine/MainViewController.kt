@@ -175,6 +175,11 @@ fun MainViewController(): UIViewController = ComposeUIViewController {
                     vm.globalDefaultSoundId
                 is SoundPickerTarget.SubdivisionDefault ->
                     vm.subdivisionSoundId
+                is SoundPickerTarget.BeatSubdivision ->
+                    (vm.builder.state.value.tracks
+                        .getOrNull(target.trackIndex)
+                        ?.items?.getOrNull(target.itemIndex)
+                            as? com.jayc180.rhythmengine.builder.TrackItem.Beat)?.subdivisionSoundId
             }
             SoundPickerDialog(
                 sounds         = sounds,
@@ -189,6 +194,8 @@ fun MainViewController(): UIViewController = ComposeUIViewController {
                             vm.setGlobalDefaultSound(info.id)
                         is SoundPickerTarget.SubdivisionDefault ->
                             appVm.setSubdivisionSound(info.id)
+                        is SoundPickerTarget.BeatSubdivision ->
+                            appVm.setBeatSubdivisionSound(target.itemIndex, info.id)
                     }
                     soundPickerTarget = null
                 },
