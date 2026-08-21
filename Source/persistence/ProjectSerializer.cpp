@@ -38,6 +38,11 @@ juce::var itemToVar(const TrackItem &item) {
             }
             obj->setProperty("subbeats", s);
         }
+        if (b->subdivisionSoundId.has_value())
+            obj->setProperty("subdivSoundId",
+                             juce::String(*b->subdivisionSoundId));
+        if (b->subdivisionVolume.has_value())
+            obj->setProperty("subdivVolume", (double)*b->subdivisionVolume);
     } else if (item.isBracketOpen())
         obj->setProperty("type", "open");
     else if (item.isBracketClose())
@@ -110,6 +115,12 @@ std::optional<TrackItem> varToItem(const juce::var &v) {
             subs[0] = SubbeatState::Beat;
             b.subbeats = std::move(subs);
         }
+        if (obj->hasProperty("subdivSoundId"))
+            b.subdivisionSoundId =
+                obj->getProperty("subdivSoundId").toString().toStdString();
+        if (obj->hasProperty("subdivVolume"))
+            b.subdivisionVolume =
+                (float)(double)obj->getProperty("subdivVolume");
         return TrackItem(b);
     }
     if (type == "open")

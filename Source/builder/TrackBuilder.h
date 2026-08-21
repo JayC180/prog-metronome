@@ -107,6 +107,10 @@ class TrackBuilder {
     void disableBeatSubdiv(int beatIndex);
     void cycleSubbeat(int beatIndex, int subbeatIndex);
     void setSubbeatAll(int beatIndex, bool active);
+    void setBeatSubdivisionSound(int beatIndex,
+                                 std::optional<std::string> soundId);
+    void setBeatSubdivisionVolume(int beatIndex, float volume);
+    void clearBeatSubdivisionSound(int beatIndex);
 
     // brackets
     void openBracket();

@@ -39,6 +39,7 @@ private:
     void openTrackSoundPicker(int trackIdx);
     void openGlobalSoundPicker();
     void openSubdivisionSoundPicker();
+    void openBeatSubdivisionSoundPicker(int itemIdx);
     void openSubbeatEditor();
 
     void loadSettings();

@@ -232,6 +232,7 @@ void TrackBuilder::clearTrackDefaultSound(int index) {
     updateTrack(index, [](const TrackDraft &d) {
         auto c = d;
         c.defaultSoundId.reset();
+        c.defaultVolume.reset();
         return c;
     });
 }
@@ -370,6 +371,32 @@ void TrackBuilder::setBeatSound(int beatIndex, const std::string &soundId) {
     updateActiveTrack([&newItems](const TrackDraft &d) {
         auto c = d;
         c.items = newItems;
+        return c;
+    });
+}
+
+void TrackBuilder::setBeatSubdivisionSound(int beatIndex,
+                                           std::optional<std::string> soundId) {
+    updateBeatAt(beatIndex, [&soundId](const TrackItem::Beat &b) {
+        auto c = b;
+        c.subdivisionSoundId = soundId;
+        return c;
+    });
+}
+
+void TrackBuilder::setBeatSubdivisionVolume(int beatIndex, float volume) {
+    updateBeatAt(beatIndex, [volume](const TrackItem::Beat &b) {
+        auto c = b;
+        c.subdivisionVolume = std::clamp(volume, 0.0f, 1.0f);
+        return c;
+    });
+}
+
+void TrackBuilder::clearBeatSubdivisionSound(int beatIndex) {
+    updateBeatAt(beatIndex, [](const TrackItem::Beat &b) {
+        auto c = b;
+        c.subdivisionSoundId.reset();
+        c.subdivisionVolume.reset();
         return c;
     });
 }

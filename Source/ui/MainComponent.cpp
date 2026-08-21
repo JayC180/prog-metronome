@@ -37,7 +37,7 @@ MainComponent::MainComponent(RhythmEngineProcessor &processor)
                                  beatBlockSizeIndex_ == i);
 
         juce::PopupMenu menu;
-        menu.addSectionHeader("Prog Metronome  v1.04");
+        menu.addSectionHeader("Prog Metronome  v1.05");
         menu.addSeparator();
         menu.addItem(1, "New Project");
         menu.addItem(2, "Open Project...");
@@ -279,6 +279,44 @@ void MainComponent::openTrackSoundPicker(int trackIdx) {
                   },
                   [this, trackIdx] {
                       builder_.applyTrackDefaultSoundToAllBeats(trackIdx);
+                  },
+                  [this, trackIdx] {
+                      builder_.clearTrackDefaultSound(trackIdx);
+                  }));
+}
+
+void MainComponent::openBeatSubdivisionSoundPicker(int itemIdx) {
+    const auto &s = builder_.state();
+    const auto *t = s.activeTrack();
+    if (t == nullptr)
+        return;
+    if (itemIdx < 0 || itemIdx >= (int)t->items.size())
+        return;
+    const auto *beat = t->items[(size_t)itemIdx].getIf<TrackItem::Beat>();
+    if (beat == nullptr)
+        return;
+
+    const std::optional<std::string> currentSound =
+        beat->subdivisionSoundId.has_value()
+            ? beat->subdivisionSoundId
+            : std::optional<std::string>{builder_.subdivisionSoundId()};
+    const float currentVol = beat->subdivisionVolume.has_value()
+                                 ? *beat->subdivisionVolume
+                                 : builder_.subdivisionVolume();
+
+    showRhythmDialog(
+        this, std::make_unique<SoundPickerDialog>(
+                  availableSounds_, currentSound,
+                  [this, itemIdx](const std::string &soundId) {
+                      builder_.setBeatSubdivisionSound(itemIdx, soundId);
+                  },
+                  currentVol,
+                  [this, itemIdx](float v) {
+                      builder_.setBeatSubdivisionVolume(itemIdx, v);
+                  },
+                  std::nullopt, nullptr, nullptr,
+                  [this, itemIdx] {
+                      builder_.clearBeatSubdivisionSound(itemIdx);
                   }));
 }
 
@@ -312,12 +350,16 @@ void MainComponent::openSubbeatEditor() {
     if (beat == nullptr || !beat->subbeats.has_value())
         return;
 
+    const bool hasSubdivOverride = beat->subdivisionSoundId.has_value();
+
     showRhythmDialog(
         this,
         std::make_unique<SubbeatEditorDialog>(
             *beat->subbeats, juce::String(beat->label()),
             [this, idx](int subIdx) { builder_.cycleSubbeat(idx, subIdx); },
-            [this, idx](bool active) { builder_.setSubbeatAll(idx, active); }));
+            [this, idx](bool active) { builder_.setSubbeatAll(idx, active); },
+            [this, idx] { openBeatSubdivisionSoundPicker(idx); },
+            hasSubdivOverride));
 }
 
 void MainComponent::newProject() {

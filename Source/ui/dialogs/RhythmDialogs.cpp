@@ -144,7 +144,7 @@ BpmInputDialog::BpmInputDialog(double currentBpm,
     tapButton_.setOnClick([this, lastValid] {
         if (auto bpm = tapCalc_.tap()) {
             const double clamped = std::max(1.0, std::min(999.99, *bpm));
-            *lastValid = formatBpm(clamped);
+            *lastValid = juce::String((juce::int64)clamped);
             field_.setText(*lastValid, juce::dontSendNotification);
         }
         tapHintLabel_.setText(juce::String(tapCalc_.tapCount()) + "x",
@@ -537,7 +537,7 @@ SoundPickerDialog::SoundPickerDialog(
     std::optional<float> currentVolume,
     std::function<void(float)> onVolumeChange, std::optional<bool> subdivideAll,
     std::function<void(bool)> onSubdivideAllToggle,
-    std::function<void()> onApplyToAll)
+    std::function<void()> onApplyToAll, std::function<void()> onClearSound)
     : DialogPanel("Choose sound", {}) {
     preferredWidth = 400;
     preferredHeight = juce::jmin(116 + (int)sounds.size() * 40, 520);
@@ -637,6 +637,16 @@ SoundPickerDialog::SoundPickerDialog(
                           findParentComponentOfClass<juce::DialogWindow>())
                       w->exitModalState(0);
               });
+
+    if (onClearSound) {
+        addAction("Use default", RhythmColors::bg3(), RhythmColors::border1(),
+                  RhythmColors::textMuted(), [this, onClearSound] {
+                      onClearSound();
+                      if (auto *w =
+                              findParentComponentOfClass<juce::DialogWindow>())
+                          w->exitModalState(1);
+                  });
+    }
 
     if (onApplyToAll) {
         addAction("Apply to all beats", RhythmColors::dangerBg(),
@@ -741,7 +751,9 @@ class SubbeatEditorDialog::Cell : public juce::Component {
 SubbeatEditorDialog::SubbeatEditorDialog(std::vector<SubbeatState> subbeats,
                                          juce::String beatLabel,
                                          std::function<void(int)> onCycle,
-                                         std::function<void(bool)> onSetAll)
+                                         std::function<void(bool)> onSetAll,
+                                         std::function<void()> onOpenSubdivSound,
+                                         bool hasSubdivOverride)
     : DialogPanel("Subbeats "), subbeats_(std::move(subbeats)),
       onCycle_(std::move(onCycle)) {
     const int n = (int)subbeats_.size();
@@ -788,6 +800,21 @@ SubbeatEditorDialog::SubbeatEditorDialog(std::vector<SubbeatState> subbeats,
                   if (onSetAll)
                       onSetAll(false);
               });
+    if (onOpenSubdivSound) {
+        addAction("sound",
+                  hasSubdivOverride ? RhythmColors::cautionBg()
+                                    : RhythmColors::bg3(),
+                  hasSubdivOverride ? RhythmColors::cautionBorder()
+                                    : RhythmColors::border1(),
+                  hasSubdivOverride ? RhythmColors::caution()
+                                    : RhythmColors::textMuted(),
+                  [this, onOpenSubdivSound] {
+                      onOpenSubdivSound();
+                      if (auto *w =
+                              findParentComponentOfClass<juce::DialogWindow>())
+                          w->exitModalState(1);
+                  });
+    }
     addAction("Close", RhythmColors::accentBg(), RhythmColors::accentBorder(),
               RhythmColors::accent(), [this] {
                   if (auto *w =

@@ -145,7 +145,8 @@ public:
                        std::function<void (float)> onVolumeChange = nullptr,
                        std::optional<bool> subdivideAll = std::nullopt,
                        std::function<void (bool)> onSubdivideAllToggle = nullptr,
-                       std::function<void ()> onApplyToAll = nullptr);
+                       std::function<void ()> onApplyToAll = nullptr,
+                       std::function<void ()> onClearSound = nullptr);
     ~SoundPickerDialog() override;
     void layoutContent (juce::Rectangle<int>) override;
 
@@ -173,7 +174,9 @@ public:
     SubbeatEditorDialog (std::vector<SubbeatState> subbeats,
                          juce::String beatLabel,
                          std::function<void (int)> onCycle,
-                         std::function<void (bool)> onSetAll);
+                         std::function<void (bool)> onSetAll,
+                         std::function<void ()> onOpenSubdivSound = nullptr,
+                         bool hasSubdivOverride = false);
     ~SubbeatEditorDialog() override;
     void layoutContent (juce::Rectangle<int>) override;
 

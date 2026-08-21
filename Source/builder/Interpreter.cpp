@@ -93,11 +93,14 @@ static void computeNode(const PNode &node, ComputeState &s,
                 e.soundId =
                     (state == SubbeatState::Beat)
                         ? (b.soundId.has_value() ? *b.soundId : defaultSound)
-                        : subdivisionSound;
+                    : b.subdivisionSoundId.has_value() ? *b.subdivisionSoundId
+                                                       : subdivisionSound;
                 e.trackItemIndex = beat->idx;
                 e.firedCount = s.fired;
                 e.volume = (state == SubbeatState::Beat) ? b.volume
-                                                         : subdivisionVolume;
+                           : b.subdivisionVolume.has_value()
+                               ? *b.subdivisionVolume
+                               : subdivisionVolume;
                 out.push_back(std::move(e));
             }
         } else {

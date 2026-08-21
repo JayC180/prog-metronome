@@ -49,6 +49,9 @@ class TrackItem {
         float volume{1.0f};
         // nullopt = subdivision off; otherwise each entry is Beat/Subbeat/Off
         std::optional<std::vector<SubbeatState>> subbeats{};
+        // per-beat subbeat sound/volume override; nullopt = use global default
+        std::optional<std::string> subdivisionSoundId{};
+        std::optional<float> subdivisionVolume{};
 
         Rational duration() const {
             return Rational((int64_t)displayNum, (int64_t)displayDenom);
