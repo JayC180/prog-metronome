@@ -1,0 +1,3 @@
+- Now support .flac and .mp3 import
+- Better .wav import
+- UI fixes
