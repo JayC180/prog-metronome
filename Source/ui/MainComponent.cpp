@@ -37,7 +37,7 @@ MainComponent::MainComponent(RhythmEngineProcessor &processor)
                                  beatBlockSizeIndex_ == i);
 
         juce::PopupMenu menu;
-        menu.addSectionHeader("Prog Metronome  v1.05");
+        menu.addSectionHeader("Prog Metronome  v1.06");
         menu.addSeparator();
         menu.addItem(1, "New Project");
         menu.addItem(2, "Open Project...");
