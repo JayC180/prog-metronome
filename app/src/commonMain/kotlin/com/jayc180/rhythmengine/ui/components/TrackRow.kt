@@ -76,11 +76,15 @@ fun TrackRow(
                 // to leftmost
                 val targetX = (leftOf(beatIndex) - padPx).toInt().coerceAtLeast(0)
                 if (scrollState.value != targetX) scrollState.animateScrollTo(targetX)
+            } else if (cursorIndex != null) {
+                // Match playback auto-scroll: keep arrow-selected items at the start of the
+                // scrollable track area, after the fixed track controls on the left.
+                val targetX = (leftOf(cursorIndex) - padPx).toInt().coerceAtLeast(0)
+                if (scrollState.value != targetX) scrollState.animateScrollTo(targetX)
             } else {
-                val cursorTarget = cursorIndex ?: draft.items.lastIndex
-                if (cursorTarget < 0) return@with
-                val itemLeft  = leftOf(cursorTarget)
-                val itemRight = itemLeft + widthOf(cursorTarget)
+                val lastIndex = draft.items.lastIndex
+                val itemLeft  = leftOf(lastIndex)
+                val itemRight = itemLeft + widthOf(lastIndex)
                 if (itemLeft >= scrollX && itemRight <= scrollX + vpPx) return@with
                 val targetX = if (itemLeft < scrollX)
                     (itemLeft - padPx).toInt().coerceAtLeast(0)
