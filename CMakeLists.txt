@@ -82,6 +82,7 @@ target_include_directories(RhythmEngine PRIVATE Source)
 target_compile_definitions(RhythmEngine PUBLIC
     JUCE_WEB_BROWSER=0
     JUCE_USE_CURL=0
+    JUCE_USE_MP3AUDIOFORMAT=1
     JUCE_VST3_CAN_REPLACE_VST2=0
     JUCE_DISPLAY_SPLASH_SCREEN=0)
 

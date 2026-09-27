@@ -212,7 +212,7 @@ MainComponent::MainComponent(RhythmEngineProcessor &processor)
         });
 
     loadSettings();
-    loadUserSoundsFromDisk(); // populates availableSounds_ and load wavs
+    loadUserSoundsFromDisk(); // populates availableSounds_ and loads audio files
     updateProjectNameDisplay();
     rebuildFromState();
 
@@ -519,8 +519,8 @@ void MainComponent::rebuildAvailableSounds() {
     const auto dir = userSoundsDir();
     if (!dir.isDirectory())
         return;
-    for (const auto &f : dir.findChildFiles(juce::File::findFiles, false,
-                                            "*.wav;*.aif;*.aiff;*.flac")) {
+    for (const auto &f : dir.findChildFiles(
+             juce::File::findFiles, false, "*.wav;*.aif;*.aiff;*.flac;*.mp3")) {
         const auto id =
             f.getFileNameWithoutExtension().toLowerCase().toStdString();
         availableSounds_.push_back(
@@ -531,8 +531,9 @@ void MainComponent::rebuildAvailableSounds() {
 void MainComponent::loadUserSoundsFromDisk() {
     const auto dir = userSoundsDir();
     if (dir.isDirectory()) {
-        for (const auto &f : dir.findChildFiles(juce::File::findFiles, false,
-                                                "*.wav;*.aif;*.aiff;*.flac")) {
+        for (const auto &f : dir.findChildFiles(
+                 juce::File::findFiles, false,
+                 "*.wav;*.aif;*.aiff;*.flac;*.mp3")) {
             const auto id =
                 f.getFileNameWithoutExtension().toLowerCase().toStdString();
             processor_.audio().loadSample(id, f);
@@ -545,7 +546,7 @@ void MainComponent::importSound() {
     fileChooser_ = std::make_unique<juce::FileChooser>(
         "Import Sound",
         juce::File::getSpecialLocation(juce::File::userDocumentsDirectory),
-        "*.wav;*.aif;*.aiff;*.flac");
+        "*.wav;*.aif;*.aiff;*.flac;*.mp3");
 
     fileChooser_->launchAsync(
         juce::FileBrowserComponent::openMode |
