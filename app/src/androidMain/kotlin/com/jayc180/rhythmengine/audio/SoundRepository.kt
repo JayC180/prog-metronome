@@ -76,11 +76,11 @@ class SoundRepository(private val context: Context) {
     }
 
     /**
-     * Copies imported wav file into usr sound dir
+     * Copies an imported supported audio file into the user sound directory.
      * Returns new SoundEntry, null if fail
      */
     fun importUserSound(sourceFile: File): SoundEntry? {
-        if (!sourceFile.exists() || !sourceFile.name.endsWith(".wav", ignoreCase = true)) return null
+        if (!sourceFile.exists() || !isSupportedAudioFile(sourceFile.name)) return null
         val dest = File(userSoundDir, sourceFile.name)
         return try {
             sourceFile.copyTo(dest, overwrite = true)
@@ -97,9 +97,22 @@ class SoundRepository(private val context: Context) {
 
     fun deleteUserSound(entry: SoundEntry): Boolean {
         val src = entry.source as? SoundSource.UserFile ?: return false
-        return src.file.delete().also {
-            if (it) Log.d("SoundRepository", "Deleted: ${entry.id}")
-        }
+        val matchingFiles = userSoundDir.listFiles { file ->
+            isSupportedAudioFile(file.name) &&
+                file.nameWithoutExtension.equals(src.file.nameWithoutExtension, ignoreCase = true)
+        }.orEmpty()
+        val deleteResults = matchingFiles.map { it.delete() }
+        val deleted = deleteResults.isNotEmpty() && deleteResults.all { it }
+        if (deleted) Log.d("SoundRepository", "Deleted: ${entry.id}")
+        return deleted
+    }
+
+    fun removeAlternateFormats(keepFile: File) {
+        val keepStem = keepFile.nameWithoutExtension
+        userSoundDir.listFiles { file ->
+            file != keepFile && isSupportedAudioFile(file.name) &&
+                file.nameWithoutExtension.equals(keepStem, ignoreCase = true)
+        }?.forEach { it.delete() }
     }
 
     /**
@@ -131,7 +144,7 @@ class SoundRepository(private val context: Context) {
 
     private fun discoverUserFiles(): List<SoundEntry> {
         return userSoundDir
-            .listFiles { f -> f.extension.equals("wav", ignoreCase = true) }
+            .listFiles { f -> isSupportedAudioFile(f.name) }
             ?.sortedBy { it.name }
             ?.map { file ->
                 SoundEntry(
@@ -139,6 +152,8 @@ class SoundRepository(private val context: Context) {
                     label  = file.nameWithoutExtension.replace('_', ' '),  // no prefix to strip
                     source = SoundSource.UserFile(file),
                 )
-            } ?: emptyList()
+            }
+            ?.distinctBy { it.id.lowercase() }
+            ?: emptyList()
     }
 }

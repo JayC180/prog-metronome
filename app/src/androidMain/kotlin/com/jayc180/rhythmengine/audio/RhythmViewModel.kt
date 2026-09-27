@@ -176,7 +176,7 @@ class RhythmViewModel(application: Application) : AndroidViewModel(application) 
                 destDir = soundRepository.userSoundDir,
             )
             if (file == null) {
-                _importState.value = ImportState.Error("Could not read file — make sure it's a WAV")
+                _importState.value = ImportState.Error("Could not read file - choose a WAV, MP3, or FLAC under 32 MB")
                 return@launch
             }
             val entry = SoundEntry(
@@ -187,10 +187,11 @@ class RhythmViewModel(application: Application) : AndroidViewModel(application) 
             val failed = soundRepository.loadAll(listOf(entry), audioEngine)
             if (entry.id in failed) {
                 file.delete()
-                _importState.value = ImportState.Error("File loaded but couldn't be parsed as WAV")
+                _importState.value = ImportState.Error("Couldn't decode audio - use WAV, MP3, or FLAC under 32 MB and 30 seconds")
                 return@launch
             }
-            val newEntries = _soundEntries.value + entry
+            soundRepository.removeAlternateFormats(file)
+            val newEntries = _soundEntries.value.filterNot { it.id.equals(entry.id, ignoreCase = true) } + entry
             _soundEntries.value = newEntries
             _sounds.value = newEntries.toSoundInfoList()
             transport.updateSoundMap(SoundMap(newEntries.map { e ->

@@ -14,7 +14,7 @@ class AudioEngineIos : AudioEngine {
     override fun trigger(soundId: String, volume: Float, expectedFireNanos: Long) =
         re_audio_trigger(soundId, volume, expectedFireNanos)
 
-    /** Load a WAV from a filesystem path directly into the C++ sample store. */
+    /** Decode supported audio from a filesystem path into the C++ sample store. */
     fun loadSamplePath(soundId: String, filePath: String): Boolean =
         re_audio_load_sample_path(soundId, filePath)
 }

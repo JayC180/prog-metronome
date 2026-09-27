@@ -501,7 +501,7 @@ private fun SettingsOverlay(
                     fontSize = 11.sp, color = RhythmColors.textMuted))
             }
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                SBtn("Import Sound…", modifier = Modifier.fillMaxWidth(),
+                SBtn("Import Sound (WAV, MP3, FLAC)", modifier = Modifier.fillMaxWidth(),
                     onClick = onImportSound,
                     bg = RhythmColors.bg3, textColor = RhythmColors.textSecondary,
                     border = RhythmColors.border1)

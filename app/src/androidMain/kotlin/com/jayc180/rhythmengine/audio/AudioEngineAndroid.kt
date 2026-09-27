@@ -11,7 +11,7 @@ import com.jayc180.rhythmengine.model.SoundMap
  *   - Android assets (assets/ folder)  → loadSounds(assets, soundMap)
  *   - res/raw resources                → loadSoundsFromRaw(context, soundMap)
  *
- * SoundConfig.resourceUri is interpreted as:
+ * Bundled SoundConfig.resourceUri is interpreted as:
  *   - asset path  when using loadSounds()       e.g. "sounds/kick.wav"
  *   - raw res name when using loadSoundsFromRaw() e.g. "kick"  (no extension, no R.raw.)
  */

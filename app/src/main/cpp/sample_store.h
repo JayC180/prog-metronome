@@ -17,6 +17,8 @@ struct Sample {
 
 class SampleStore {
 public:
+    static constexpr size_t MAX_ENCODED_BYTES = 32ULL * 1024ULL * 1024ULL;
+
 #ifdef __ANDROID__
     // android asset dir
     bool loadFromAssets(AAssetManager* mgr, const std::string& soundId,
@@ -26,6 +28,7 @@ public:
     // from fd (res/raw)
     bool loadFromFd(const std::string& soundId, int fd, long offset, long length);
 
+    bool loadFromFile(const std::string& soundId, const std::string& filePath);
     bool loadFromBuffer(const std::string& soundId, const uint8_t* data, size_t len);
 
     const Sample* get(const std::string& soundId) const;
@@ -35,6 +38,5 @@ public:
 
 private:
     std::unordered_map<std::string, Sample> samples_;
-    bool parseWav(const uint8_t* data, size_t len, Sample& out);
-    void monoToStereo(std::vector<int16_t>& pcm);
+    bool decodeAudio(const uint8_t* data, size_t len, Sample& out);
 };

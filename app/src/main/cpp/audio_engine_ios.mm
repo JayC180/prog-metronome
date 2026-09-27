@@ -111,15 +111,7 @@ bool re_audio_load_sample_buffer(const char* soundId, const unsigned char* data,
 }
 
 bool re_audio_load_sample_path(const char* soundId, const char* filePath) {
-    FILE* f = fopen(filePath, "rb");
-    if (!f) return false;
-    fseek(f, 0, SEEK_END);
-    long len = ftell(f);
-    rewind(f);
-    std::vector<uint8_t> buf(static_cast<size_t>(len));
-    fread(buf.data(), 1, static_cast<size_t>(len), f);
-    fclose(f);
-    return gStore.loadFromBuffer(soundId, buf.data(), buf.size());
+    return gStore.loadFromFile(soundId, filePath);
 }
 
 void re_audio_trigger(const char* soundId, float volume, int64_t expectedNanos) {

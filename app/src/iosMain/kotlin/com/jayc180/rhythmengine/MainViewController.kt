@@ -523,8 +523,8 @@ private fun IosSettingsOverlay(
             Divider()
 
             // Sound import
-            IosBtn("Import Sound (.wav)…", modifier = Modifier.fillMaxWidth(),
-                onClick = { picker.pickWav(uiVC) { path -> vm.importSoundFromPath(path) } })
+            IosBtn("Import Sound (WAV, MP3, FLAC)", modifier = Modifier.fillMaxWidth(),
+                onClick = { picker.pickAudio(uiVC) { path -> vm.importSoundFromPath(path) } })
 
             // Import state feedback
             when (val s = importState) {

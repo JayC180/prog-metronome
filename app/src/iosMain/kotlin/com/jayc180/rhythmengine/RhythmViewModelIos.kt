@@ -195,7 +195,7 @@ class RhythmViewModelIos {
                 transport.updateSoundMap(SoundMap(list.map { SoundConfig(soundId = it.id, resourceUri = it.id) }))
                 _importState.value = ImportState.Success(info.label)
             } else {
-                _importState.value = ImportState.Error("Import failed — make sure the file is a .wav")
+                _importState.value = ImportState.Error("Import failed — use WAV, MP3, or FLAC under 32 MB and 30 seconds")
             }
             delay(3000L)
             _importState.value = ImportState.Idle

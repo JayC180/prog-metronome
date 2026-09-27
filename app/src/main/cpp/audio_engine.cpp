@@ -56,6 +56,10 @@ public:
         return store_.loadFromBuffer(id, data, len);
     }
 
+    bool loadSampleFile(const std::string& id, const std::string& path) {
+        return store_.loadFromFile(id, path);
+    }
+
     void triggerSound(const std::string& id, float vol, int64_t expectedNanos) {
         const Sample* s = store_.get(id);
         if (!s) { LOGE("Unknown sound: %s", id.c_str()); return; }
@@ -137,23 +141,7 @@ Java_com_jayc180_rhythmengine_audio_AudioEngineAndroid_nativeLoadSamplePath(
     const char* soundId  = env->GetStringUTFChars(jSoundId,  nullptr);
     const char* filePath = env->GetStringUTFChars(jFilePath, nullptr);
 
-    // Open file from filesystem (user-imported sounds live in app's files dir)
-    FILE* f = fopen(filePath, "rb");
-    bool ok = false;
-
-    if (f) {
-        fseek(f, 0, SEEK_END);
-        long len = ftell(f);
-        fseek(f, 0, SEEK_SET);
-
-        std::vector<uint8_t> buf(static_cast<size_t>(len));
-        fread(buf.data(), 1, len, f);
-        fclose(f);
-
-        ok = gEngine.loadSampleFromBuffer(soundId, buf.data(), buf.size());
-    } else {
-        LOGE("nativeLoadSamplePath: cannot open file: %s", filePath);
-    }
+    const bool ok = gEngine.loadSampleFile(soundId, filePath);
 
     env->ReleaseStringUTFChars(jSoundId,  soundId);
     env->ReleaseStringUTFChars(jFilePath, filePath);

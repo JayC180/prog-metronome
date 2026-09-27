@@ -20,9 +20,9 @@ class DocumentPickerHelper : NSObject(), UIDocumentPickerDelegateProtocol {
     fun pickAny(from: UIViewController, onPick: (String) -> Unit) =
         present(from, listOf("public.data"), onPick)
 
-    /** Pick a WAV audio file (for sound import). */
-    fun pickWav(from: UIViewController, onPick: (String) -> Unit) =
-        present(from, listOf("com.microsoft.waveform-audio", "public.audio"), onPick)
+    /** Pick a WAV, MP3, or FLAC audio file for sound import. */
+    fun pickAudio(from: UIViewController, onPick: (String) -> Unit) =
+        present(from, listOf("public.audio"), onPick)
 
     /** Pick a JSON file (for theme import). */
     fun pickJson(from: UIViewController, onPick: (String) -> Unit) =

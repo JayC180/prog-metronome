@@ -6,7 +6,7 @@ import platform.Foundation.*
 /**
  * Sound discovery for iOS.
  * Bundled sounds: app bundle "raw/" folder reference (WAV files from res/raw/).
- * User sounds: Documents/user_sounds/ directory.
+ * User sounds: WAV, MP3, or FLAC files in Documents/user_sounds/.
  */
 @OptIn(ExperimentalForeignApi::class)
 class SoundRepositoryIos(private val engine: AudioEngineIos) {
@@ -49,9 +49,11 @@ class SoundRepositoryIos(private val engine: AudioEngineIos) {
         @Suppress("UNCHECKED_CAST")
         val files = fm.contentsOfDirectoryAtPath(dir, null) as? List<String> ?: return
 
-        for (name in files.sorted()) {
-            if (!name.endsWith(".wav", ignoreCase = true)) continue
-            val id    = name.removeSuffix(".wav")
+        val supportedFiles = files.filter(::isSupportedAudioFile)
+            .sorted()
+            .distinctBy { audioFileStem(it).lowercase() }
+        for (name in supportedFiles) {
+            val id    = audioFileStem(name)
             val label = id.replace('_', ' ')
             val path  = "$dir/$name"
             if (engine.loadSamplePath(id, path)) {
@@ -63,14 +65,18 @@ class SoundRepositoryIos(private val engine: AudioEngineIos) {
     fun importSound(sourcePath: String): SoundInfo? {
         val dir  = userSoundsDir ?: return null
         val name = sourcePath.substringAfterLast('/')
-        if (!name.endsWith(".wav", ignoreCase = true)) return null
+        if (!isSupportedAudioFile(name)) return null
         val dest = "$dir/$name"
         val fm   = NSFileManager.defaultManager
         if (fm.fileExistsAtPath(dest)) fm.removeItemAtPath(dest, null)
         fm.copyItemAtPath(sourcePath, dest, null)
-        val id    = name.removeSuffix(".wav")
+        val id    = audioFileStem(name)
         val label = id.replace('_', ' ')
-        if (!engine.loadSamplePath(id, dest)) return null
+        if (!engine.loadSamplePath(id, dest)) {
+            fm.removeItemAtPath(dest, null)
+            return null
+        }
+        removeAlternateFormats(dir, id, name)
         val info = SoundInfo(id = id, label = label, isUser = true)
         loadUser()
         return info
@@ -78,8 +84,24 @@ class SoundRepositoryIos(private val engine: AudioEngineIos) {
 
     fun deleteUserSound(soundId: String) {
         val dir = userSoundsDir ?: return
-        NSFileManager.defaultManager.removeItemAtPath("$dir/$soundId.wav", null)
+        val fm = NSFileManager.defaultManager
+        @Suppress("UNCHECKED_CAST")
+        val files = fm.contentsOfDirectoryAtPath(dir, null) as? List<String> ?: emptyList()
+        files.filter {
+            isSupportedAudioFile(it) && audioFileStem(it).equals(soundId, ignoreCase = true)
+        }
+            .forEach { fm.removeItemAtPath("$dir/$it", null) }
         loadUser()
+    }
+
+    private fun removeAlternateFormats(dir: String, soundId: String, keepName: String) {
+        val fm = NSFileManager.defaultManager
+        @Suppress("UNCHECKED_CAST")
+        val files = fm.contentsOfDirectoryAtPath(dir, null) as? List<String> ?: return
+        files.filter {
+            it != keepName && isSupportedAudioFile(it) &&
+                audioFileStem(it).equals(soundId, ignoreCase = true)
+        }.forEach { fm.removeItemAtPath("$dir/$it", null) }
     }
 
     private val userSoundsDir: String? get() {
